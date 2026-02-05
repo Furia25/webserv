@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/02/03 15:19:44 by vdurand          ###   ########.fr        #
+#    Updated: 2026/02/05 15:31:10 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -54,7 +54,7 @@ endif
 NAME = webserv
 SRC_DIR = src
 OBJ_DIR = obj
-INC_DIR = src
+INC_DIR = includes
 LIBS_DIR = libs
 
 # Source files
@@ -130,6 +130,21 @@ fclean: clean fcleanlibs
 	$(SILENT) rm -f $(NAME)
 
 re: fclean all
+
+# ----------------------
+# Preprocessing rule
+# ----------------------
+
+$(OBJ_DIR)/%.i: $(SRC_DIR)/%.cpp
+	$(SILENT) mkdir -p $(dir $@)
+	@$(LOG) "$(CYAN)>>> Preprocessing $<...$(RESET)"
+	$(SILENT) $(CXX) $(CXXFLAGS) $(INC_FLAGS) -E $< -o $@
+
+preproc: $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.i)
+	@$(LOG) "$(GREEN)>>> Preprocessing done!$(RESET)"
+
+# Targets
+.PHONY: all clean fclean re fcleanlibs preproc
 
 # Targets
 .PHONY: all clean fclean re fcleanlibs

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/02/03 16:38:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/02/05 18:38:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,8 @@
 #include <iostream>
 #include <cstdlib>
 
-#define PRINT(...) #_VA_LIST;
-
 int	main(void)
 {
-	PRINT("Test", "test", "test");
+	std::string	test("text/plain");
+	std::cout << TEST::toString(MIME::from(test)) << std::endl;
 }
