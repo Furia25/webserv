@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 20:28:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/05 21:30:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,12 +23,11 @@ class Socket
 {
 public:
 	Socket();
-	Socket(int fd);
 	~Socket();
 
 	void	listen(void);
 	void	bind(void);
-	int	getFD(void)	const;
+	int		getFD(void)	const;
 protected:
 private:
 	const int	socket_fd;
