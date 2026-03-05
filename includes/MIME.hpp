@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/02/05 18:37:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/05 17:42:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 
 # include <string>
 # include <ostream>
+# include "macrosplosion.hpp"
+# include "EnumClass.hpp"
 
 # define MIME_TYPE (\
 	(txt, text/plain), \
@@ -87,19 +89,11 @@
 	(ttc, font/collection)\
 ) \
 
-# include "EnumClass.hpp"
-# include "macrosplosion.hpp"
-
 # define X(tuple, ...)	M_TUPLE_ELEMENT(tuple,0),
 # define X_STRING(tuple, ...)	M_TUPLE_ELEMENT(tuple, 1)
-ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X_STRING, ~));
+ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X_STRING, ~););
 # undef X
 # undef X_STRING
 
-# define X(tuple, ...)	M_TUPLE_ELEMENT(tuple,0),
-# define X_STRING(tuple, ...)	M_TUPLE_ELEMENT(tuple, 0)
-ENUM_CLASS(TEST, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X_STRING, ~));
-# undef X
-# undef X_STRING
 
 #endif // _MIME_H
