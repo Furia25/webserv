@@ -6,49 +6,22 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 21:30:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:10:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Address.hpp"
 
-void Address::init_address(const char *host, const char *service)
+Address::Address(const std::string& host, const std::string& service, const struct addrinfo *raw_addr)
 {
-	struct addrinfo hints, *res;
-	std::memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	if (host == NULL)
-		hints.ai_flags = AI_PASSIVE;
-	int error_code = getaddrinfo(host, service, &hints, &res);
-	if (error_code != 0)
-		throw std::runtime_error(gai_strerror(error_code));
-	this->family = res->ai_family;
-	this->protocol = res->ai_protocol;
-	this->type = res->ai_socktype;
-	this->flags = res->ai_flags;
-	std::memcpy(&this->data, res->ai_addr, res->ai_addrlen);
-	this->addr_len = res->ai_addrlen;
-	freeaddrinfo(res);
-}
-
-Address::Address(const std::string &host, int service)
-{
-	std::stringstream	ss;
-	ss << service;
-	this->host = std::string(host);
+	this->host = host;
 	this->service = service;
-	this->init_address(host == "" ? NULL : host.c_str(), ss.str().c_str());
-}
-
-Address::Address(const char *host, const char *service)
-{
-	this->host = std::string(host);
-	errno = 0;
-	this->service = strtod(service, NULL);
-	if (errno != 0)
-		throw std::invalid_argument(strerror(errno));
-	this->init_address(host, service);
+	this->family = raw_addr->ai_family;
+	this->protocol = raw_addr->ai_protocol;
+	this->type = raw_addr->ai_socktype;
+	this->flags = raw_addr->ai_flags;
+	std::memcpy(&this->data, raw_addr->ai_addr, raw_addr->ai_addrlen);
+	this->addr_len = raw_addr->ai_addrlen;
 }
 
 Address::Address(const Address &other)
@@ -86,12 +59,9 @@ std::string Address::toString(bool host, bool service) const
 	if (result != 0)
 		return std::string("Unknown");
 	std::stringstream	ss;
-	if (host)
-		ss << host;
-	if (host && service)
-		ss << ':';
-	if (service)
-		ss << service;
+	if (host) ss << hbuf;
+	if (host && service) ss << ':';
+	if (service) ss << sbuf;
 	return ss.str();
 }
 
@@ -102,7 +72,7 @@ bool Address::isIPv6(void) const
 
 const std::string &Address::getHost(void) const { return this->host; }
 
-const int Address::getService(void)const { return this->service; }
+const std::string& Address::getService(void)const { return this->service; }
 
 const sockaddr *Address::getSockAddr(void) const { return (sockaddr *)this->data; }
 
@@ -119,4 +89,5 @@ int Address::getFlags(void) const { return this->flags; }
 std::ostream &operator<<(std::ostream &os, const Address &addr)
 {
 	os << addr.toString();
+	return (os);
 }

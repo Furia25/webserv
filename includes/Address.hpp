@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:30:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 21:30:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:10:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,18 +17,17 @@
 # include <unistd.h>
 # include <netdb.h>
 # include <cstring>
-# include <stdexcept>
-# include <cerrno>
-# include <sstream>
 # include <iostream>
+# include <sstream>
 
 using SocketAddr = struct sockaddr_storage;
+
+# define MAX_PORT	UINT16_MAX
 
 class Address
 {
 public:
-	Address(const std::string &host = "", int service = 8080);
-	Address(const char *host = NULL, const char *service = "8080");
+	Address::Address(const std::string& host, const std::string& service, const struct addrinfo *raw_addr);
 	Address(const Address& other);
 	~Address();
 	Address& operator=(const Address& other);
@@ -38,7 +37,7 @@ public:
 	bool					isIPv6(void) const;
 
 	const std::string&		getHost(void) const;
-	const int				getService(void) const;
+	const std::string&		getService(void) const;
 	const struct sockaddr*	getSockAddr(void) const;
 	socklen_t				getAddrLen(void) const;
 	int						getFamily(void) const;
@@ -55,9 +54,9 @@ private:
 	int			flags;
 
 	std::string	host;
-	int			service;
+	std::string	service;
 
-	void		init_address(const char *host, const char *service);
+	void		init_address(const char *host, const char *service, int type = SOCK_STREAM);
 };
 
 std::ostream&	operator<<(std::ostream& os, const Address& addr);
