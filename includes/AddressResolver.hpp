@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 02:49:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 03:11:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:18:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 
 # include <vector>
 # include <stdexcept>
-# include <cstdint>
+# include <stdint.h>
 # include <cerrno>
 # include <sstream>
 

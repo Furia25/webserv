@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 02:55:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 03:13:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:21:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@ static std::vector<Address> init_address(const std::string& host, const std::str
 	node = res;
 	while (node)
 	{
-		addresses.emplace_back(host, service, node);
+		Address addr(host, service, node);
+		addresses.push_back(addr);
 		node = node->ai_next;
 	}
 	freeaddrinfo(res);

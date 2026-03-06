@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 18:46:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:20:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 # define _IREQUESTHANDLER_H
 
 # include <vector>
-# include <cstdint>
+# include <stdint.h>
 
 # include "Connection.hpp"
 

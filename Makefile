@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/02/05 15:31:10 by vdurand          ###   ########.fr        #
+#    Updated: 2026/03/06 03:21:44 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -58,7 +58,10 @@ INC_DIR = includes
 LIBS_DIR = libs
 
 # Source files
-SRC_FILES = main.cpp
+SRC_FILES = \
+	main.cpp \
+	AddressResolver.cpp \
+	Address.cpp
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:30:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 03:10:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 03:18:28 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,14 +20,14 @@
 # include <iostream>
 # include <sstream>
 
-using SocketAddr = struct sockaddr_storage;
+typedef struct sockaddr_storage	SocketAddr;
 
 # define MAX_PORT	UINT16_MAX
 
 class Address
 {
 public:
-	Address::Address(const std::string& host, const std::string& service, const struct addrinfo *raw_addr);
+	Address(const std::string& host, const std::string& service, const struct addrinfo *raw_addr);
 	Address(const Address& other);
 	~Address();
 	Address& operator=(const Address& other);
