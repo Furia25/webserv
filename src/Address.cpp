@@ -6,22 +6,25 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 03:10:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/06 18:23:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Address.hpp"
 
-Address::Address(const std::string& host, const std::string& service, const struct addrinfo *raw_addr)
+Address::Address()
 {
-	this->host = host;
-	this->service = service;
-	this->family = raw_addr->ai_family;
-	this->protocol = raw_addr->ai_protocol;
-	this->type = raw_addr->ai_socktype;
-	this->flags = raw_addr->ai_flags;
+	std::memset(&this->data, 0, sizeof(data));
+	addr_len = 0;
+}
+
+Address::Address(const std::string &host, const std::string &service, const struct addrinfo *raw_addr) :
+	family(raw_addr->ai_family), type(raw_addr->ai_socktype), protocol(raw_addr->ai_protocol),
+	flags(raw_addr->ai_flags), host(host), service(service)
+	
+{
 	std::memcpy(&this->data, raw_addr->ai_addr, raw_addr->ai_addrlen);
-	this->addr_len = raw_addr->ai_addrlen;
+	addr_len = raw_addr->ai_addrlen;
 }
 
 Address::Address(const Address &other)
@@ -36,8 +39,8 @@ Address &Address::operator=(const Address &other)
 	if (this == &other)
 		return (*this);
 	this->host = other.host;
-	this->addr_len = other.addr_len;
 	this->data = other.data;
+	this->addr_len = other.addr_len;
 	this->family = other.family;
 	this->flags = other.flags;
 	this->service = other.service;
@@ -74,7 +77,7 @@ const std::string &Address::getHost(void) const { return this->host; }
 
 const std::string& Address::getService(void)const { return this->service; }
 
-const sockaddr *Address::getSockAddr(void) const { return (sockaddr *)this->data; }
+const sockaddr *Address::getSockAddr(void) const { return reinterpret_cast<const struct sockaddr*>(&data);}
 
 socklen_t Address::getAddrLen(void) const { return this->addr_len; }
 

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 04:27:49 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/07 17:59:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,20 @@
 # include <netdb.h>
 # include <cstring>
 # include <stdexcept>
+# include <vector>
+# include <iostream>
+# include <cerrno>
+
+# include "Address.hpp"
+
+# define SOCKET_DEBUG	false
+# if SOCKET_DEBUG == true
+	# define SOCKET_DEBUG_ERROR	do {std::cerr << this->toString((int)errno) << "\n";} while (0)
+#else
+	# define SOCKET_DEBUG_ERROR	
+#endif
+
+# define ESOCK_INVALID	"Invalid socket, not opened."
 
 class Socket
 {
@@ -28,39 +42,58 @@ public:
 	Socket();
 	~Socket();
 
-	void	open(int type, int protocol, int domain);
-	void	open_dual(int type, int protocol);
+	void		open(int type, int domain, int protocol = 0);
+	void		open_dual(int type, int protocol = 0);
 
-	void	setReuseAddr(bool enable);
-	void	setNoDelay(bool enable);
-	void	setDualStack(bool enable);
+	void		bind(const Address& address);
+	void		bind(const std::vector<Address>&	addresses);
+
+	void		connect(const Address& address);
+	void		connect(const std::vector<Address>&	addresses);
+
+	ssize_t		receive(void *buffer, size_t length, int flags = 0);
+
+	void		setReuseAddr(bool enable);
+	void		setNoDelay(bool enable);
+	void		setDualStack(bool enable);
+
+	std::string	toString(int error = 0) const;
+
 	enum State { CLOSED, OPEN, BOUND, LISTENING, CONNECTED };
 
-	State	getState() const;
+	State			getState() const;
+	const Address&	getAddress() const;
 protected:
 private:
 	int			socket_fd;
+	Address		address;
 	State		state;
 
+	const char* stateToString() const;
 	template <typename T>
 	void	setOption(int level, int option, const T& value);
 };
+
+std::ostream&	operator<<(std::ostream& os, const Socket& socket);
 
 class SocketException : public std::runtime_error
 {
 public:
 	SocketException(const std::string& msg, int code = 0)
 		: std::runtime_error(msg), error_code(code) {}
+	SocketException(const std::string& type, const std::string& msg, int code = 0)
+		: std::runtime_error(type + ": " + msg), error_code(code) {}
 	int getErrorCode() const { return error_code; }
 private:
 	int error_code;
 };
 
-#endif // _SOCKET_H
-
 template <typename T>
 inline void Socket::setOption(int level, int option, const T& value)
 {
-	if (setsockopt(socket_fd, level, option, &value, sizeof(value)) < 0)
+	if (setsockopt(socket_fd, level, option, &value, sizeof(value)) == -1)
 		throw SocketException("Couldn't configure socket option");
 }
+
+#endif // _SOCKET_H
+

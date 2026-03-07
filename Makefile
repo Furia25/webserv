@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/03/06 03:21:44 by vdurand          ###   ########.fr        #
+#    Updated: 2026/03/06 16:14:26 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -61,7 +61,8 @@ LIBS_DIR = libs
 SRC_FILES = \
 	main.cpp \
 	AddressResolver.cpp \
-	Address.cpp
+	Address.cpp \
+	Socket.cpp \
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 OBJ = $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
