@@ -6,11 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 18:23:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/08 16:00:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Address.hpp"
+
+static std::pair<std::string, std::string> get_hostname_info(const sockaddr *addr, socklen_t addr_len, bool numeric);
 
 Address::Address()
 {
@@ -19,12 +21,23 @@ Address::Address()
 }
 
 Address::Address(const std::string &host, const std::string &service, const struct addrinfo *raw_addr) :
-	family(raw_addr->ai_family), type(raw_addr->ai_socktype), protocol(raw_addr->ai_protocol),
+	domain(raw_addr->ai_family), type(raw_addr->ai_socktype), protocol(raw_addr->ai_protocol),
 	flags(raw_addr->ai_flags), host(host), service(service)
 	
 {
 	std::memcpy(&this->data, raw_addr->ai_addr, raw_addr->ai_addrlen);
 	addr_len = raw_addr->ai_addrlen;
+	if (host == "" || service == "")
+	{
+		std::pair<std::string, std::string> info = get_hostname_info(
+			raw_addr->ai_addr,
+			raw_addr->ai_addrlen,
+			NUMERICAL_HOSTNAME_RESOLUTION);
+		if (host == "")
+			this->host = info.first;
+		if (service == "")
+			this->service = info.second;
+	}
 }
 
 Address::Address(const Address &other)
@@ -41,7 +54,7 @@ Address &Address::operator=(const Address &other)
 	this->host = other.host;
 	this->data = other.data;
 	this->addr_len = other.addr_len;
-	this->family = other.family;
+	this->domain = other.domain;
 	this->flags = other.flags;
 	this->service = other.service;
 	this->type = other.type;
@@ -49,39 +62,51 @@ Address &Address::operator=(const Address &other)
 	return (*this);
 }
 
-std::string Address::toString(bool host, bool service) const
+static std::pair<std::string, std::string> get_hostname_info(const sockaddr *addr, socklen_t addr_len, bool numeric)
 {
-	char	hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+	char	host[NI_MAXHOST];
+	char	service[NI_MAXSERV];
 
-	int result = getnameinfo(
-		(struct sockaddr*)&this->data, this->addr_len,
-		hbuf, host ? sizeof(hbuf) : 0,
-		sbuf, service ? sizeof(sbuf) : 0,
-		NI_NUMERICHOST | NI_NUMERICSERV
+	int result = ::getnameinfo(
+		addr, addr_len,
+		host, sizeof(host),
+		service, sizeof(service),
+		numeric ? NI_NUMERICHOST | NI_NUMERICSERV : 0
 	);
 	if (result != 0)
-		return std::string("Unknown");
+		return std::make_pair("Unknown", "Unknown");
+	return std::make_pair(std::string(host), std::string(service));
+}
+
+std::string Address::toString(bool host, bool service) const
+{
 	std::stringstream	ss;
-	if (host) ss << hbuf;
+	if (host) ss << this->host;
 	if (host && service) ss << ':';
-	if (service) ss << sbuf;
+	if (service) ss << this->service;
 	return ss.str();
 }
 
 bool Address::isIPv6(void) const
 {
-	return this->family == AF_INET6;
+	return this->domain == AF_INET6;
 }
 
-const std::string &Address::getHost(void) const { return this->host; }
+const std::string &Address::getHost(void) const
+{
+	return this->host;
+}
 
-const std::string& Address::getService(void)const { return this->service; }
+const std::string& Address::getService(void) const
+{
+	return this->service;
+}
 
 const sockaddr *Address::getSockAddr(void) const { return reinterpret_cast<const struct sockaddr*>(&data);}
 
 socklen_t Address::getAddrLen(void) const { return this->addr_len; }
 
-int Address::getFamily(void) const { return this->family; }
+int Address::getDomain(void) const { return this->domain; }
 
 int Address::getType(void) const { return this->type; }
 

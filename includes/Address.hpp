@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:30:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 17:44:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/08 15:59:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 # include <sstream>
 
 # define MAX_PORT	UINT16_MAX
+
+# define NUMERICAL_HOSTNAME_RESOLUTION	true
 
 class Address
 {
@@ -39,21 +41,23 @@ public:
 	const std::string&		getService(void) const;
 	const struct sockaddr*	getSockAddr(void) const;
 	socklen_t				getAddrLen(void) const;
-	int						getFamily(void) const;
+	int						getDomain(void) const;
 	int						getType(void) const;
 	int						getProtocol(void) const;
 	int						getFlags(void) const;
+
 protected:
 private:
 	sockaddr_storage	data;
 	socklen_t			addr_len;
-	int					family;
+	int					domain;
 	int					type;
 	int					protocol;
 	int					flags;
 
 	std::string			host;
 	std::string			service;
+
 };
 
 std::ostream&	operator<<(std::ostream& os, const Address& addr);

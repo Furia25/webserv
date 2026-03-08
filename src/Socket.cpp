@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/07 17:32:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/08 16:04:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,12 @@ void Socket::open(int type, int domain, int protocol)
 		throw SocketException("Socket already opened");
 	int	temp_fd = socket(domain, type, protocol);
 	if (temp_fd == -1)
-		throw SocketException(strerror(errno));
+		throw SocketException("Open", strerror(errno));
 	this->socket_fd = temp_fd;
 	this->state = OPEN;
+	this->type = type;
+	this->domain = domain;
+	this->protocol = protocol;
 	this->setReuseAddr(true);
 }
 
@@ -100,6 +103,45 @@ void Socket::connect(const std::vector<Address>& addresses)
 	if (it == addresses.end())
 		throw SocketException("Connect", strerror(errno));
 	this->state = CONNECTED;
+}
+
+void Socket::accept(Socket& client)
+{
+	if (client.state != LISTENING)
+		throw SocketException("Accept", ESOCK_INVALID);
+	sockaddr_storage	addr_storage;
+	sockaddr			*addr_ptr = reinterpret_cast<struct sockaddr *>(&addr_storage);
+	socklen_t			temp_len = sizeof(sockaddr_storage);
+	int temp_fd = ::accept(this->socket_fd, addr_ptr, &temp_len);
+	if (temp_fd == -1)
+		throw SocketException("Accept", strerror(errno));
+	addrinfo addr_info;
+	addr_info.ai_family = temp_len == 16 ? AF_INET : AF_INET6;
+	addr_info.ai_addr = addr_ptr;
+	addr_info.ai_addrlen = temp_len;
+	addr_info.ai_protocol = this->protocol;
+	addr_info.ai_socktype = this->type;
+	client.address = Address("", "", &addr_info);
+	client.type = this->type;
+	client.protocol = this->protocol;
+	client.state = CONNECTED;
+	client.domain = addr_info.ai_family;
+}
+
+ssize_t Socket::receive(void *buffer, size_t size, int flags)
+{
+	ssize_t readed = ::recv(this->socket_fd, buffer, size, flags);
+	if (readed == -1)
+		throw SocketException("Receive", strerror(errno));
+	return readed;
+}
+
+ssize_t Socket::send(void *buffer, size_t size, int flags)
+{
+	ssize_t sended = ::send(this->socket_fd, buffer, size, flags);
+	if (sended == -1)
+		throw SocketException("Send", strerror(errno));
+	return sended;
 }
 
 void Socket::setDualStack(bool enable)

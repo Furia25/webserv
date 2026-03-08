@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/07 17:59:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/08 15:33:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,10 @@ public:
 	void		connect(const Address& address);
 	void		connect(const std::vector<Address>&	addresses);
 
-	ssize_t		receive(void *buffer, size_t length, int flags = 0);
+	void		accept(Socket& client);
+
+	ssize_t		receive(void *buffer, size_t size, int flags = 0);
+	ssize_t		send(void *buffer, size_t size, int flags = MSG_NOSIGNAL);
 
 	void		setReuseAddr(bool enable);
 	void		setNoDelay(bool enable);
@@ -65,11 +68,17 @@ public:
 	const Address&	getAddress() const;
 protected:
 private:
+	int			domain;
 	int			socket_fd;
+	int			type;
+	int			protocol;
 	Address		address;
 	State		state;
 
+	Socket(const Socket& other);
+	Socket&		operator=(const Socket& other);
 	const char* stateToString() const;
+
 	template <typename T>
 	void	setOption(int level, int option, const T& value);
 };
@@ -89,7 +98,7 @@ private:
 };
 
 template <typename T>
-inline void Socket::setOption(int level, int option, const T& value)
+inline void Socket::setOption(int level, int option, const T &value)
 {
 	if (setsockopt(socket_fd, level, option, &value, sizeof(value)) == -1)
 		throw SocketException("Couldn't configure socket option");
