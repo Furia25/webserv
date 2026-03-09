@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/08 15:33:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/09 18:33:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,10 +51,10 @@ public:
 	void		connect(const Address& address);
 	void		connect(const std::vector<Address>&	addresses);
 
-	void		accept(Socket& client);
+	void		accept(Socket& server);
 
 	ssize_t		receive(void *buffer, size_t size, int flags = 0);
-	ssize_t		send(void *buffer, size_t size, int flags = MSG_NOSIGNAL);
+	ssize_t		send(const void *buffer, size_t size, int flags = MSG_NOSIGNAL);
 
 	void		setReuseAddr(bool enable);
 	void		setNoDelay(bool enable);

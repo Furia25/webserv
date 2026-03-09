@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/08 16:04:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/09 19:28:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,43 +105,37 @@ void Socket::connect(const std::vector<Address>& addresses)
 	this->state = CONNECTED;
 }
 
-void Socket::accept(Socket& client)
+void Socket::accept(Socket& server)
 {
-	if (client.state != LISTENING)
+	if (server.state != LISTENING)
 		throw SocketException("Accept", ESOCK_INVALID);
 	sockaddr_storage	addr_storage;
 	sockaddr			*addr_ptr = reinterpret_cast<struct sockaddr *>(&addr_storage);
 	socklen_t			temp_len = sizeof(sockaddr_storage);
-	int temp_fd = ::accept(this->socket_fd, addr_ptr, &temp_len);
+	int temp_fd = ::accept(server.socket_fd, addr_ptr, &temp_len);
 	if (temp_fd == -1)
 		throw SocketException("Accept", strerror(errno));
 	addrinfo addr_info;
 	addr_info.ai_family = temp_len == 16 ? AF_INET : AF_INET6;
 	addr_info.ai_addr = addr_ptr;
 	addr_info.ai_addrlen = temp_len;
-	addr_info.ai_protocol = this->protocol;
-	addr_info.ai_socktype = this->type;
-	client.address = Address("", "", &addr_info);
-	client.type = this->type;
-	client.protocol = this->protocol;
-	client.state = CONNECTED;
-	client.domain = addr_info.ai_family;
+	addr_info.ai_protocol = server.protocol;
+	addr_info.ai_socktype = server.type;
+	this->address = Address("", "", &addr_info);
+	this->type = server.type;
+	this->protocol = server.protocol;
+	this->state = CONNECTED;
+	this->domain = addr_info.ai_family;
 }
 
 ssize_t Socket::receive(void *buffer, size_t size, int flags)
 {
-	ssize_t readed = ::recv(this->socket_fd, buffer, size, flags);
-	if (readed == -1)
-		throw SocketException("Receive", strerror(errno));
-	return readed;
+	return ::recv(this->socket_fd, buffer, size, flags);
 }
 
-ssize_t Socket::send(void *buffer, size_t size, int flags)
+ssize_t Socket::send(const void *buffer, size_t size, int flags)
 {
-	ssize_t sended = ::send(this->socket_fd, buffer, size, flags);
-	if (sended == -1)
-		throw SocketException("Send", strerror(errno));
-	return sended;
+	return ::send(this->socket_fd, buffer, size, flags);
 }
 
 void Socket::setDualStack(bool enable)

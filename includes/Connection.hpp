@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/08 16:15:51 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/09 19:47:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,20 +15,49 @@
 
 # include <vector>
 # include <stddef.h>
+# include <cstring>
 
 # include "Socket.hpp"
+
+# define READ_SIZE	4096
+# define READ_LIMIT	16384
+
+# define READ_BUFFER_DEFAULT_SIZE	4096
+# define WRITE_BUFFER_DEFAULT_SIZE	2096
 
 class Connection
 {
 public:
-	Connection();
+
+	enum State
+	{
+		CONNECTED,
+		CLOSING,
+		DELETABLE
+	};
+
+	Connection(Socket& server_socket);
 	~Connection();
 
-	
+	void			handleRead(void);
+	void			handleWrite(void);
+
+	void			sendData(const uint8_t *data, size_t len);
+	void			sendData(const std::string& data);
+
+	void			consumeReadData(size_t n);
+	const uint8_t	*getReadBufferPtr() const;
+	size_t			getReadBufferSize() const;
+
+	void			clearReadBuffer();
+	void			clearWriteBuffer();
+	void			compactReadBuffer();
+	void			compactWriteBuffer();
 
 	size_t			getClientID(void)	const;
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;
+	State			getState(void) const;
 
 	friend bool		operator==(const Connection& lhs, const Connection& rhs);
 protected:
@@ -43,6 +72,7 @@ private:
 	size_t					bytes_received;
 
 	static size_t			last_id;
+	State					state;
 
 	Connection(const Connection& other);
 	Connection&		operator=(const Connection& other);
