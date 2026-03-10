@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:00:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 18:43:49 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ public:
 
 	State			getState() const;
 	const Address&	getAddress() const;
+	int				getFd() const;
 protected:
 private:
 	int			domain;

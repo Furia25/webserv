@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:00:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 18:47:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Socket.hpp"
+#include "Server/Socket.hpp"
 
 Socket::Socket() : socket_fd(-1), state(CLOSED) {}
 
@@ -219,5 +219,10 @@ const Address &Socket::getAddress() const { return this->address; }
 std::ostream &operator<<(std::ostream &os, const Socket &socket)
 {
 	os << socket.toString();
-	return (os);
+	return os;
+}
+
+int Socket::getFd() const
+{
+	return this->socket_fd;
 }

@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 02:55:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 18:33:43 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:13:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "AddressResolver.hpp"
+#include "Server/AddressResolver.hpp"
 
 static std::vector<Address> init_address(const std::string& host, const std::string& service, int type)
 {

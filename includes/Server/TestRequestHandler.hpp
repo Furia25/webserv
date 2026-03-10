@@ -1,31 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   IRequestHandler.hpp                                :+:      :+:    :+:   */
+/*   TestRequestHandler.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:02:44 by vdurand          ###   ########.fr       */
+/*   Created: 2026/03/10 17:08:53 by vdurand           #+#    #+#             */
+/*   Updated: 2026/03/10 17:09:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-#ifndef _IREQUESTHANDLER_H
-# define _IREQUESTHANDLER_H
+#ifndef _TESTREQUESTHANDLER_H
+# define _TESTREQUESTHANDLER_H
 
-# include <vector>
-# include <stdint.h>
+#include "IRequestHandler.hpp"
 
-# include "Connection.hpp"
-
-class IRequestHandler
+class TestRequestHandler : public IRequestHandler
 {
 public:
-	virtual void	onData(Connection& connection) = 0;
-	virtual void	onConnection(Connection& connection) = 0;
-	virtual void	onDisconnection(Connection& connection) = 0;
-	virtual void	onError(Connection& Connection) = 0;
+	TestRequestHandler();
+	~TestRequestHandler();
+protected:
+private:
 };
 
-#endif // _IREQUESTHANDLER_H
+#endif // _TESTREQUESTHANDLER_H

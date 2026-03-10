@@ -1,23 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   IEpollHandler.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:27:50 by vdurand          ###   ########.fr       */
+/*   Created: 2026/03/10 19:01:25 by vdurand           #+#    #+#             */
+/*   Updated: 2026/03/10 19:02:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "MIME.hpp"
-#include <iostream>
-#include <vector>
-#include "Server/Address.hpp"
-#include "Server/AddressResolver.hpp"
-#include "Server/TCPServer.hpp"
 
-int main()
+#ifndef _IEPOLLHANDLER_H
+# define _IEPOLLHANDLER_H
+
+# include "TCPServer.hpp"
+# include "Socket.hpp"
+
+class IEpollHandler
 {
-	TCPServer	server;
-}
+public:
+	virtual void			handleEvent(TCPServer &server, uint32_t events) = 0;
+	virtual Socket&			getSocket(void) = 0;
+	virtual const Socket&	getSocket(void) const = 0;
+protected:
+private:
+};
+
+#endif // _IEPOLLHANDLER_H

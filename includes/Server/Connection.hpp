@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/09 19:47:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 19:03:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <cstring>
 
 # include "Socket.hpp"
+# include "IEpollHandler.hpp"
 
 # define READ_SIZE	4096
 # define READ_LIMIT	16384
@@ -25,7 +26,7 @@
 # define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
 
-class Connection
+class Connection : public IEpollHandler
 {
 public:
 

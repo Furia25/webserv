@@ -1,23 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   TestRequestHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:27:50 by vdurand          ###   ########.fr       */
+/*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
+/*   Updated: 2026/03/10 17:13:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "MIME.hpp"
-#include <iostream>
-#include <vector>
-#include "Server/Address.hpp"
-#include "Server/AddressResolver.hpp"
-#include "Server/TCPServer.hpp"
+#include "Server/TestRequestHandler.hpp"
 
-int main()
+TestRequestHandler::TestRequestHandler()
 {
-	TCPServer	server;
+}
+
+TestRequestHandler::~TestRequestHandler()
+{
 }

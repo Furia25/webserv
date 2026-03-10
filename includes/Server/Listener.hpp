@@ -1,23 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Listener.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:27:50 by vdurand          ###   ########.fr       */
+/*   Created: 2026/03/10 19:03:15 by vdurand           #+#    #+#             */
+/*   Updated: 2026/03/10 19:07:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "MIME.hpp"
-#include <iostream>
-#include <vector>
-#include "Server/Address.hpp"
-#include "Server/AddressResolver.hpp"
-#include "Server/TCPServer.hpp"
 
-int main()
+#ifndef _LISTENER_H
+# define _LISTENER_H
+
+# include "Socket.hpp"
+# include "IEpollHandler.hpp"
+
+class Listener : public IEpollHandler
 {
-	TCPServer	server;
-}
+public:
+	Listener(const char *host, const char *service);
+	~Listener();
+
+	void			handleEvent(TCPServer &server, uint32_t events);
+
+	Socket&			getSocket(void);
+	const Socket&	getSocket(void) const;
+protected:
+private:
+	Socket			socket;
+};
+
+#endif // _LISTENER_H
