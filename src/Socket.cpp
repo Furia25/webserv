@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/09 19:28:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:00:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,16 @@ void Socket::connect(const std::vector<Address>& addresses)
 	this->state = CONNECTED;
 }
 
+void Socket::listen(unsigned int backlog)
+{
+	if (this->state != BOUND)
+		throw SocketException("Listen", ESOCK_INVALID);
+	errno = 0;
+	if (::listen(this->socket_fd, backlog) == -1)
+		throw SocketException("Listen", strerror(errno));
+	this->state = LISTENING;
+}
+
 void Socket::accept(Socket& server)
 {
 	if (server.state != LISTENING)
@@ -142,6 +152,22 @@ void Socket::setDualStack(bool enable)
 {
 	int val = enable ? 0 : 1;
 	this->setOption(IPPROTO_IPV6, IPV6_V6ONLY, val);
+}
+
+void Socket::setIOBlocking(bool blocking)
+{
+	int flags = this->fcntl(F_GETFL, 0);
+	flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
+	if (this->fcntl(F_SETFL, flags) != 0)
+		throw SocketException("fctnl", strerror(errno));
+}
+
+int Socket::fcntl(int command, long arg)
+{
+	int result = ::fcntl(this->socket_fd, command, arg);
+	if (result == -1)
+		throw SocketException("fctnl", strerror(errno));
+	return result;
 }
 
 const char* Socket::stateToString() const

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/09 18:33:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 17:00:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 # include <vector>
 # include <iostream>
 # include <cerrno>
+# include <fcntl.h>
 
 # include "Address.hpp"
 
@@ -51,6 +52,8 @@ public:
 	void		connect(const Address& address);
 	void		connect(const std::vector<Address>&	addresses);
 
+	void		listen(unsigned int backlog);
+
 	void		accept(Socket& server);
 
 	ssize_t		receive(void *buffer, size_t size, int flags = 0);
@@ -59,6 +62,9 @@ public:
 	void		setReuseAddr(bool enable);
 	void		setNoDelay(bool enable);
 	void		setDualStack(bool enable);
+	void		setIOBlocking(bool blocking);
+
+	int			fcntl(int command, long arg);
 
 	std::string	toString(int error = 0) const;
 
