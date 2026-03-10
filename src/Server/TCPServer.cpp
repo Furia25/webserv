@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 19:15:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/10 19:20:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,17 +35,8 @@ void TCPServer::run(void)
 		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, EPOLL_TIMEOUT);
 		for (int i = 0; i < n; i++)
 		{
-			const Socket *socket = static_cast<Socket *>(events[i].data.ptr);
-			if (this->connections.find(socket->getFd()) == this->connections.end())
-			{
-				//Listeners
-				
-			}
-			else
-			{
-				//Connections
-				
-			}
+			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
+			event_handler->handleEvent(*this, events[i].events);
 		}
 	}
 }
