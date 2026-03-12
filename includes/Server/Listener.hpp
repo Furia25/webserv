@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:03:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 19:07:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 16:09:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,14 +16,15 @@
 
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
+# include "AddressResolver.hpp"
 
 class Listener : public IEpollHandler
 {
 public:
 	Listener(const char *host, const char *service);
-	~Listener();
+	virtual ~Listener();
 
-	void			handleEvent(TCPServer &server, uint32_t events);
+	void			handleEvent(TCPServer& server, uint32_t events);
 
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;

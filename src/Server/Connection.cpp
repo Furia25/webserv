@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:13:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 16:03:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,13 @@ Connection::Connection(Socket& server_socket) : bytes_sended(0), bytes_received(
 
 Connection::~Connection() {}
 
-void Connection::handleRead(void)
+void Connection::handleEvent(TCPServer &server, uint32_t events)
+{
+	(void) server;
+	(void) events;
+}
+
+void Connection::handleRead(void) 
 {
 	if (this->read_buffer.size() > READ_LIMIT)
 	{

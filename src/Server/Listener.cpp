@@ -6,11 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 19:14:21 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 17:53:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Listener.hpp"
+#include "Server/Listener.hpp"
+#include "Server/Connection.hpp"
+#include "Server/TCPServer.hpp"
 
 Listener::Listener(const char *host, const char *service)
 {
@@ -22,8 +24,27 @@ Listener::Listener(const char *host, const char *service)
 
 Listener::~Listener() {}
 
-void Listener::handleEvent(TCPServer &server, uint32_t events)
+void Listener::handleEvent(TCPServer& server, uint32_t events)
 {
+	/*if (events & EPOLLERR || events & EPOLLHUP)
+	{	
+		server.recoverListener(*this);
+		return ;
+	}*/
+	if (events & EPOLLIN)
+	{
+		while (true)
+		{
+			Connection *client_connection = NULL;
+			try {
+				client_connection = new Connection(this->getSocket());
+			}
+			catch (const SocketException& e) {delete client_connection; break;}
+			catch (const std::exception& e) {delete client_connection; throw;}
+			server.registerConnection(client_connection);
+		}
+
+	}
 }
 
 Socket &Listener::getSocket(void)

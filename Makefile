@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/03/10 17:11:46 by vdurand          ###   ########.fr        #
+#    Updated: 2026/03/12 18:30:21 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -62,9 +62,11 @@ SRC_FILES = \
 	Server/Address.cpp \
 	Server/AddressResolver.cpp \
 	Server/Connection.cpp \
+	Server/Listener.cpp \
 	Server/Socket.cpp \
 	Server/TCPServer.cpp \
 	Server/TestRequestHandler.cpp \
+	Logger.cpp \
 	main.cpp
 
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
@@ -79,7 +81,7 @@ LIBS_INCLUDE_DIRS :=
 
 # Compiler & flags
 CXX = c++
-CXXFLAGS = -O3 -Wall -Werror -Wextra -std=c++98
+CXXFLAGS = -g3 -Wall -Werror -Wextra -std=c++98
 
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I,$(LIBS_DIRS)) $(addprefix -I,$(LIBS_INCLUDE_DIRS))
 LDFLAGS =

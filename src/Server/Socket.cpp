@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 18:47:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 16:33:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,25 +115,26 @@ void Socket::listen(unsigned int backlog)
 	this->state = LISTENING;
 }
 
-void Socket::accept(Socket& server)
+void Socket::accept(Socket& listener_socket)
 {
-	if (server.state != LISTENING)
+	if (listener_socket.state != LISTENING)
 		throw SocketException("Accept", ESOCK_INVALID);
 	sockaddr_storage	addr_storage;
 	sockaddr			*addr_ptr = reinterpret_cast<struct sockaddr *>(&addr_storage);
 	socklen_t			temp_len = sizeof(sockaddr_storage);
-	int temp_fd = ::accept(server.socket_fd, addr_ptr, &temp_len);
+	int temp_fd = ::accept(listener_socket.socket_fd, addr_ptr, &temp_len);
 	if (temp_fd == -1)
 		throw SocketException("Accept", strerror(errno));
 	addrinfo addr_info;
 	addr_info.ai_family = temp_len == 16 ? AF_INET : AF_INET6;
 	addr_info.ai_addr = addr_ptr;
 	addr_info.ai_addrlen = temp_len;
-	addr_info.ai_protocol = server.protocol;
-	addr_info.ai_socktype = server.type;
+	addr_info.ai_protocol = listener_socket.protocol;
+	addr_info.ai_socktype = listener_socket.type;
+	this->socket_fd = temp_fd;
 	this->address = Address("", "", &addr_info);
-	this->type = server.type;
-	this->protocol = server.protocol;
+	this->type = listener_socket.type;
+	this->protocol = listener_socket.protocol;
 	this->state = CONNECTED;
 	this->domain = addr_info.ai_family;
 }

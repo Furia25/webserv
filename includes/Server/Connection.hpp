@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 19:03:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 16:09:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,14 +32,16 @@ public:
 
 	enum State
 	{
+		ERRORED,
 		CONNECTED,
 		CLOSING,
 		DELETABLE
 	};
 
 	Connection(Socket& server_socket);
-	~Connection();
+	virtual ~Connection();
 
+	void			handleEvent(TCPServer &server, uint32_t events);
 	void			handleRead(void);
 	void			handleWrite(void);
 

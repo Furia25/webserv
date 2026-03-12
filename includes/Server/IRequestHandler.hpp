@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 18:39:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/12 16:04:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include <vector>
 # include <stdint.h>
 
-# include "Server/Connection.hpp"
+# include "Connection.hpp"
 
 class IRequestHandler
 {
