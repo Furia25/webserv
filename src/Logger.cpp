@@ -6,16 +6,18 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 18:09:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:32:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:38:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Logger.hpp"
 
-std::ostream		*Logger::current_stream = &std::cout;
-std::ofstream		Logger::file_stream;
-LogLevel			Logger::min_level = LogLevel::INFO;
-time_t				Logger::heartbeat_interval = 5;
+std::ostream				*Logger::current_stream = &std::cout;
+std::ofstream				Logger::file_stream;
+LogLevel					Logger::min_level = LogLevel::INFO;
+time_t						Logger::tick_interval = 5;
+Logger::TickCallback		Logger::callback = NULL;
+void						*Logger::callback_context = NULL;
 
 LogMessage::LogMessage(LogLevel level) : level(level) {}
 
@@ -90,18 +92,25 @@ LogLevel Logger::getGlobalLevel()
 	return Logger::min_level;
 }
 
-void Logger::setHeartbeatInterval(time_t interval)
+void Logger::setTickInterval(time_t interval)
 {
-	Logger::heartbeat_interval = interval;
+	Logger::tick_interval = interval;
 }
 
-void Logger::heartbeat()
+void Logger::setTickCallback(TickCallback callback, void *context)
+{
+	Logger::callback = callback;
+	Logger::callback_context = context;
+}
+
+void Logger::tick()
 {
 	static time_t last_beat = 0;
 	time_t timestamp = std::time(NULL);
-	if (timestamp - last_beat >= Logger::heartbeat_interval)
+	if (timestamp - last_beat >= Logger::tick_interval)
 	{
-		Logger::DEBUG() << "Heartbeat: Server is running...";
+		if (Logger::callback)
+			Logger::callback(Logger::callback_context);
 		last_beat = timestamp;
 	}
 }

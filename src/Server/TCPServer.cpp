@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:41:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:42:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,6 @@ TCPServer::~TCPServer()
 	close(this->epoll_fd);
 }
 
-# include <cstdlib>
-
 void TCPServer::run(void)
 {
 	std::signal(SIGINT, signal_handler);
@@ -49,7 +47,7 @@ void TCPServer::run(void)
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
-		Logger::heartbeat();
+		Logger::tick();
 	}
 }
 
@@ -136,4 +134,18 @@ void TCPServer::clearConnections()
 void TCPServer::bindHandler(IRequestHandler &handler)
 {
 	this->handler = &handler;
+}
+
+void TCPServer::tickCallback(void *instance)
+{
+	TCPServer *server = static_cast<TCPServer *>(instance);
+	Logger::DEBUG() << "Heartbeat: Server is running...";
+	LogMessage debug = Logger::DEBUG();
+	debug << "Connections: ";
+	for (std::vector<Connection *>::const_iterator it = server->connections.begin(); it != server->connections.end(); it++)
+	{
+		debug << (*(*it));
+		if (it != server->connections.end())
+			debug << ", ";
+	}
 }

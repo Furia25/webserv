@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:47:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:39:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,8 @@ int main()
 	TCPServer	server;
 
 	Logger::setDefaultStream(std::cout);
-	Logger::setHeartbeatInterval(5);
+	Logger::setTickInterval(5);
+	Logger::setTickCallback(&TCPServer::tickCallback, &server);
 	server.openListener("localhost", "8080");
 	try {
 		server.run();

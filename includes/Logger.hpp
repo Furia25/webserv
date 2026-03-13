@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:27:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:28:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:35:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 # include <iomanip>
 # include <unistd.h>
 
+# include "Debugging.hpp"
 # include "ansi_sequence.hpp"
 
 # define LOG_TYPE	(INFO, WARNING, ERROR, FATAL, DEBUG)
@@ -48,22 +49,28 @@ private:
 class Logger
 {
 public:
+	typedef void (*TickCallback)(void*);
+
 	static void					setDefaultStream(std::ostream& stream);
 	static void					setLogFile(const std::string& filename);
 	static std::ostream&		getStream();
 	static void					setGlobalLevel(LogLevel level);
 	static LogLevel				getGlobalLevel();
-	static void					heartbeat();
-	static void					setHeartbeatInterval(time_t interval);
+	static void					tick();
+	static void					setTickInterval(time_t interval);
+	static void					setTickCallback(TickCallback callback, void *context);
 
 	# define X(e, ...) static LogMessage	e() {return LogMessage(LogLevel::e);}
 	M_TUPLE_FOREACH(LOG_TYPE, X)
 	# undef X
 protected:
-	static LogLevel				min_level;
-	static std::ostream			*current_stream;
-	static std::ofstream		file_stream;
-	static time_t				heartbeat_interval;
+private:
+	static LogLevel			min_level;
+	static std::ostream		*current_stream;
+	static std::ofstream	file_stream;
+	static time_t			tick_interval;
+	static TickCallback		callback;
+	static void				*callback_context;
 };
 
 template <typename T>

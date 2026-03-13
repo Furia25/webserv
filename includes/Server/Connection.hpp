@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:52:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:16:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,7 @@ public:
 	State			getState(void) const;
 	const Address&	getAddress(void) const;
 
-	friend bool		operator==(const Connection& lhs, const Connection& rhs);
+	friend bool				operator==(const Connection& lhs, const Connection& rhs);
 protected:
 private:
 	Socket					client_socket;
@@ -83,5 +83,11 @@ private:
 };
 
 bool	operator==(const Connection& lhs, const Connection& rhs);
+
+inline std::ostream&	operator<<(std::ostream& os, const Connection& connection)
+{
+	os << connection.getClientID() << ":" << '\"' << connection.getSocket().getAddress() << "\"";
+	return os;
+}
 
 #endif // _CONNECTION_H

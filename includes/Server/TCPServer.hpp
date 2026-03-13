@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 19:05:07 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 17:39:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,8 @@ public:
 	void	removePollEvent(IEpollHandler& event_handler);
 	
 	void	bindHandler(IRequestHandler& handler);
+
+	static void	tickCallback(void *instance);
 
 protected:
 	void	clearListeners();
