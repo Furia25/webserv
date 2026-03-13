@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 18:09:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:29:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:32:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,7 +101,7 @@ void Logger::heartbeat()
 	time_t timestamp = std::time(NULL);
 	if (timestamp - last_beat >= Logger::heartbeat_interval)
 	{
-		Logger::DEBUG() << "Heartbeat: Server is running";
+		Logger::DEBUG() << "Heartbeat: Server is running...";
 		last_beat = timestamp;
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 16:33:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:46:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,6 +165,8 @@ void Socket::setIOBlocking(bool blocking)
 
 int Socket::fcntl(int command, long arg)
 {
+	if (this->state == CLOSED)
+		throw SocketException("Socket operations", ESOCK_INVALID);
 	int result = ::fcntl(this->socket_fd, command, arg);
 	if (result == -1)
 		throw SocketException("fctnl", strerror(errno));

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 18:43:49 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:46:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,6 +107,8 @@ private:
 template <typename T>
 inline void Socket::setOption(int level, int option, const T &value)
 {
+	if (this->state == CLOSED)
+		throw SocketException("Socket operations", ESOCK_INVALID);
 	if (setsockopt(socket_fd, level, option, &value, sizeof(value)) == -1)
 		throw SocketException("Couldn't configure socket option");
 }

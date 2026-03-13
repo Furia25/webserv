@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:03:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 16:09:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:52:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ public:
 
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;
+	const Address&	getAddress(void) const;
 protected:
 private:
 	Socket			socket;

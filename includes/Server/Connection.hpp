@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 16:09:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:52:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ public:
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;
 	State			getState(void) const;
+	const Address&	getAddress(void) const;
 
 	friend bool		operator==(const Connection& lhs, const Connection& rhs);
 protected:

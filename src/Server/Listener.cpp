@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 17:53:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:53:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ Listener::Listener(const char *host, const char *service)
 	std::vector<Address>	addresses = AddressResolver::resolve(host, service);
 	socket.open(SOCK_STREAM, AF_INET);
 	socket.bind(addresses);
+	socket.setIOBlocking(false);
 	socket.listen(MAX_PENDING_CONNECTION);
 }
 
@@ -26,11 +27,11 @@ Listener::~Listener() {}
 
 void Listener::handleEvent(TCPServer& server, uint32_t events)
 {
-	/*if (events & EPOLLERR || events & EPOLLHUP)
+	if (events & EPOLLERR || events & EPOLLHUP)
 	{	
 		server.recoverListener(*this);
 		return ;
-	}*/
+	}
 	if (events & EPOLLIN)
 	{
 		while (true)
@@ -39,11 +40,11 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 			try {
 				client_connection = new Connection(this->getSocket());
 			}
-			catch (const SocketException& e) {delete client_connection; break;}
-			catch (const std::exception& e) {delete client_connection; throw;}
+			catch (const SocketException& e) {break;}
+			catch (const std::exception& e) {throw;}
 			server.registerConnection(client_connection);
+			Logger::INFO() << "Connection established: Listener " << this->getSocket().getAddress() << " -> " << client_connection->getSocket().getAddress();
 		}
-
 	}
 }
 
@@ -55,4 +56,9 @@ Socket &Listener::getSocket(void)
 const Socket &Listener::getSocket(void) const
 {
 	return this->socket;
+}
+
+const Address &Listener::getAddress(void) const
+{
+	return this->socket.getAddress();
 }

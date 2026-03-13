@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 16:03:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:53:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,6 +133,11 @@ const Socket &Connection::getSocket(void) const
 Connection::State Connection::getState(void) const
 {
 	return this->state;
+}
+
+const Address &Connection::getAddress(void) const
+{
+	return this->client_socket.getAddress();
 }
 
 bool operator==(const Connection &lhs, const Connection &rhs)
