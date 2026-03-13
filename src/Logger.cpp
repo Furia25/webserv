@@ -6,52 +6,102 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 18:09:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 19:09:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:29:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Logger.hpp"
 
-std::ostream		*LogConfig::current_stream = &std::cout;
-std::ofstream		LogConfig::fileStream;
-std::ostringstream	Logger::buffer;
-LogLevel			Logger::level = LogLevel::INFO;
+std::ostream		*Logger::current_stream = &std::cout;
+std::ofstream		Logger::file_stream;
+LogLevel			Logger::min_level = LogLevel::INFO;
+time_t				Logger::heartbeat_interval = 5;
 
-LogMessage::LogMessage() {}
+LogMessage::LogMessage(LogLevel level) : level(level) {}
+
+LogMessage::LogMessage(const LogMessage &other) : level(other.level) {}
+
+static const char* get_level_color(LogLevel level)
+{
+	switch (level())
+	{
+		case LogLevel::FATAL:	return ANSI_BOLD ANSI_WHITE ANSI_BG_RED;
+		case LogLevel::ERROR:	return ANSI_BOLD ANSI_RED;
+		case LogLevel::WARNING:	return ANSI_BOLD ANSI_YELLOW;
+		case LogLevel::INFO:	return ANSI_BOLD ANSI_CYAN;
+		case LogLevel::DEBUG:	return ANSI_BOLD ANSI_WHITE ANSI_BG_BRIGHT_BLUE;
+		default:				return ANSI_RESET;
+	}
+}
 
 LogMessage::~LogMessage()
 {
-	std::ostream& stream = LogConfig::getStream();
-	stream << "[" << LogLevel::toString(Logger::getLevel()()) << "] " << Logger::getBuffer().str();
-	Logger::getBuffer().str("");
+	if (this->level < Logger::getGlobalLevel())
+		return ;
+	struct timeval	tv;
+	gettimeofday(&tv, NULL);
+
+	struct tm		datetime;
+	localtime_r(&tv.tv_sec, &datetime);
+
+	char			timestr[50];
+	std::strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &datetime);
+
+	int millis = tv.tv_usec / 1000;
+	std::ostream& os = Logger::getStream();
+	bool tty = isatty(STDOUT_FILENO);
+
+	if (tty) os << ANSI_BRIGHT_BLACK;
+	os << '[' << timestr << "." << std::setfill('0') << std::setw(3) << millis << "] ";
+
+	if (tty) os << get_level_color(this->level);
+ 	os << LogLevel::toString(this->level()) ;
+	if (tty) os << ANSI_RESET;
+	os << ' ' << stream.str() << "\n";
 }
 
-void LogConfig::setDefaultStream(std::ostream &stream)
+void Logger::setDefaultStream(std::ostream &stream)
 {
-	LogConfig::current_stream = &stream;
+	Logger::current_stream = &stream;
 }
 
-void LogConfig::setLogFile(const std::string &filename)
+void Logger::setLogFile(const std::string &filename)
 {
-	if (LogConfig::fileStream.is_open())
-		LogConfig::fileStream.close();
-	LogConfig::fileStream.open(filename.c_str(), std::ios::ate);
-	if (LogConfig::fileStream.bad())
+	if (Logger::file_stream.is_open())
+		Logger::file_stream.close();
+	Logger::file_stream.open(filename.c_str(), std::ios::ate);
+	if (Logger::file_stream.bad())
 		throw std::runtime_error("Logger: Unable to open file: " + filename);
-	LogConfig::current_stream = &LogConfig::fileStream;
+	Logger::current_stream = &Logger::file_stream;
 }
 
-std::ostream& LogConfig::getStream()
+std::ostream& Logger::getStream()
 {
-	return *LogConfig::current_stream;
+	return *Logger::current_stream;
 }
 
-std::ostringstream& Logger::getBuffer()
+void Logger::setGlobalLevel(LogLevel level)
 {
-	return Logger::buffer;
+	Logger::min_level = level;
 }
 
-LogLevel Logger::getLevel()
+LogLevel Logger::getGlobalLevel()
 {
-	return Logger::level;
+	return Logger::min_level;
+}
+
+void Logger::setHeartbeatInterval(time_t interval)
+{
+	Logger::heartbeat_interval = interval;
+}
+
+void Logger::heartbeat()
+{
+	static time_t last_beat = 0;
+	time_t timestamp = std::time(NULL);
+	if (timestamp - last_beat >= Logger::heartbeat_interval)
+	{
+		Logger::DEBUG() << "Heartbeat: Server is running";
+		last_beat = timestamp;
+	}
 }

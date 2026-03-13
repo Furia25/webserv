@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 16:05:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 18:27:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:22:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,13 @@ public:\
 	name(E e) : _t(e) {};\
 	E operator()() const {return _t;}\
 	static size_t	length() {return (M_TUPLE_SIZE(enum_tuple));};\
+	bool operator==(const name& other) const { return _t == other._t; }\
+	bool operator!=(const name& other) const { return _t != other._t; }\
+	bool operator<(const name& other) const { return _t < other._t; }\
+	bool operator<=(const name& other) const { return _t <= other._t; }\
+	bool operator>(const name& other) const { return _t > other._t; }\
+	bool operator>=(const name& other) const { return _t >= other._t; }\
+	bool operator==(E e) const { return _t == e; }\
 \
 __VA_ARGS__ \
 \

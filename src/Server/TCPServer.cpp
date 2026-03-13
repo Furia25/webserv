@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 19:05:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:29:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,8 @@ TCPServer::~TCPServer()
 	close(this->epoll_fd);
 }
 
+# include <cstdlib>
+
 void TCPServer::run(void)
 {
 	std::signal(SIGINT, signal_handler);
@@ -47,7 +49,7 @@ void TCPServer::run(void)
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
-		Logger::INFO() << "Running\n";
+		Logger::heartbeat();
 	}
 }
 
