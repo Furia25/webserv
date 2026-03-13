@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 17:16:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:20:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,16 +26,20 @@
 # define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
 
+# define _CONNECTION_STATES \
+	X(ERRORED)\
+	X(CONNECTED)\
+	X(CLOSING)\
+	X(DELETABLE)
+
 class Connection : public IEpollHandler
 {
 public:
-
 	enum State
 	{
-		ERRORED,
-		CONNECTED,
-		CLOSING,
-		DELETABLE
+		#define X(el, ...) el,
+		_CONNECTION_STATES
+		#undef X
 	};
 
 	Connection(Socket& server_socket);
@@ -63,7 +67,10 @@ public:
 	State			getState(void) const;
 	const Address&	getAddress(void) const;
 
+	static const char		*getStateString(State state);
+
 	friend bool				operator==(const Connection& lhs, const Connection& rhs);
+	friend std::ostream&	operator<<(std::ostream& os, const Connection& connection);
 protected:
 private:
 	Socket					client_socket;
@@ -86,7 +93,8 @@ bool	operator==(const Connection& lhs, const Connection& rhs);
 
 inline std::ostream&	operator<<(std::ostream& os, const Connection& connection)
 {
-	os << connection.getClientID() << ":" << '\"' << connection.getSocket().getAddress() << "\"";
+	os << connection.getClientID() << ":" << '\"' << connection.client_socket.getAddress() << "\""
+		<< ':' << Connection::getStateString(connection.state);
 	return os;
 }
 

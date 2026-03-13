@@ -6,11 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:53:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:42:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/Connection.hpp"
+#include "Server/TCPServer.hpp"
 
 size_t Connection::last_id = 0;
 
@@ -28,7 +29,13 @@ Connection::~Connection() {}
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
-	(void) events;
+	if (events & EPOLLHUP)
+	{
+		this->state = DELETABLE;
+		return ;
+	}
+	if (events & EPOLLIN)
+		this->handleRead();
 }
 
 void Connection::handleRead(void) 
@@ -46,6 +53,7 @@ void Connection::handleRead(void)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
 		this->state = this->bytes_sended >= this->write_buffer.size() ? CLOSING : DELETABLE;
+	Logger::DEBUG() << this->read_buffer;
 }
 
 void Connection::handleWrite(void)
@@ -138,6 +146,19 @@ Connection::State Connection::getState(void) const
 const Address &Connection::getAddress(void) const
 {
 	return this->client_socket.getAddress();
+}
+
+const char *Connection::getStateString(State state)
+{
+	switch (state) {
+		#define X(el) \
+			case el: \
+				return #el;
+				_CONNECTION_STATES
+			default:
+				return "Unknown";
+		#undef X
+	}
 }
 
 bool operator==(const Connection &lhs, const Connection &rhs)

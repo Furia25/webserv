@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 17:42:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:45:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ void TCPServer::run(void)
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
+		this->cleanConnections();
 		Logger::tick();
 	}
 }
@@ -76,7 +77,29 @@ void TCPServer::registerConnection(Connection *connection)
 	this->addPollEvent(*connection, CONNECTION_EVENTS);
 }
 
-/*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER*/
+void TCPServer::dropConnection(Connection *connection)
+{
+	this->handler->onDisconnection(*connection);
+	this->removePollEvent(*connection);
+}
+
+void TCPServer::cleanConnections(void)
+{
+	std::vector<Connection *>::iterator it = this->connections.begin();
+	for (; it != this->connections.end(); ++it)
+	{
+		Connection *connection = *it;
+		if (connection->getState() == Connection::DELETABLE)
+		{
+			this->connections.erase(it);
+			this->dropConnection(connection);
+		}
+	}
+}
+
+/*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER
+ REALLY REALLY UNSAFE IDK WHY I DO THAT, I AM A FOOL
+ */
 void TCPServer::recoverListener(Listener& listener)
 {
 	bool		on_heap = false;
@@ -134,6 +157,11 @@ void TCPServer::clearConnections()
 void TCPServer::bindHandler(IRequestHandler &handler)
 {
 	this->handler = &handler;
+}
+
+IRequestHandler &TCPServer::getHandler(void)
+{
+	return *this->handler;
 }
 
 void TCPServer::tickCallback(void *instance)

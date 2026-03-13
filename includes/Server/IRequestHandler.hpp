@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/12 16:04:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:07:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ public:
 	virtual void	onData(Connection& connection) = 0;
 	virtual void	onConnection(Connection& connection) = 0;
 	virtual void	onDisconnection(Connection& connection) = 0;
-	virtual void	onError(Connection& Connection) = 0;
+	virtual void	onError(Connection& connection) = 0;
 };
 
 #endif // _IREQUESTHANDLER_H

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:01:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:51:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:03:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 # define _IEPOLLHANDLER_H
 
 # include "Socket.hpp"
+# include "Logger.hpp"
+# include <sys/epoll.h>
 
 class TCPServer;
 

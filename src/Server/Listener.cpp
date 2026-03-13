@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:53:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:05:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 			catch (const std::exception& e) {throw;}
 			server.registerConnection(client_connection);
 			Logger::INFO() << "Connection established: Listener " << this->getSocket().getAddress() << " -> " << client_connection->getSocket().getAddress();
+  			server.getHandler().onConnection(*client_connection);
 		}
 	}
 }

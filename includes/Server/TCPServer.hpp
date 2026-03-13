@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 17:39:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 18:45:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,23 +48,21 @@ public:
 	TCPServer();
 	~TCPServer();
 
-	void	run(void);
+	void				run(void);
 
-	void	openListener(const std::string& host, const std::string& service);
-	void	openListener(const std::string& host, unsigned int port);
-	void	openListener(const char *host, const char *service);
+	void				openListener(const std::string& host, const std::string& service);
+	void				openListener(const std::string& host, unsigned int port);
+	void				openListener(const char *host, const char *service);
 
-	void	registerConnection(Connection *connection);
-
-	void	recoverListener(Listener& listener);
-
-	void	addPollEvent(IEpollHandler& event_handler, uint32_t events);
-	void	removePollEvent(IEpollHandler& event_handler);
+	void				cleanConnections(void);
 	
-	void	bindHandler(IRequestHandler& handler);
+	void				bindHandler(IRequestHandler& handler);
+	IRequestHandler&	getHandler(void);
 
-	static void	tickCallback(void *instance);
+	static void			tickCallback(void *instance);
 
+	friend class Connection;
+	friend class Listener;
 protected:
 	void	clearListeners();
 	void	clearConnections();
@@ -73,6 +71,13 @@ private:
 	IRequestHandler				*handler;
 	std::vector<Listener*>		listeners;
 	std::vector<Connection*>	connections;
+
+	void	recoverListener(Listener& listener);
+
+	void	addPollEvent(IEpollHandler& event_handler, uint32_t events);
+	void	removePollEvent(IEpollHandler& event_handler);
+	void	registerConnection(Connection *connection);
+	void	dropConnection(Connection* connection);
 };
 
 #endif // _TCPSERVER_H
