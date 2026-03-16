@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 18:18:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 19:26:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,9 +50,6 @@ public:
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
 
-	void			consumeReadData(size_t n);
-	const uint8_t	*getReadBufferPtr() const;
-	size_t			getReadBufferSize() const;
 
 	void			clearReadBuffer();
 	void			clearWriteBuffer();
@@ -64,6 +61,11 @@ public:
 	const Socket&	getSocket(void) const;
 	State			getState(void) const;
 	const Address&	getAddress(void) const;
+
+	void						consumeReadData(size_t n);
+	const uint8_t				*getReadBufferPtr() const;
+	const std::vector<uint8_t>&	getReadVector() const;
+	size_t						getReadBufferSize() const;
 
 	static const char		*getStateString(State state);
 

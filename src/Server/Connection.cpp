@@ -6,12 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 19:18:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 19:27:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/Connection.hpp"
 #include "Server/TCPServer.hpp"
+#include "Connection.hpp"
 
 size_t Connection::last_id = 0;
 
@@ -98,7 +99,12 @@ void Connection::consumeReadData(size_t n)
 
 const uint8_t *Connection::getReadBufferPtr() const
 {
-	return &this->read_buffer[0];
+	return &this->read_buffer[this->bytes_received];
+}
+
+const std::vector<uint8_t> &Connection::getReadVector() const
+{
+	return this->read_buffer;
 }
 
 size_t Connection::getReadBufferSize() const
