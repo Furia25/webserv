@@ -6,13 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 18:45:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 18:36:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _TCPSERVER_H
 # define _TCPSERVER_H
 
+# include <map>
 # include <vector>
 # include <cstring>
 # include <sys/types.h>
@@ -34,6 +35,7 @@
 # include "Connection.hpp"
 # include "Logger.hpp"
 
+# define MAX_CLIENTS	1024
 # define MAX_EVENTS	512
 # define MAX_PENDING_CONNECTION	10
 # define EPOLL_TIMEOUT	5
@@ -67,10 +69,11 @@ protected:
 	void	clearListeners();
 	void	clearConnections();
 private:
+	size_t						actual_connections;
 	int							epoll_fd;
 	IRequestHandler				*handler;
 	std::vector<Listener*>		listeners;
-	std::vector<Connection*>	connections;
+	std::map<int, Connection*>	connections;
 
 	void	recoverListener(Listener& listener);
 
