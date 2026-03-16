@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 18:42:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 19:18:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Connection::Connection(Socket& server_socket) : bytes_sended(0), bytes_received(
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(READ_BUFFER_DEFAULT_SIZE);
-	this->read_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
+	this->write_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
 	this->id = Connection::last_id;
 	Connection::last_id++;
 }
@@ -30,19 +30,26 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
 	if (events & EPOLLHUP)
+		this->setDeletable();
+	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
+		this->setDeletable();
+	if (events & EPOLLIN && this->state != DELETABLE)
 	{
-		this->state = DELETABLE;
-		return ;
-	}
-	if (events & EPOLLIN)
 		this->handleRead();
+		server.getHandler().onData(*this);
+	}
 }
 
-void Connection::handleRead(void) 
+void Connection::setDeletable(void)
+{
+	this->state = DELETABLE;
+}
+
+void Connection::handleRead(void)
 {
 	if (this->read_buffer.size() > READ_LIMIT)
 	{
-		this->state = DELETABLE;
+		this->setDeletable();
 		return ;
 	}
 
@@ -52,8 +59,8 @@ void Connection::handleRead(void)
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
-		this->state = this->bytes_sended >= this->write_buffer.size() ? CLOSING : DELETABLE;
-	Logger::DEBUG() << this->read_buffer;
+		this->state = CLOSING;
+	/*Logger::DEBUG() << this->read_buffer;*/
 }
 
 void Connection::handleWrite(void)

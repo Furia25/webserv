@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 18:45:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 18:05:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@ static void signal_handler(int signum)
 
 TCPServer::TCPServer()
 {
+	this->actual_connections = 0;
 	this->epoll_fd = ::epoll_create(100);
 	if (this->epoll_fd == -1)
 		throw std::runtime_error("Unable to init epoll :" + std::string(strerror(errno)));
@@ -47,7 +48,6 @@ void TCPServer::run(void)
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
-		this->cleanConnections();
 		Logger::tick();
 	}
 }
@@ -73,28 +73,19 @@ void TCPServer::openListener(const char *host, const char *service)
 
 void TCPServer::registerConnection(Connection *connection)
 {
-	this->connections.push_back(connection);
+	this->connections[connection->getSocket().getFd()] = connection;
+	this->handler->onConnection(*connection);
 	this->addPollEvent(*connection, CONNECTION_EVENTS);
+	this->actual_connections++;
 }
 
 void TCPServer::dropConnection(Connection *connection)
 {
+	this->connections.erase(connection->getSocket().getFd());
 	this->handler->onDisconnection(*connection);
 	this->removePollEvent(*connection);
-}
-
-void TCPServer::cleanConnections(void)
-{
-	std::vector<Connection *>::iterator it = this->connections.begin();
-	for (; it != this->connections.end(); ++it)
-	{
-		Connection *connection = *it;
-		if (connection->getState() == Connection::DELETABLE)
-		{
-			this->connections.erase(it);
-			this->dropConnection(connection);
-		}
-	}
+	delete connection;
+	this->actual_connections--;
 }
 
 /*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER
@@ -149,8 +140,8 @@ void TCPServer::clearListeners()
 
 void TCPServer::clearConnections()
 {
-	for (std::vector<Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
-		delete *it;
+	for (std::map<int, Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
+		delete (*it).second;
 	this->connections.clear();
 }
 
@@ -170,9 +161,9 @@ void TCPServer::tickCallback(void *instance)
 	Logger::DEBUG() << "Heartbeat: Server is running...";
 	LogMessage debug = Logger::DEBUG();
 	debug << "Connections: ";
-	for (std::vector<Connection *>::const_iterator it = server->connections.begin(); it != server->connections.end(); it++)
+	for (std::map<int, Connection *>::iterator it = server->connections.begin(); it != server->connections.end(); ++it)
 	{
-		debug << (*(*it));
+		debug << (*(*it).second);
 		if (it != server->connections.end())
 			debug << ", ";
 	}
