@@ -6,13 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 19:27:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 19:30:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/Connection.hpp"
 #include "Server/TCPServer.hpp"
-#include "Connection.hpp"
 
 size_t Connection::last_id = 0;
 
