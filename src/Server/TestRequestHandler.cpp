@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TestRequestHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 18:08:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/16 18:06:17 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,22 +20,46 @@ TestRequestHandler::~TestRequestHandler()
 {
 }
 
-void	TestRequestHandler::onData(Connection &connection)
+void TestRequestHandler::onDataReceived(Connection &connection)
+{
+	int				id;
+	const uint8_t	*dataPtr = connection.getReadBufferPtr();
+	size_t			dataSize;
+
+	id = connection.getClientID();
+	Request &req = ongoingRequests[id];
+	dataSize = connection.getReadBufferSize();
+	if (dataSize > 0)
+	{
+		std::vector<uint8_t> buffer(dataPtr, dataPtr+ dataSize);
+		try
+		{
+			req.feed(buffer);
+			// connection.sendData();
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+		connection.consumeReadData(dataSize);
+	}
+	if (req.getCompleteStatus())
+	{
+		ongoingRequests.erase(id);
+	}
+}
+
+void TestRequestHandler::onConnection(Connection &connection)
 {
 	(void)connection;
 }
 
-void	TestRequestHandler::onConnection(Connection& connection)
+void TestRequestHandler::onDisconnection(Connection &connection)
 {
 	(void)connection;
 }
 
-void	TestRequestHandler::onDisconnection(Connection& connection)
-{
-	(void)connection;
-}
-
-void	TestRequestHandler::onError(Connection& connection)
+void TestRequestHandler::onError(Connection &connection)
 {
 	(void)connection;
 }
