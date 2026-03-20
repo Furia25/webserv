@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 18:06:17 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/20 13:48:35 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ TestRequestHandler::~TestRequestHandler()
 void TestRequestHandler::onDataReceived(Connection &connection)
 {
 	int				id;
-	const uint8_t	*dataPtr = connection.getReadBufferPtr();
 	size_t			dataSize;
 
 	id = connection.getClientID();
@@ -31,11 +30,9 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 	dataSize = connection.getReadBufferSize();
 	if (dataSize > 0)
 	{
-		std::vector<uint8_t> buffer(dataPtr, dataPtr+ dataSize);
 		try
 		{
-			req.feed(buffer);
-			// connection.sendData();
+			req.feed(connection.getReadBufferPtr(), connection.getReadBufferSize());
 		}
 		catch(const std::exception& e)
 		{

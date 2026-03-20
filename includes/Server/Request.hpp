@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/16 19:37:05 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/20 14:20:47 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Request
 	Request(const Request &other);
 	~Request();
 	Request &operator=(const Request &other);
-	void feed(uint8_t *buffer);
+	void feed(const uint8_t *buffer, size_t length);
 
 	// Getters
 	const bool &getCompleteStatus() const;
@@ -40,7 +40,7 @@ class Request
 	const std::string &getProtocol() const;
 
   private:
-	MethodType method;
+	std::string method;
 	std::string request_path;
 	std::string protocol;
 	std::map<std::string, std::string> headers;
@@ -56,5 +56,6 @@ class Request
 	void validateMethod() const;
 	void validateProtocol() const;
 	void validatePath() const;
+	void validateHeader();
 	std::string trim(const std::string &str) const;
 };

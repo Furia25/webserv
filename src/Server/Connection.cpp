@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 19:30:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/17 16:27:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 	if (events & EPOLLIN && this->state != DELETABLE)
 	{
 		this->handleRead();
-		server.getHandler().onData(*this);
+		server.getHandler().onDataReceived(*this);
 	}
 }
 

@@ -6,13 +6,26 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/16 19:36:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/20 14:28:45 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
+#include <algorithm>
+#include <iterator>
 
 #define PROTOCOL "HTTP"
+#define _MAX_BODY_SIZE_ 10485760
+
+static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
+
+enum	Method
+{
+	GET,
+	POST,
+	METHOD,
+	UNKNOWN,
+};
 
 Request::Request() : method(""), request_path(""), protocol(""),
 	is_complete(false), header_parsed(false), content_length(0)
@@ -44,15 +57,23 @@ Request::~Request()
 {
 }
 
-void Request::feed(uint8_t *buffer)
+void Request::feed(const uint8_t *fragment, size_t length)
 {
-	size_t	pos;
+	const char	*target = "\r\n\r\n";
+	size_t		pos;
 
-	if (!header_parsed)
+	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
+	if (!header_parsed && raw_buffer.size() > 8192)
+		throw std::runtime_error("431 Request Header Fields Too Large");
+	if (!header_parsed && raw_buffer.size() > 8192)
 	{
-		if ()
+		std::vector<uint8_t>::iterator it = std::search(raw_buffer.begin(),
+				raw_buffer.end(), target, target + 4);
+		if (it != raw_buffer.end())
 		{
-			std::string all_headers = current_str.substr(0, pos);
+			pos = it - raw_buffer.begin();
+			std::string all_headers(raw_buffer.begin(), raw_buffer.begin()
+				+ pos);
 			std::stringstream ss(all_headers);
 			std::string line;
 			if (std::getline(ss, line))
@@ -61,6 +82,9 @@ void Request::feed(uint8_t *buffer)
 					line.erase(line.size() - 1);
 				parseRequestLine(line);
 			}
+			validateMethod();
+			validatePath();
+			validateProtocol();
 			while (std::getline(ss, line))
 			{
 				if (!line.empty() && line[line.size() - 1] == '\r')
@@ -68,24 +92,43 @@ void Request::feed(uint8_t *buffer)
 				if (!line.empty())
 					parseHeaderLine(line);
 			}
-			validateMethod();
-			validatePath();
-			validateProtocol();
-			if (headers.find("Host") == headers.end())
-				throw std::runtime_error("400 Bad Request: Missing Host header");
-			if (headers.count("Content-Length"))
-				content_length = std::atoll(headers["Content-Length"].c_str());
-			else
-				content_length = 0;
+			validateHeader();
 			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + pos + 4);
 			header_parsed = true;
 		}
 	}
-	if (header_parsed && (raw_buffer.size() >= content_length) && !is_complete)
+	if (header_parsed && !is_complete)
 	{
-		body.assign(raw_buffer.begin(), raw_buffer.begin() + content_length);
-		is_complete = true;
+		if (raw_buffer.size() >= content_length)
+		{
+			body.assign(raw_buffer.begin(), raw_buffer.begin()
+				+ content_length);
+			is_complete = true;
+		}
 	}
+}
+
+void Request::validateHeader()
+{
+	long long	val;
+
+	if (headers.find("Host") == headers.end())
+		throw std::runtime_error("400 Bad Request: Missing Host header");
+	if (headers.count("Content-Length"))
+	{
+		val = std::atoll(headers["Content-Length"].c_str());
+		if (val < 0)
+			throw std::runtime_error("400 Bad Request: Negative Content-Length");
+		content_length = static_cast<size_t>(val);
+	}
+	else
+	{
+		content_length = 0;
+		if (method == "POST")
+			throw std::runtime_error("411 Length Required");
+	}
+	if (content_length > _MAX_BODY_SIZE_)
+		throw std::runtime_error("413 Content too large");
 }
 
 void Request::parseRequestLine(std::string line)
@@ -131,7 +174,12 @@ void Request::parseHeaderLine(std::string line)
 
 void Request::validateMethod() const
 {
-	MethodType::from(method);
+	for (size_t i = 0; i < UNKNOWN; i++)
+	{
+		if (method == allowed_method[i])
+			return ;
+	}
+	throw std::runtime_error("405 Method Not Allowed");
 }
 
 void Request::validateProtocol() const
@@ -150,9 +198,14 @@ void Request::validateProtocol() const
 	}
 }
 
-void Request::validatePath()
-
 // Getters
+void Request::validatePath() const
+{
+	if (request_path.find("/../"))
+		throw std::runtime_error("400 Bad Request: Invalid Path");
+	request_path.find("?");
+}
+
 const std::string &Request::getMethod() const
 {
 	return (method);
