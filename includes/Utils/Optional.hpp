@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 14:38:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/22 16:00:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/22 18:10:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ public:
 
 	T*			operator->();
 	const T*	operator->() const;
+
 protected:
 private:
 	aligned_storage<sizeof(T), alignment_of<T>::value> buffer;
@@ -238,5 +239,39 @@ inline void Optional<T>::destroy()
 	this->ptr()->~T();
 	initialized = false;
 }
+
+template <class T>
+bool operator==(const Optional<T>& a, const Optional<T>& b)
+{
+	if (a.has_value() != b.has_value())
+		return false;
+	if (!a.has_value())
+		return true;
+	return *a == *b;
+}
+
+template <class T>
+bool operator!=(const Optional<T>& a, const Optional<T>& b)
+{
+	return !(a == b);
+}
+
+template <typename T>
+bool operator==(const Optional<T>& optional, const T& val)
+{
+	return optional.has_value() && *opt == val;
+}
+
+template <typename T>
+bool operator==(const T& val, const Optional<T>& optional)
+{
+	return optional == val;
+}
+
+template <typename T>
+bool operator!=(const Optional<T>& optional, const T& val) { return !(optional == val); }
+
+template <typename T>
+bool operator!=(const T& val, const Optional<T>& optional) { return !(optional == val); }
 
 #endif // _OPTIONAL_H
