@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/17 16:27:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/21 13:41:28 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		this->setDeletable();
 	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
 		this->setDeletable();
-	if (events & EPOLLIN && this->state != DELETABLE)
+	if (events & EPOLLIN && this->state == CONNECTED)
 	{
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
