@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 14:38:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/22 18:10:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/23 01:42:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,29 @@ struct aligned_storage
 };
 
 template <class T>
-class Optional
+class RawStorage
+{
+public:
+	RawStorage() {};
+
+	T&			operator* ();
+	const T&	operator* () const;
+
+	T*			operator->();
+	const T*	operator->() const;
+
+	T*			ptr();
+	const T*	ptr() const;
+
+	void		construct(const T& val);
+	void		destroy();
+protected:
+	aligned_storage<sizeof(T), alignment_of<T>::value> buffer;
+
+};
+
+template <class T>
+class Optional : public RawStorage<T>
 {
 public:
 	Optional();
@@ -64,35 +86,26 @@ public:
 	bool		has_value() const;
 	operator	bool() const;
 
-	T&			operator* ();
-	const T&	operator* () const;
-
-	T*			operator->();
-	const T*	operator->() const;
 
 protected:
 private:
-	aligned_storage<sizeof(T), alignment_of<T>::value> buffer;
 	bool		initialized;
-
-	T*			ptr();
-	const T*	ptr() const;
 
 	void		construct(const T& val);
 	void		destroy();
 };
 
 template <class T>
-inline Optional<T>::Optional() : initialized(false) {}
+inline Optional<T>::Optional() : RawStorage<T>(), initialized(false) {}
 
 template <class T>
-inline Optional<T>::Optional(const T& val) : initialized(false)
+inline Optional<T>::Optional(const T& val) : RawStorage<T>(), initialized(false)
 {
 	this->construct(val);
 }
 
 template <class T>
-inline Optional<T>::Optional(const Optional& other) : initialized(false)
+inline Optional<T>::Optional(const Optional& other) : RawStorage<T>(), initialized(false)
 {
 	if (other.initialized)
 		this->construct(*other.ptr());
@@ -191,53 +204,65 @@ inline Optional<T>::operator bool() const
 }
 
 template <class T>
-inline T& Optional<T>::operator*()
-{
-	return *this->ptr();
-}
-
-template <class T>
-inline const T& Optional<T>::operator*() const
-{
-	return *this->ptr();
-}
-
-template <class T>
-inline T *Optional<T>::operator->()
-{
-	return this->ptr();
-}
-
-template <class T>
-inline const T *Optional<T>::operator->() const
-{
-	return this->ptr();
-}
-
-template <class T>
-inline T *Optional<T>::ptr()
-{
-	return reinterpret_cast<T *>(&this->buffer.raw);
-}
-
-template <class T>
-inline const T *Optional<T>::ptr() const
-{
-	return reinterpret_cast<const T *>(&this->buffer.raw);
-}
-
-template <class T>
 inline void Optional<T>::construct(const T &val)
 {
-	new (&this->buffer.raw) T(val);
+	RawStorage<T>::construct(val);
 	this->initialized = true;
 }
 
 template <class T>
 inline void Optional<T>::destroy()
 {
+	RawStorage<T>::destroy();
+	this->initialized = false;
+}
+
+template <class T>
+inline T& RawStorage<T>::operator*()
+{
+	return *this->ptr();
+}
+
+template <class T>
+inline const T&  RawStorage<T>::operator*() const
+{
+	return *this->ptr();
+}
+
+template <class T>
+inline T *RawStorage<T>::operator->()
+{
+	return this->ptr();
+}
+
+template <class T>
+inline const T *RawStorage<T>::operator->() const
+{
+	return this->ptr();
+}
+
+template <class T>
+inline T *RawStorage<T>::ptr()
+{
+	return reinterpret_cast<T *>(&this->buffer.raw);
+}
+
+template <class T>
+inline const T *RawStorage<T>::ptr() const
+{
+	return reinterpret_cast<const T *>(&this->buffer.raw);
+}
+
+template <class T>
+inline void RawStorage<T>::construct(const T &val)
+{
+	new (&this->buffer.raw) T(val);
+}
+
+template <class T>
+inline void RawStorage<T>::destroy()
+{
 	this->ptr()->~T();
-	initialized = false;
 }
 
 template <class T>
@@ -259,7 +284,7 @@ bool operator!=(const Optional<T>& a, const Optional<T>& b)
 template <typename T>
 bool operator==(const Optional<T>& optional, const T& val)
 {
-	return optional.has_value() && *opt == val;
+	return optional.has_value() && *optional == val;
 }
 
 template <typename T>

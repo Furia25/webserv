@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/23 01:42:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/23 02:13:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@
 
 # define HASHMAP_DEFAULT_CAPACITY	16
 # define HASHMAP_REHASH_GROWTH	2.0
-# define HASHMAP_DEFAULT_MAX_LOAD_FACTOR 0.7f
+# define HASHMAP_DEFAULT_MAX_LOAD_FACTOR 0.65f
 
 # define _HashMapTemplate_ template <class Key, class Value, typename HashFunctor>
 # define _HashMapDef_ HashMap<Key, Value, HashFunctor>
@@ -141,7 +141,7 @@ public:
 	const_iterator		find(const key_type& key) const;
 	
 	bool				contain(const key_type& key) const;
-	
+
 	void				insert(const key_type& key, const mapped_type& value);
 	mapped_type&		at(const key_type& key);
 	const mapped_type&	at(const key_type& key) const;
@@ -167,6 +167,7 @@ private:
 	size_t					tombstone_count;
 	HashFunctor				hasher;
 
+	void		insert_unsafe(const key_type& key, const mapped_type& value);
 	size_t		probe(const key_type& key) const;
 	size_t		probe(size_t h, unsigned char h7, const key_type& key) const;
 	void		rehash(size_t new_capacity);
@@ -247,9 +248,24 @@ inline _HashMapDef_::~HashMap()
 }
 
 _HashMapTemplate_
+inline void _HashMapDef_::insert_unsafe(const key_type& key, const mapped_type& value)
+{
+    size_t              hash  = this->hasher(key);
+    unsigned char       h7    = _HashMap_::Meta::h7(hash);
+    size_t              index = hash & (this->capacity - 1);
+
+    while (_HashMap_::Meta::is_occupied(this->meta[index]))
+        index = (index + 1) & (this->capacity - 1);
+
+    this->table[index].construct(std::make_pair(key, value));
+    this->meta[index] = h7;
+    this->slot_used++;
+}
+
+_HashMapTemplate_
 inline void _HashMapDef_::insert(const key_type& key, const mapped_type& value)
 {
-	if (static_cast<float>(this->slot_used + this->tombstone_count) / this->capacity >= this->_max_load_factor)
+	if (this->load_factor() >= this->_max_load_factor)
 		this->rehash(next_pow2(this->capacity * this->growth_factor));
 	size_t				hash = this->hasher(key);
 	_HashMap_::SlotMeta	h7 = _HashMap_::Meta::h7(hash);
@@ -340,7 +356,7 @@ inline bool _HashMapDef_::empty() const
 _HashMapTemplate_
 inline float _HashMapDef_::load_factor() const
 {
-	return static_cast<float>(this->slot_used) / this->capacity;
+	return static_cast<float>(this->slot_used + this->tombstone_count) / this->capacity;
 }
 
 _HashMapTemplate_
@@ -398,7 +414,7 @@ inline void _HashMapDef_::rehash(size_t new_capacity)
 		if (_HashMap_::Meta::is_occupied(old_meta[i]))
 		{
 			value_type* p = old_table[i].ptr();
-			this->insert(p->first, p->second);
+			this->insert_unsafe(p->first, p->second);
 			old_table[i].destroy();
 		}
 	}
