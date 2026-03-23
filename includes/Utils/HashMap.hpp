@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/23 18:20:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/23 19:10:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,80 +56,58 @@ public:	/*Public types*/
 	typedef std::pair<Key, Value>	value_type;
 	typedef HashFunctor				hash_functor;
 
+	typedef ptrdiff_t				difference_type;
+	typedef size_t					size_type;
+
 	typedef RawStorage<value_type>	Slot;
 
 private:
 
 public: /*Iterator*/
-	class iterator
-	{
-	private:
-		HashMap*	map;
-		size_t		index;
+	# define _HASHMAP_ITERATOR_(iterator_type) \
+	class iterator_type : public std::iterator<std::forward_iterator_tag, \
+		value_type, \
+		ptrdiff_t, \
+		value_type*, \
+		value_type&> \
+	{ \
+	private: \
+		HashMap*	map; \
+		size_t		index; \
+		void	skip_empty() \
+		{ \
+			while (this->index < this->map->capacity \
+					&& !_HashMap_::Meta::is_occupied(this->map->meta[this->index])) \
+				this->index++; \
+		} \
+	public: \
+		iterator_type(HashMap* map, size_t index) : map(map), index(index) { this->skip_empty(); }; \
+		value_type&		operator* () const	{ return *this->map->table[this->index].ptr(); }; \
+		value_type		*operator->() const	{ return this->map->table[this->index].operator->(); }; \
+		bool			operator==(const iterator_type& other) const { return index == other.index; } \
+		bool			operator!=(const iterator_type& other) const { return index != other.index; } \
+		\
+		iterator_type&	operator++() \
+		{ \
+			this->index++; \
+			this->skip_empty(); \
+			return *this; \
+		} \
+		\
+		iterator_type	operator++(int) \
+		{ \
+			iterator_type temp = *this; \
+			++(*this); \
+			return temp; \
+		} \
+	}; \
+	friend class iterator_type
 
-		void	skip_empty()
-		{
-			while (this->index < this->map->capacity
-					&& !_HashMap_::Meta::is_occupied(this->map->meta[this->index]))
-				this->index++;
-		};
-	public:
-		iterator(HashMap* map, size_t index) : map(map), index(index) { this->skip_empty(); };
-		value_type&		operator* () const	{ return *this->map->table[this->index].ptr(); };
-		value_type		*operator->() const	{ return this->map->table[this->index].operator->(); };
-		bool			operator==(const iterator& other) const { return index == other.index; }
-		bool			operator!=(const iterator& other) const { return index != other.index; }
-
-		iterator&	operator++()
-		{
-			this->index++;
-			this->skip_empty();
-			return *this;
-		}
-		iterator	operator++(int)
-		{
-			iterator temp = *this;
-			++(*this);
-			return temp;
-		}
-	};
-	class const_iterator
-	{
-		private:
-		const HashMap*	map;
-		size_t			index;
-
-		void	skip_empty()
-		{
-			while (this->index < this->map->capacity
-					&& !_HashMap_::Meta::is_occupied(this->map->meta[this->index]))
-				this->index++;
-		};
-	public:
-		const_iterator(const HashMap* map, size_t index) : map(map), index(index) { this->skip_empty(); };
-		const value_type&	operator* () const	{ return *this->map->table[this->index].ptr(); };
-		const value_type	*operator->() const	{ return this->map->table[this->index].operator->(); };
-		bool				operator==(const const_iterator& other) const { return index == other.index; }
-		bool				operator!=(const const_iterator& other) const { return index != other.index; }
-
-		const_iterator&	operator++()
-		{
-			this->index++;
-			this->skip_empty();
-			return *this;
-		}
-		const_iterator	operator++(int)
-		{
-			const_iterator temp = *this;
-			++(*this);
-			return temp;
-		}
-	};
-	friend class iterator;
-	friend class const_iterator;
+	_HASHMAP_ITERATOR_(iterator);
+	_HASHMAP_ITERATOR_(const_iterator);
 public:
 	HashMap(
-		size_t base_capacity = HASHMAP_DEFAULT_CAPACITY,
+		size_t base_capacity = 0,
 		float max_load_factor = HASHMAP_DEFAULT_MAX_LOAD_FACTOR,
 		float growth_factor = HASHMAP_REHASH_GROWTH
 	);
@@ -153,6 +131,7 @@ public:
 
 	bool				erase(const key_type& key);
 	void				clear(void);
+	void				rehash(size_t new_capacity);
 
 	size_t				size() const;
 	bool				empty() const;
@@ -171,12 +150,12 @@ private:
 	void		insert_unsafe(const key_type& key, const mapped_type& value);
 	size_t		probe(const key_type& key) const;
 	size_t		probe(size_t h, unsigned char h7, const key_type& key) const;
-	void		rehash(size_t new_capacity);
+	void		_rehash(size_t new_capacity);
 };
 
 inline size_t next_pow2(size_t n)
 {
-	if (n == 0) return 1;
+	if (n == 0) return HASHMAP_DEFAULT_CAPACITY;
 	n |= n >> 1;
 	n |= n >> 2;
 	n |= n >> 4;
@@ -188,15 +167,19 @@ inline size_t next_pow2(size_t n)
 
 _HashMapTemplate_
 _HashMapDef_::HashMap(size_t base_capacity, float max_load_factor, float growth_factor) :
-	table(new Slot[next_pow2(base_capacity)]),
-	meta(new _HashMap_::SlotMeta[next_pow2(base_capacity)]),
-	capacity(next_pow2(base_capacity)),
+	table(base_capacity == 0 ? NULL : new Slot[next_pow2(base_capacity)]),
+	meta(base_capacity == 0 ? NULL : new _HashMap_::SlotMeta[next_pow2(base_capacity)]),
+	capacity(base_capacity == 0 ? 0 : next_pow2(base_capacity)),
 	slot_used(0),
 	growth_factor(growth_factor),
 	_max_load_factor(max_load_factor),
 	tombstone_count(0),
 	hasher(HashFunctor())
 {
+	if (growth_factor <= 1.0f)
+		throw std::invalid_argument("growth_factor must be > 1.0");
+	if (max_load_factor <= 0.0f || max_load_factor >= 1.0f)
+		throw std::invalid_argument("max_load_factor must be in (0, 1)");
 	std::memset(this->meta, _HashMap_::Meta::EMPTY, capacity);
 }
 
@@ -271,7 +254,7 @@ _HashMapTemplate_
 inline void _HashMapDef_::insert(const key_type& key, const mapped_type& value)
 {
 	if (this->load_factor() >= this->_max_load_factor)
-		this->rehash(next_pow2(this->capacity * this->growth_factor));
+		this->_rehash(next_pow2(this->capacity * this->growth_factor));
 	size_t				hash	= this->hasher(key);
 	_HashMap_::SlotMeta	h7		= _HashMap_::Meta::h7(hash);
 	size_t				index	= this->probe(hash, h7, key);
@@ -360,6 +343,13 @@ inline bool _HashMapDef_::erase(const key_type &key)
 }
 
 _HashMapTemplate_
+inline void _HashMapDef_::rehash(size_t new_capacity)
+{
+	new_capacity = this->slot_used > new_capacity ? this->slot_used : new_capacity;
+	this->_rehash(next_pow2(new_capacity));
+}
+
+_HashMapTemplate_
 inline size_t _HashMapDef_::size() const
 {
 	return this->slot_used;
@@ -374,6 +364,8 @@ inline bool _HashMapDef_::empty() const
 _HashMapTemplate_
 inline float _HashMapDef_::load_factor() const
 {
+	if (this->capacity == 0)
+		return 1.0;
 	return static_cast<float>(this->slot_used + this->tombstone_count) / this->capacity;
 }
 
@@ -414,7 +406,7 @@ inline size_t _HashMapDef_::probe(size_t hash, unsigned char h7, const key_type 
 }
 
 _HashMapTemplate_
-inline void _HashMapDef_::rehash(size_t new_capacity)
+inline void _HashMapDef_::_rehash(size_t new_capacity)
 {
 	_HashMap_::SlotMeta	*old_meta		= this->meta;
 	Slot				*old_table		= this->table;
