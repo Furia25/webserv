@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 14:38:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/23 01:42:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/23 18:19:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,7 @@ public:
 	T*			ptr();
 	const T*	ptr() const;
 
+	void		copy_from(const RawStorage& other);
 	void		construct(const T& val);
 	void		destroy();
 protected:
@@ -251,6 +252,12 @@ template <class T>
 inline const T *RawStorage<T>::ptr() const
 {
 	return reinterpret_cast<const T *>(&this->buffer.raw);
+}
+
+template <class T>
+inline void RawStorage<T>::copy_from(const RawStorage &other)
+{
+	new (&this->buffer.raw) T(*other.ptr());
 }
 
 template <class T>

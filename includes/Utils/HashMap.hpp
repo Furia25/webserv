@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/23 02:13:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/23 18:20:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,6 +152,7 @@ public:
 	const_iterator		end() const		{ return const_iterator(this, this->capacity); };
 
 	bool				erase(const key_type& key);
+	void				clear(void);
 
 	size_t				size() const;
 	bool				empty() const;
@@ -213,7 +214,8 @@ inline _HashMapDef_::HashMap(const HashMap& other) :
 	for (size_t i = 0; i < other.capacity; i++)
 	{
 		this->meta[i] = other.meta[i];
-		this->table[i] = other.table[i];
+		if (_HashMap_::Meta::is_occupied(other.meta[i]))
+			this->table[i].copy_from(other.table[i]);
 	}
 }
 
@@ -222,6 +224,7 @@ inline _HashMapDef_& _HashMapDef_::operator=(const HashMap& other)
 {
 	if (this == &other)
 		return *this;
+	this->clear();
 	delete[] this->table;
 	delete[] this->meta;
 	this->table				= new Slot[other.capacity];
@@ -235,7 +238,8 @@ inline _HashMapDef_& _HashMapDef_::operator=(const HashMap& other)
 	for (size_t i = 0; i < other.capacity; i++)
 	{
 		this->meta[i] = other.meta[i];
-		this->table[i] = other.table[i];
+		if (_HashMap_::Meta::is_occupied(other.meta[i]))
+			this->table[i].copy_from(other.table[i]);
 	}
 	return *this;
 }
@@ -243,6 +247,7 @@ inline _HashMapDef_& _HashMapDef_::operator=(const HashMap& other)
 _HashMapTemplate_
 inline _HashMapDef_::~HashMap()
 {
+	this->clear();
 	delete[] this->table;
 	delete[] this->meta;
 }
@@ -267,9 +272,9 @@ inline void _HashMapDef_::insert(const key_type& key, const mapped_type& value)
 {
 	if (this->load_factor() >= this->_max_load_factor)
 		this->rehash(next_pow2(this->capacity * this->growth_factor));
-	size_t				hash = this->hasher(key);
-	_HashMap_::SlotMeta	h7 = _HashMap_::Meta::h7(hash);
-	size_t				index = this->probe(hash, h7, key);
+	size_t				hash	= this->hasher(key);
+	_HashMap_::SlotMeta	h7		= _HashMap_::Meta::h7(hash);
+	size_t				index	= this->probe(hash, h7, key);
 	if (index == SIZE_MAX)
 		throw std::runtime_error("Unable to insert value into an HashMap");
 	if (_HashMap_::Meta::is_occupied(this->meta[index]))
@@ -326,6 +331,19 @@ _HashMapTemplate_
 inline bool _HashMapDef_::contain(const key_type& key) const
 {
 	return this->find(key) != this->end();
+}
+
+_HashMapTemplate_
+inline void _HashMapDef_::clear(void)
+{
+	for (size_t index = 0; index < this->capacity; index++)
+	{
+		if (_HashMap_::Meta::is_occupied(this->meta[index]))
+		{
+			this->table[index].destroy();
+		}
+		this->meta[index] = _HashMap_::Meta::EMPTY;
+	}
 }
 
 _HashMapTemplate_
