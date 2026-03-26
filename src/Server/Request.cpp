@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 15:42:09 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 16:25:50 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,52 +68,76 @@ Request::~Request()
 {
 }
 
+size_t Request::find_header_end() 
+{
+    const char *target = "\r\n\r\n";
+    std::vector<uint8_t>::iterator it = std::search(raw_buffer.begin(), raw_buffer.end(), target, target + 4);
+    
+    if (it == raw_buffer.end())
+        return std::string::npos;
+        
+    return (it - raw_buffer.begin());
+}
+
+void	Request::parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos)
+{
+	size_t start = 0;
+	size_t end = 0;
+	end = find_newline(buffer, start, pos);
+	if (end != std::string::npos)
+	{
+		std::string line(buffer.begin() + start, buffer.begin() + end);
+		if (!line.empty() && line[line.size()-1] == '\r') line.erase(line.size()-1);
+    		parseRequestLine(line);
+        start = end + 1;
+	}
+	while (start < pos) 
+	{
+        end = find_newline(buffer, start, pos);
+        if (end == std::string::npos) 
+			break;
+
+        std::string line(buffer.begin() + start, buffer.begin() + end);
+        if (!line.empty() && line[line.size()-1] == '\r') 
+			line.erase(line.size()-1);
+        
+        if (!line.empty())
+            parseHeaderLine(line);
+        start = end + 1;
+    }
+}
+
+size_t Request::find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
+{
+	for (size_t i = start; i < max; ++i)
+		if (buffer[i] == '\n') return i;
+	return std::string::npos;
+}
+
 void Request::feed(const uint8_t *fragment, size_t length)
 {
-	const char	*target = "\r\n\r\n";
-	size_t		pos;
-
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-	if (!header_parsed && raw_buffer.size() > 8192)
-		throw std::runtime_error("431 Request Header Fields Too Large");
-	if (!header_parsed && raw_buffer.size() > 8192)
+	
+	if (!header_parsed)
 	{
-		std::vector<uint8_t>::iterator it = std::search(raw_buffer.begin(),
-				raw_buffer.end(), target, target + 4);
-		if (it != raw_buffer.end())
+		if (raw_buffer.size() > 8192)
+			throw std::runtime_error("431 Request Header Fields Too Large");
+			
+		size_t pos = find_header_end();
+		if (pos != std::string::npos)
 		{
-			pos = it - raw_buffer.begin();
-			std::string all_headers(raw_buffer.begin(), raw_buffer.begin()
-				+ pos);
-			std::stringstream ss(all_headers);
-			std::string line;
-			if (std::getline(ss, line))
-			{
-				if (!line.empty() && line[line.size() - 1] == '\r')
-					line.erase(line.size() - 1);
-				parseRequestLine(line);
-			}
-			validateMethod();
-			validatePath();
-			validateProtocol();
-			while (std::getline(ss, line))
-			{
-				if (!line.empty() && line[line.size() - 1] == '\r')
-					line.erase(line.size() - 1);
-				if (!line.empty())
-					parseHeaderLine(line);
-			}
-			validateHeader();
+			parse_all_headers(raw_buffer, pos);
 			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + pos + 4);
 			header_parsed = true;
+			if (content_length == 0)
+				is_complete = true;
 		}
 	}
 	if (header_parsed && !is_complete)
 	{
 		if (raw_buffer.size() >= content_length)
 		{
-			body.assign(raw_buffer.begin(), raw_buffer.begin()
-				+ content_length);
+			body.assign(raw_buffer.begin(), raw_buffer.begin() + content_length);
 			is_complete = true;
 		}
 	}
@@ -150,7 +174,7 @@ void Request::validateHeader()
 		throw std::runtime_error("413 Content too large");
 }
 
-void Request::parseRequestLine(std::string line)
+void Request::parseRequestLine(std::string &line)
 {
 	std::stringstream ss(line);
 	std::string extra;
@@ -265,7 +289,7 @@ void Request::validatePath()
 	
 	std::string full_path = "./www" + request_path;
 	
-	int type = checkPathType(request_path);
+	int type = checkPathType(full_path);
 	if (type == INVALID)
 		throw std::runtime_error("404 Not found");
 
