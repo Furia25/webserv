@@ -6,16 +6,25 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/20 14:28:45 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 14:58:38 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "HashMap.hpp"
 #include "Request.hpp"
 #include <algorithm>
 #include <iterator>
 
 #define PROTOCOL "HTTP"
 #define _MAX_BODY_SIZE_ 10485760
+#define _MAX_PATH_SIZE_ 2048
+
+enum	PathType
+{
+	INVALID,
+	FILE,
+	DIR,
+};
 
 static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
 
@@ -108,15 +117,23 @@ void Request::feed(const uint8_t *fragment, size_t length)
 	}
 }
 
+void Request::toLowerCase(std::string &str)
+{
+	for (size_t i = 0; i < str.length(); ++i)
+		str[i] = std::tolower(str[i]);
+}
+
 void Request::validateHeader()
 {
 	long long	val;
 
+	HashMap<std::string,
+		std::string>::iterator it = headers.find("Content-Length");
 	if (headers.find("Host") == headers.end())
 		throw std::runtime_error("400 Bad Request: Missing Host header");
-	if (headers.count("Content-Length"))
+	if (it != headers.end())
 	{
-		val = std::atoll(headers["Content-Length"].c_str());
+		val = std::atoll((*it).second.c_str());
 		if (val < 0)
 			throw std::runtime_error("400 Bad Request: Negative Content-Length");
 		content_length = static_cast<size_t>(val);
@@ -157,19 +174,23 @@ std::string Request::trim(const std::string &str) const
 	return (str.substr(first, (last - first + 1)));
 }
 
-void Request::parseHeaderLine(std::string line)
+void Request::parseHeaderLine(std::string &line)
 {
 	size_t	colon;
+	size_t	startValue;
 
 	if (!line.empty() && line[line.size() - 1] == '\r')
 		line.erase(line.size() - 1);
 	colon = line.find(':');
-	if (colon != std::string::npos)
-	{
-		std::string key = line.substr(0, colon);
-		std::string value = line.substr(colon + 1);
-		headers[trim(key)] = trim(value);
-	}
+	if (colon == std::string::npos)
+		return ;
+	std::string key = line.substr(0, colon);
+	std::string value = line.substr(colon + 1);
+	startValue = value.find_first_not_of(" \t");
+	if (startValue != std::string::npos)
+		value = value.substr(startValue);
+	toLowerCase(key);
+	headers.insert(key, value);
 }
 
 void Request::validateMethod() const
@@ -197,13 +218,54 @@ void Request::validateProtocol() const
 		throw std::runtime_error("505 HTTP Version Not Supported");
 	}
 }
+#include <sys/stat.h>
+#include <unistd.h>
 
-// Getters
-void Request::validatePath() const
+int Request::checkPathType(const std::string &path)
 {
-	if (request_path.find("/../"))
-		throw std::runtime_error("400 Bad Request: Invalid Path");
-	request_path.find("?");
+	struct stat	buffer;
+	int			status;
+
+	status = stat(path.c_str(), &buffer);
+	if (status == 0)
+	{
+		if (S_ISDIR(buffer.st_mode))
+			return (DIR);
+		if (S_ISREG(buffer.st_mode))
+			return (FILE);
+	}
+	return (INVALID);
+}
+
+void Request::validatePath()
+{
+	size_t	q_path;
+	int		type;
+
+	if (request_path.size() > _MAX_PATH_SIZE_)
+		throw std::runtime_error("414 Request-URI Too Long");
+	if (request_path.find("..") != std::string::npos)
+		throw std::runtime_error("403 Forbidden: Path security violation");
+	if (request_path == "/")
+	{
+		request_path = "/index.html";
+		return ;
+	}
+	q_path = request_path.find('?');
+	if (q_path != std::string::npos)
+		request_path = request_path.substr(0, q_path);
+	request_path = "./www" + request_path;
+	type = checkPathType(request_path);
+	if (type == INVALID)
+		throw std::runtime_error("404 Not found: Unknown path");
+	if (type == FILE)
+	{
+		access(request_path.c_str(), R_OK) != 0
+			throw std::runtime_error("")
+	}
+	if (type == DIR)
+	{
+	}
 }
 
 const std::string &Request::getMethod() const

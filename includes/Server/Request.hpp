@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/20 14:20:47 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/25 16:05:03 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <stdint.h>
 # include <vector>
 # include "EnumClass.hpp"
+# include "HashMap.hpp"
 
 # define _METHOD_TYPE \
 	(GET, POST, DELETE)
@@ -40,10 +41,10 @@ class Request
 	const std::string &getProtocol() const;
 
   private:
+	HashMap<std::string, std::string> headers;
 	std::string method;
 	std::string request_path;
 	std::string protocol;
-	std::map<std::string, std::string> headers;
 	std::vector<uint8_t> body;
 	
 	std::vector<uint8_t> raw_buffer;
@@ -51,11 +52,13 @@ class Request
 	bool header_parsed;
 	size_t content_length;
 	
+	void toLowerCase(std::string &str);
 	void parseRequestLine(std::string line);
-	void parseHeaderLine(std::string line);
+	void parseHeaderLine(std::string &line);
 	void validateMethod() const;
 	void validateProtocol() const;
-	void validatePath() const;
+	void validatePath();
 	void validateHeader();
+	int checkPathType(const std::string &path);
 	std::string trim(const std::string &str) const;
 };
