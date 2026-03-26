@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 16:22:14 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 16:50:56 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,7 @@
 # include <stdint.h>
 # include <vector>
 # include "EnumClass.hpp"
-# include "HashMap.hpp"
-
-# define _METHOD_TYPE \
-	(GET, POST, DELETE)
-
-ENUM_CLASS(MethodType, _METHOD_TYPE, ENUM_BASIC, ENUM_LITERALS(_METHOD_TYPE, ENUM_BASIC, ENUM_BASIC_STRING););
-
+# include "../Utils/HashMap.hpp"
 
 class Request
 {
@@ -32,21 +26,26 @@ public:
 	Request();
 	Request(const Request &other);
 	~Request();
-	Request &operator=(const Request &other);
-	void feed(const uint8_t *buffer, size_t length);
+	Request 	&operator=(const Request &other);
+	void 		feed(const uint8_t *buffer, size_t length);
+	void		check();
 
 	// Getters
 	const bool 			&getCompleteStatus() const;
 	const std::string 	&getMethod() const;
 	const std::string 	&getRequestPath() const;
 	const std::string 	&getProtocol() const;
+	const bool			&isHeaderParsed()const ;
+	const bool			&isValidated()const ;
+	void				setValidateStatus();
 
 private:
 
   
 	std::vector<uint8_t> 			raw_buffer;
-	bool 							is_complete;
-	bool 							header_parsed;
+	bool 							parsing_is_complete;
+	bool 							header_is_parsed;
+	bool							is_validated;
 	size_t							content_length;
   
 	HashMap<std::string, std::string> 	headers;
@@ -58,9 +57,9 @@ private:
 	
 	
 	void 			toLowerCase(std::string &str);
-	size_t 			Request::find_header_end();
-	void			Request::parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos);
-	size_t 			Request::find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
+	size_t 			find_header_end();
+	void			parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos);
+	size_t 			find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
 	void 			parseRequestLine(std::string &line);
 	void 			parseHeaderLine(std::string &line);
 	void 			validateMethod() const;
@@ -69,5 +68,4 @@ private:
 	void 			validatePath();
 	void 			invalidPath();
 	int 			checkPathType(const std::string &path);
-	std::string 	trim(const std::string &str) const;
 };

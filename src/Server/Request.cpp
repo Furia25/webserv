@@ -6,12 +6,12 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 16:25:50 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 16:55:40 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HashMap.hpp"
-#include "Request.hpp"
+#include "Utils/HashMap.hpp"
+#include "Server/Request.hpp"
 #include <algorithm>
 #include <iterator>
 #include <sys/stat.h>
@@ -24,7 +24,7 @@
 enum	PathType
 {
 	INVALID,
-	FILE,
+	FILES,
 	DIR,
 };
 
@@ -38,15 +38,15 @@ enum	Method
 	UNKNOWN,
 };
 
-Request::Request() : method(""), request_path(""), protocol(""),
-	is_complete(false), header_parsed(false), content_length(0)
+Request::Request() : parsing_is_complete(false), header_is_parsed(false), is_validated(false),
+	content_length(0), method(""), request_path(""), protocol("")
 {
 }
 
-Request::Request(const Request &other) : method(other.method),
-	request_path(other.request_path), protocol(other.protocol),
-	headers(other.headers), body(other.body), is_complete(other.is_complete),
-	header_parsed(other.header_parsed), content_length(other.content_length)
+Request::Request(const Request &other) : parsing_is_complete(other.parsing_is_complete),
+	header_is_parsed(other.header_is_parsed), is_validated(other.is_validated),
+	content_length(other.content_length), headers(other.headers), method(other.method),
+	request_path(other.request_path), protocol(other.protocol), body(other.body)
 {
 }
 
@@ -59,7 +59,7 @@ Request &Request::operator=(const Request &other)
 		protocol = other.protocol;
 		headers = other.headers;
 		body = other.body;
-		is_complete = other.is_complete;
+		parsing_is_complete = other.parsing_is_complete;
 	}
 	return (*this);
 }
@@ -118,7 +118,7 @@ void Request::feed(const uint8_t *fragment, size_t length)
 {
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
 	
-	if (!header_parsed)
+	if (!header_is_parsed)
 	{
 		if (raw_buffer.size() > 8192)
 			throw std::runtime_error("431 Request Header Fields Too Large");
@@ -128,17 +128,18 @@ void Request::feed(const uint8_t *fragment, size_t length)
 		{
 			parse_all_headers(raw_buffer, pos);
 			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + pos + 4);
-			header_parsed = true;
+			header_is_parsed = true;
 			if (content_length == 0)
-				is_complete = true;
+				parsing_is_complete = true;
 		}
 	}
-	if (header_parsed && !is_complete)
+	if (header_is_parsed && !parsing_is_complete)
 	{
 		if (raw_buffer.size() >= content_length)
 		{
 			body.assign(raw_buffer.begin(), raw_buffer.begin() + content_length);
-			is_complete = true;
+			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + content_length);
+			parsing_is_complete = true;
 		}
 	}
 }
@@ -189,15 +190,6 @@ void Request::parseRequestLine(std::string &line)
 	{
 		protocol.erase(protocol.size() - 1);
 	}
-}
-
-std::string Request::trim(const std::string &str) const
-{
-	size_t first = str.find_first_not_of(" \t");
-	if (first == std::string::npos)
-		return ("");
-	size_t last = str.find_last_not_of(" \t");
-	return (str.substr(first, (last - first + 1)));
 }
 
 void Request::parseHeaderLine(std::string &line)
@@ -256,7 +248,7 @@ int Request::checkPathType(const std::string &path)
 		if (S_ISDIR(buffer.st_mode))
 			return (DIR);
 		if (S_ISREG(buffer.st_mode))
-			return (FILE);
+			return (FILES);
 	}
 	return (INVALID);
 }
@@ -298,13 +290,21 @@ void Request::validatePath()
 		if (full_path[full_path.size() - 1] != '/')
             full_path += "/";
         full_path += "index.html";
-		if (checkPathType(full_path) != FILE)
+		if (checkPathType(full_path) != FILES)
             throw std::runtime_error("403 Forbidden: No index file");
 	}
 	if (access(full_path.c_str(), R_OK) != 0)
         throw std::runtime_error("403 Forbidden: Access denied");
 
     request_path = full_path;
+}
+
+void	Request::check()
+{
+	validateMethod();
+	validateProtocol();
+	validatePath();
+	validateHeader();
 }
 
 const std::string &Request::getMethod() const
@@ -322,5 +322,20 @@ const std::string &Request::getProtocol() const
 
 const bool &Request::getCompleteStatus() const
 {
-	return (is_complete);
+	return (parsing_is_complete);
+}
+
+const bool &Request::isHeaderParsed()const
+{
+	return header_is_parsed;
+}
+
+const bool &Request::isValidated()const
+{
+	return is_validated;
+}
+
+void	Request::setValidateStatus()
+{
+	this->is_validated = true;
 }

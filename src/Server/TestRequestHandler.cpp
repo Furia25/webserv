@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/20 13:48:35 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 16:52:42 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,11 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 		try
 		{
 			req.feed(connection.getReadBufferPtr(), connection.getReadBufferSize());
+			if (req.isHeaderParsed() && !req.isValidated())
+			{
+				req.check();
+				req.setValidateStatus();
+			}
 		}
 		catch(const std::exception& e)
 		{
