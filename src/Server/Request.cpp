@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 14:58:38 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 15:42:09 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 #include "Request.hpp"
 #include <algorithm>
 #include <iterator>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define PROTOCOL "HTTP"
 #define _MAX_BODY_SIZE_ 10485760
@@ -218,8 +220,6 @@ void Request::validateProtocol() const
 		throw std::runtime_error("505 HTTP Version Not Supported");
 	}
 }
-#include <sys/stat.h>
-#include <unistd.h>
 
 int Request::checkPathType(const std::string &path)
 {
@@ -237,35 +237,50 @@ int Request::checkPathType(const std::string &path)
 	return (INVALID);
 }
 
-void Request::validatePath()
+void	Request::invalidPath()
 {
-	size_t	q_path;
-	int		type;
-
 	if (request_path.size() > _MAX_PATH_SIZE_)
 		throw std::runtime_error("414 Request-URI Too Long");
+		
 	if (request_path.find("..") != std::string::npos)
 		throw std::runtime_error("403 Forbidden: Path security violation");
-	if (request_path == "/")
-	{
-		request_path = "/index.html";
-		return ;
-	}
-	q_path = request_path.find('?');
+		
+	if (request_path[0] != '/')
+			throw std::runtime_error("400 Bad Request: Path must start with /");
+}
+
+void Request::validatePath()
+{
+	invalidPath();
+	
+	size_t q_path = request_path.find('?');
 	if (q_path != std::string::npos)
-		request_path = request_path.substr(0, q_path);
-	request_path = "./www" + request_path;
-	type = checkPathType(request_path);
-	if (type == INVALID)
-		throw std::runtime_error("404 Not found: Unknown path");
-	if (type == FILE)
 	{
-		access(request_path.c_str(), R_OK) != 0
-			throw std::runtime_error("")
+		query_path = request_path.substr(q_path + 1);
+		request_path = request_path.substr(0, q_path);
 	}
+	
+	if (request_path == "/")
+		request_path = "/index.html";
+	
+	std::string full_path = "./www" + request_path;
+	
+	int type = checkPathType(request_path);
+	if (type == INVALID)
+		throw std::runtime_error("404 Not found");
+
 	if (type == DIR)
 	{
+		if (full_path[full_path.size() - 1] != '/')
+            full_path += "/";
+        full_path += "index.html";
+		if (checkPathType(full_path) != FILE)
+            throw std::runtime_error("403 Forbidden: No index file");
 	}
+	if (access(full_path.c_str(), R_OK) != 0)
+        throw std::runtime_error("403 Forbidden: Access denied");
+
+    request_path = full_path;
 }
 
 const std::string &Request::getMethod() const

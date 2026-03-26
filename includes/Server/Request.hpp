@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/25 16:05:03 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 15:26:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ class Request
 	HashMap<std::string, std::string> headers;
 	std::string method;
 	std::string request_path;
+	std::string query_path;
 	std::string protocol;
 	std::vector<uint8_t> body;
 	
@@ -57,8 +58,9 @@ class Request
 	void parseHeaderLine(std::string &line);
 	void validateMethod() const;
 	void validateProtocol() const;
-	void validatePath();
 	void validateHeader();
+	void validatePath();
+	void invalidPath();
 	int checkPathType(const std::string &path);
 	std::string trim(const std::string &str) const;
 };
