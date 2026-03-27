@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/23 19:10:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/27 19:20:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,6 +129,7 @@ public:
 	iterator			end()			{ return iterator(this, this->capacity); };
 	const_iterator		end() const		{ return const_iterator(this, this->capacity); };
 
+	void				swap(HashMap& rhs);
 	bool				erase(const key_type& key);
 	void				clear(void);
 	void				rehash(size_t new_capacity);
@@ -137,6 +138,8 @@ public:
 	bool				empty() const;
 	float				load_factor() const;
 	float				max_load_factor() const;
+	size_t				max_size()	const;
+
 private:
 	Slot					*table;
 	_HashMap_::SlotMeta		*meta;
@@ -152,6 +155,20 @@ private:
 	size_t		probe(size_t h, unsigned char h7, const key_type& key) const;
 	void		_rehash(size_t new_capacity);
 };
+
+_HashMapTemplate_
+inline bool operator==(const _HashMapDef_& lhs, const _HashMapDef_& rhs)
+{
+	return (lhs.size() == rhs.size()
+		&& lhs.begin() == rhs.begin()
+		&& lhs.end() == rhs.end())
+}
+
+_HashMapTemplate_
+inline bool operator!=(const _HashMapDef_& lhs, const _HashMapDef_& rhs)
+{
+	return (!(lhs == rhs))
+}
 
 inline size_t next_pow2(size_t n)
 {
@@ -317,6 +334,25 @@ inline bool _HashMapDef_::contain(const key_type& key) const
 }
 
 _HashMapTemplate_
+inline void _HashMapDef_::swap(HashMap& rhs)
+{
+	std::swap(this->meta, rhs.meta);
+	std::swap(this->table, rhs.table);
+	std::swap(this->capacity, rhs.capacity);
+	std::swap(this->growth_factor, rhs.growth_factor);
+	std::swap(this->hasher, rhs.hasher);
+	std::swap(this->slot_used, rhs.slot_used);
+	std::swap(this->tombstone_count, rhs.tombstone_count);
+	std::swap(this->_max_load_factor, rhs._max_load_factor);
+}
+
+_HashMapTemplate_
+inline void swap(_HashMapDef_& rhs, _HashMapDef_& lhs)
+{
+	rhs.swap(lhs);
+}
+
+_HashMapTemplate_
 inline void _HashMapDef_::clear(void)
 {
 	for (size_t index = 0; index < this->capacity; index++)
@@ -376,6 +412,12 @@ inline float _HashMapDef_::max_load_factor() const
 }
 
 _HashMapTemplate_
+inline size_t _HashMapDef_::max_size() const
+{
+	return SIZE_MAX / sizeof(value_type);
+}
+
+_HashMapTemplate_
 inline size_t _HashMapDef_::probe(const key_type& key) const
 {
 	size_t	hash = this->hasher(key);
@@ -385,8 +427,8 @@ inline size_t _HashMapDef_::probe(const key_type& key) const
 _HashMapTemplate_
 inline size_t _HashMapDef_::probe(size_t hash, unsigned char h7, const key_type &key) const
 {
-	size_t				first_tombstone = SIZE_MAX;
-	size_t				index = hash & (this->capacity - 1);
+	size_t	first_tombstone	= SIZE_MAX;
+	size_t	index			= hash & (this->capacity - 1);
 
 	for (size_t i = 0; i < this->capacity; ++i)
 	{
@@ -410,7 +452,7 @@ inline void _HashMapDef_::_rehash(size_t new_capacity)
 {
 	_HashMap_::SlotMeta	*old_meta		= this->meta;
 	Slot				*old_table		= this->table;
-	size_t				old_capacity	= this->capacity;
+	size_t				 old_capacity	= this->capacity;
 
 	this->meta = new _HashMap_::SlotMeta[new_capacity];
 	this->table = new Slot[new_capacity];

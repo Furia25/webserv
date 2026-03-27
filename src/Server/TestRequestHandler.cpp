@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TestRequestHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/20 13:48:35 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/25 21:20:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,28 +22,7 @@ TestRequestHandler::~TestRequestHandler()
 
 void TestRequestHandler::onDataReceived(Connection &connection)
 {
-	int				id;
-	size_t			dataSize;
-
-	id = connection.getClientID();
-	Request &req = ongoingRequests[id];
-	dataSize = connection.getReadBufferSize();
-	if (dataSize > 0)
-	{
-		try
-		{
-			req.feed(connection.getReadBufferPtr(), connection.getReadBufferSize());
-		}
-		catch(const std::exception& e)
-		{
-			std::cerr << e.what() << '\n';
-		}
-		connection.consumeReadData(dataSize);
-	}
-	if (req.getCompleteStatus())
-	{
-		ongoingRequests.erase(id);
-	}
+	(void)connection;
 }
 
 void TestRequestHandler::onConnection(Connection &connection)

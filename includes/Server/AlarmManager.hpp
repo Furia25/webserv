@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/21 13:51:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/22 15:51:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/24 17:32:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,13 @@ public:
 	Alarm(const Alarm& other);
 	~Alarm();
 	Alarm& operator=(const Alarm& other);
+protected:
+private:
+};
+
+class TimeWheel
+{
+public:
 protected:
 private:
 };
