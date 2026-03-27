@@ -6,16 +6,27 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/20 14:28:45 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/26 16:55:40 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Request.hpp"
+#include "Utils/HashMap.hpp"
+#include "Server/Request.hpp"
 #include <algorithm>
 #include <iterator>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #define PROTOCOL "HTTP"
 #define _MAX_BODY_SIZE_ 10485760
+#define _MAX_PATH_SIZE_ 2048
+
+enum	PathType
+{
+	INVALID,
+	FILES,
+	DIR,
+};
 
 static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
 
@@ -27,15 +38,15 @@ enum	Method
 	UNKNOWN,
 };
 
-Request::Request() : method(""), request_path(""), protocol(""),
-	is_complete(false), header_parsed(false), content_length(0)
+Request::Request() : parsing_is_complete(false), header_is_parsed(false), is_validated(false),
+	content_length(0), method(""), request_path(""), protocol("")
 {
 }
 
-Request::Request(const Request &other) : method(other.method),
-	request_path(other.request_path), protocol(other.protocol),
-	headers(other.headers), body(other.body), is_complete(other.is_complete),
-	header_parsed(other.header_parsed), content_length(other.content_length)
+Request::Request(const Request &other) : parsing_is_complete(other.parsing_is_complete),
+	header_is_parsed(other.header_is_parsed), is_validated(other.is_validated),
+	content_length(other.content_length), headers(other.headers), method(other.method),
+	request_path(other.request_path), protocol(other.protocol), body(other.body)
 {
 }
 
@@ -48,7 +59,7 @@ Request &Request::operator=(const Request &other)
 		protocol = other.protocol;
 		headers = other.headers;
 		body = other.body;
-		is_complete = other.is_complete;
+		parsing_is_complete = other.parsing_is_complete;
 	}
 	return (*this);
 }
@@ -57,66 +68,99 @@ Request::~Request()
 {
 }
 
+size_t Request::find_header_end() 
+{
+    const char *target = "\r\n\r\n";
+    std::vector<uint8_t>::iterator it = std::search(raw_buffer.begin(), raw_buffer.end(), target, target + 4);
+    
+    if (it == raw_buffer.end())
+        return std::string::npos;
+        
+    return (it - raw_buffer.begin());
+}
+
+void	Request::parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos)
+{
+	size_t start = 0;
+	size_t end = 0;
+	end = find_newline(buffer, start, pos);
+	if (end != std::string::npos)
+	{
+		std::string line(buffer.begin() + start, buffer.begin() + end);
+		if (!line.empty() && line[line.size()-1] == '\r') line.erase(line.size()-1);
+    		parseRequestLine(line);
+        start = end + 1;
+	}
+	while (start < pos) 
+	{
+        end = find_newline(buffer, start, pos);
+        if (end == std::string::npos) 
+			break;
+
+        std::string line(buffer.begin() + start, buffer.begin() + end);
+        if (!line.empty() && line[line.size()-1] == '\r') 
+			line.erase(line.size()-1);
+        
+        if (!line.empty())
+            parseHeaderLine(line);
+        start = end + 1;
+    }
+}
+
+size_t Request::find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
+{
+	for (size_t i = start; i < max; ++i)
+		if (buffer[i] == '\n') return i;
+	return std::string::npos;
+}
+
 void Request::feed(const uint8_t *fragment, size_t length)
 {
-	const char	*target = "\r\n\r\n";
-	size_t		pos;
-
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-	if (!header_parsed && raw_buffer.size() > 8192)
-		throw std::runtime_error("431 Request Header Fields Too Large");
-	if (!header_parsed && raw_buffer.size() > 8192)
+	
+	if (!header_is_parsed)
 	{
-		std::vector<uint8_t>::iterator it = std::search(raw_buffer.begin(),
-				raw_buffer.end(), target, target + 4);
-		if (it != raw_buffer.end())
+		if (raw_buffer.size() > 8192)
+			throw std::runtime_error("431 Request Header Fields Too Large");
+			
+		size_t pos = find_header_end();
+		if (pos != std::string::npos)
 		{
-			pos = it - raw_buffer.begin();
-			std::string all_headers(raw_buffer.begin(), raw_buffer.begin()
-				+ pos);
-			std::stringstream ss(all_headers);
-			std::string line;
-			if (std::getline(ss, line))
-			{
-				if (!line.empty() && line[line.size() - 1] == '\r')
-					line.erase(line.size() - 1);
-				parseRequestLine(line);
-			}
-			validateMethod();
-			validatePath();
-			validateProtocol();
-			while (std::getline(ss, line))
-			{
-				if (!line.empty() && line[line.size() - 1] == '\r')
-					line.erase(line.size() - 1);
-				if (!line.empty())
-					parseHeaderLine(line);
-			}
-			validateHeader();
+			parse_all_headers(raw_buffer, pos);
 			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + pos + 4);
-			header_parsed = true;
+			header_is_parsed = true;
+			if (content_length == 0)
+				parsing_is_complete = true;
 		}
 	}
-	if (header_parsed && !is_complete)
+	if (header_is_parsed && !parsing_is_complete)
 	{
 		if (raw_buffer.size() >= content_length)
 		{
-			body.assign(raw_buffer.begin(), raw_buffer.begin()
-				+ content_length);
-			is_complete = true;
+			body.assign(raw_buffer.begin(), raw_buffer.begin() + content_length);
+			raw_buffer.erase(raw_buffer.begin(), raw_buffer.begin() + content_length);
+			parsing_is_complete = true;
 		}
 	}
+}
+
+void Request::toLowerCase(std::string &str)
+{
+	for (size_t i = 0; i < str.length(); ++i)
+		str[i] = std::tolower(str[i]);
 }
 
 void Request::validateHeader()
 {
 	long long	val;
 
+	HashMap<std::string,
+		std::string>::iterator it = headers.find("Content-Length");
 	if (headers.find("Host") == headers.end())
 		throw std::runtime_error("400 Bad Request: Missing Host header");
-	if (headers.count("Content-Length"))
+	if (it != headers.end())
 	{
-		val = std::atoll(headers["Content-Length"].c_str());
+		val = std::atoll((*it).second.c_str());
 		if (val < 0)
 			throw std::runtime_error("400 Bad Request: Negative Content-Length");
 		content_length = static_cast<size_t>(val);
@@ -131,7 +175,7 @@ void Request::validateHeader()
 		throw std::runtime_error("413 Content too large");
 }
 
-void Request::parseRequestLine(std::string line)
+void Request::parseRequestLine(std::string &line)
 {
 	std::stringstream ss(line);
 	std::string extra;
@@ -148,28 +192,23 @@ void Request::parseRequestLine(std::string line)
 	}
 }
 
-std::string Request::trim(const std::string &str) const
-{
-	size_t first = str.find_first_not_of(" \t");
-	if (first == std::string::npos)
-		return ("");
-	size_t last = str.find_last_not_of(" \t");
-	return (str.substr(first, (last - first + 1)));
-}
-
-void Request::parseHeaderLine(std::string line)
+void Request::parseHeaderLine(std::string &line)
 {
 	size_t	colon;
+	size_t	startValue;
 
 	if (!line.empty() && line[line.size() - 1] == '\r')
 		line.erase(line.size() - 1);
 	colon = line.find(':');
-	if (colon != std::string::npos)
-	{
-		std::string key = line.substr(0, colon);
-		std::string value = line.substr(colon + 1);
-		headers[trim(key)] = trim(value);
-	}
+	if (colon == std::string::npos)
+		return ;
+	std::string key = line.substr(0, colon);
+	std::string value = line.substr(colon + 1);
+	startValue = value.find_first_not_of(" \t");
+	if (startValue != std::string::npos)
+		value = value.substr(startValue);
+	toLowerCase(key);
+	headers.insert(key, value);
 }
 
 void Request::validateMethod() const
@@ -198,12 +237,74 @@ void Request::validateProtocol() const
 	}
 }
 
-// Getters
-void Request::validatePath() const
+int Request::checkPathType(const std::string &path)
 {
-	if (request_path.find("/../"))
-		throw std::runtime_error("400 Bad Request: Invalid Path");
-	request_path.find("?");
+	struct stat	buffer;
+	int			status;
+
+	status = stat(path.c_str(), &buffer);
+	if (status == 0)
+	{
+		if (S_ISDIR(buffer.st_mode))
+			return (DIR);
+		if (S_ISREG(buffer.st_mode))
+			return (FILES);
+	}
+	return (INVALID);
+}
+
+void	Request::invalidPath()
+{
+	if (request_path.size() > _MAX_PATH_SIZE_)
+		throw std::runtime_error("414 Request-URI Too Long");
+		
+	if (request_path.find("..") != std::string::npos)
+		throw std::runtime_error("403 Forbidden: Path security violation");
+		
+	if (request_path[0] != '/')
+			throw std::runtime_error("400 Bad Request: Path must start with /");
+}
+
+void Request::validatePath()
+{
+	invalidPath();
+	
+	size_t q_path = request_path.find('?');
+	if (q_path != std::string::npos)
+	{
+		query_path = request_path.substr(q_path + 1);
+		request_path = request_path.substr(0, q_path);
+	}
+	
+	if (request_path == "/")
+		request_path = "/index.html";
+	
+	std::string full_path = "./www" + request_path;
+	
+	int type = checkPathType(full_path);
+	if (type == INVALID)
+		throw std::runtime_error("404 Not found");
+
+	if (type == DIR)
+	{
+		if (full_path[full_path.size() - 1] != '/')
+            full_path += "/";
+        full_path += "index.html";
+		if (checkPathType(full_path) != FILES)
+            throw std::runtime_error("403 Forbidden: No index file");
+	}
+	if (access(full_path.c_str(), R_OK) != 0)
+        throw std::runtime_error("403 Forbidden: Access denied");
+
+    request_path = full_path;
+}
+
+void	Request::check()
+{
+	validateMethod();
+	validateProtocol();
+	validatePath();
+	validateHeader();
 }
 
 const std::string &Request::getMethod() const
@@ -221,5 +322,20 @@ const std::string &Request::getProtocol() const
 
 const bool &Request::getCompleteStatus() const
 {
-	return (is_complete);
+	return (parsing_is_complete);
+}
+
+const bool &Request::isHeaderParsed()const
+{
+	return header_is_parsed;
+}
+
+const bool &Request::isValidated()const
+{
+	return is_validated;
+}
+
+void	Request::setValidateStatus()
+{
+	this->is_validated = true;
 }
