@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 16:55:40 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/30 17:46:10 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -299,6 +299,22 @@ void Request::validatePath()
     request_path = full_path;
 }
 
+void Request::print() const 
+{
+    std::cout << "--- REQUEST DEBUG ---" << std::endl;
+    std::cout << "Method: [" << method << "]" << std::endl;
+    std::cout << "Path:   [" << request_path << "]" << std::endl;
+    std::cout << "Proto:  [" << protocol << "]" << std::endl;
+    std::cout << "Query:  [" << query_path << "]" << std::endl;
+    std::cout << "Content-Length: " << content_length << std::endl;
+    std::cout << "Headers Count: " << headers.size() << std::endl;
+    std::cout << "Body Size: " << body.size() << std::endl;
+    if (!body.empty())
+        std::cout << "Body (first 20 bytes): " << std::string(body.begin(), body.begin() + std::min(body.size(), (size_t)20)) << "..." << std::endl;
+    std::cout << "Complete: " << (is_validated ? "YES" : "NO") << std::endl;
+    std::cout << "---------------------" << std::endl;
+}
+
 void	Request::check()
 {
 	validateMethod();
@@ -335,7 +351,10 @@ const bool &Request::isValidated()const
 	return is_validated;
 }
 
-void	Request::setValidateStatus()
+void	Request::setValidateStatus(int status)
 {
-	this->is_validated = true;
+	if (status)
+		this->is_validated = true;
+	else
+		this->is_validated = false;
 }

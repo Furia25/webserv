@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/26 16:52:42 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/30 17:49:35 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,13 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 			if (req.isHeaderParsed() && !req.isValidated())
 			{
 				req.check();
-				req.setValidateStatus();
+				req.setValidateStatus(1);
 			}
+		}
+		catch(const std::runtime_error& e)
+		{
+			req.setValidateStatus(0);
+			std::cerr << e.what() << '\n';
 		}
 		catch(const std::exception& e)
 		{
@@ -45,8 +50,9 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 		}
 		connection.consumeReadData(dataSize);
 	}
-	if (req.getCompleteStatus())
+	if (req.getCompleteStatus() && req.isValidated())
 	{
+		req.print();
 		ongoingRequests.erase(id);
 	}
 }

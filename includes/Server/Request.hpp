@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 16:50:56 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/03/30 17:46:20 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ public:
 	Request 	&operator=(const Request &other);
 	void 		feed(const uint8_t *buffer, size_t length);
 	void		check();
-
+	void		print() const;
 	// Getters
 	const bool 			&getCompleteStatus() const;
 	const std::string 	&getMethod() const;
@@ -37,7 +37,7 @@ public:
 	const std::string 	&getProtocol() const;
 	const bool			&isHeaderParsed()const ;
 	const bool			&isValidated()const ;
-	void				setValidateStatus();
+	void				setValidateStatus(int status);
 
 private:
 
