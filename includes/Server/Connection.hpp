@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 19:26:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:14:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
+# include "HashedTimingWheel.hpp"
 
 # define READ_SIZE	4096
 # define READ_LIMIT	16384
