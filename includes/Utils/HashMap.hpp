@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/27 19:20:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:54:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,13 +161,13 @@ inline bool operator==(const _HashMapDef_& lhs, const _HashMapDef_& rhs)
 {
 	return (lhs.size() == rhs.size()
 		&& lhs.begin() == rhs.begin()
-		&& lhs.end() == rhs.end())
+		&& lhs.end() == rhs.end());
 }
 
 _HashMapTemplate_
 inline bool operator!=(const _HashMapDef_& lhs, const _HashMapDef_& rhs)
 {
-	return (!(lhs == rhs))
+	return (!(lhs == rhs));
 }
 
 inline size_t next_pow2(size_t n)

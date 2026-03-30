@@ -6,12 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/21 13:51:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:24:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:53:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _ALARMMANAGER_H
-# define _ALARMMANAGER_H
+
+#ifndef _HASHEDTIMINGWHEEL_H
+# define _HASHEDTIMINGWHEEL_H
 
 # include <ctime>
 # include <vector>
@@ -25,7 +26,7 @@ typedef int64_t timestamp_ms;
 #define _HTWTemplate_	template <timestamp_ms resolution>
 #define _HTWDef_	HashedTimingWheel<resolution>
 
-static timestamp_ms now_ms()
+static inline timestamp_ms now_ms()
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -37,7 +38,7 @@ class AAlarm
 public:
 	AAlarm() : wheel_slot(0), bucket_index(0), expire_at(0), wheel_round(0), scheduled(false) {};
 	virtual ~AAlarm() {};
-	virtual void	operator()() const = 0;
+	virtual void	operator()() = 0;
 
 	bool	is_scheduled(void) { return this->scheduled; };
 
@@ -56,12 +57,13 @@ template <typename T>
 class Alarm : public AAlarm
 {
 public:
-	typedef void (*callback)(T* ctx);
-	Alarm(T& obj, callback cb) : ptr(&obj), cb(cb) {};
+	typedef void (*callback)(Alarm& alarm, T ctx);
+	Alarm(T obj, callback cb) : AAlarm(), obj(obj), cb(cb) {};
 
-	virtual void	operator()() const {if (cb && ptr) {cb(ptr);} } ;
+	virtual void	operator()() {if (cb && obj) {cb(*this, obj);} } ;
 private:
-	T				*ptr;
+	Alarm();
+	T				obj;
 	callback		cb;
 };
 
@@ -177,4 +179,4 @@ inline void _HTWDef_::tick(void)
 	}
 }
 
-#endif // _ALARMMANAGER_H
+#endif // _HASHEDTIMINGWHEEL_H

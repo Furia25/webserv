@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:14:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:58:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@
 # define MAX_CLIENTS	1024
 # define MAX_EVENTS	512
 # define MAX_PENDING_CONNECTION	10
-# define EPOLL_TIMEOUT	5
+# define EPOLL_TIMEOUT	1000
 
 # define LISTENER_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
 # define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
@@ -64,6 +64,7 @@ public:
 
 	static void			tickCallback(void *instance);
 
+	static	HashedTimingWheel<1000> AlarmManager;
 	friend class Connection;
 	friend class Listener;
 protected:

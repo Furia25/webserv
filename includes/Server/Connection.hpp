@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:14:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:52:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,9 @@
 
 # define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
+
+# define CLOSING_TIMEOUT	30
+# define ABSOLUTE_TIMEOUT	60
 
 # define _CONNECTION_STATES \
 	X(ERRORED)\
@@ -86,12 +89,18 @@ private:
 	static size_t			last_id;
 	State					state;
 
+	Alarm<Connection *>		alarmTimeout;
+
+	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
+	void			timeout(Alarm<Connection *>& alarm);
 	void			setDeletable(void);
 	void			handleRead(void);
 	void			handleWrite(void);
 	Connection(const Connection& other);
 	Connection&		operator=(const Connection& other);
 };
+
+void	timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 
 bool	operator==(const Connection& lhs, const Connection& rhs);
 

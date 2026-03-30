@@ -6,11 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 18:05:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/30 19:58:29 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/TCPServer.hpp"
+
+HashedTimingWheel<1000> TCPServer::AlarmManager;
 
 volatile sig_atomic_t	g_running = true;
 
@@ -42,13 +44,14 @@ void TCPServer::run(void)
 
 	while (g_running)
 	{
-		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, EPOLL_TIMEOUT);
+		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, AlarmManager.next_timeout_ms() ? 0 : EPOLL_TIMEOUT);
 		for (int i = 0; i < n; ++i)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
 		Logger::tick();
+		AlarmManager.tick();
 	}
 }
 
