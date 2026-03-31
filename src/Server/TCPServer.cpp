@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:15:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:36:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,11 +41,13 @@ TCPServer::~TCPServer()
 void TCPServer::run(void)
 {
 	std::signal(SIGINT, signal_handler);
+	std::signal(SIGPIPE, SIG_IGN);
 	epoll_event	events[MAX_EVENTS];
 
 	while (g_running)
 	{
-		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, AlarmManager.next_timeout_ms() ? 0 : EPOLL_TIMEOUT);
+		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
+		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout);
 		for (int i = 0; i < n; ++i)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);

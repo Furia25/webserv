@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:18:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:33:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,21 +30,19 @@ Connection::~Connection() {}
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
-	if (events & EPOLLHUP)
+	if (events & EPOLLHUP && events & EPOLLRDHUP)
 		this->setDeletable();
 	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
 		this->setDeletable();
-	if (this->state != CONNECTED)
-		return ;
-	if (events & EPOLLIN)
+	if (events & EPOLLIN && this->state == CONNECTED)
 	{
 		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
-	if (events & EPOLLOUT)
+	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CLOSING_TIMEOUT);
 		this->handleWrite();
 	}
 }

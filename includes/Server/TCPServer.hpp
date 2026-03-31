@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:12:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:33:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@
 # define EPOLL_TIMEOUT	1000
 
 # define LISTENER_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
-# define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
+# define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP
 
 class TCPServer
 {
