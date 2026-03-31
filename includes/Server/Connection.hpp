@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:52:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:16:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,8 +27,8 @@
 # define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
 
-# define CLOSING_TIMEOUT	30
-# define ABSOLUTE_TIMEOUT	60
+# define CLOSING_TIMEOUT	10
+# define ABSOLUTE_TIMEOUT	30
 
 # define _CONNECTION_STATES \
 	X(ERRORED)\
@@ -46,14 +46,13 @@ public:
 		#undef X
 	};
 
-	Connection(Socket& server_socket);
+	Connection(TCPServer& server, Socket& server_socket);
 	virtual ~Connection();
 
 	void			handleEvent(TCPServer &server, uint32_t events);
 
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
-
 
 	void			clearReadBuffer();
 	void			clearWriteBuffer();
@@ -77,6 +76,7 @@ public:
 	friend std::ostream&	operator<<(std::ostream& os, const Connection& connection);
 protected:
 private:
+	TCPServer&				server;
 	Socket					client_socket;
 	size_t					id;
 

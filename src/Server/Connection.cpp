@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:53:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:18:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 size_t Connection::last_id = 0;
 
-Connection::Connection(Socket& server_socket) : bytes_sended(0), bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback)
+Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0), bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(READ_BUFFER_DEFAULT_SIZE);
@@ -34,10 +34,18 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		this->setDeletable();
 	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
 		this->setDeletable();
-	if (events & EPOLLIN && this->state == CONNECTED)
+	if (this->state != CONNECTED)
+		return ;
+	if (events & EPOLLIN)
 	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
+	}
+	if (events & EPOLLOUT)
+	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
+		this->handleWrite();
 	}
 }
 
@@ -50,6 +58,7 @@ void Connection::timeout(Alarm<Connection *>& alarm)
 void Connection::setDeletable(void) 
 {
 	this->state = DELETABLE;
+	this->server.dropConnection(this);
 }
 
 void Connection::handleRead(void)
@@ -91,11 +100,13 @@ void Connection::handleWrite(void)
 
 void Connection::sendData(const uint8_t *data, size_t len)
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
 	this->write_buffer.insert(this->write_buffer.end(), data, data + len);
 }
 
 void Connection::sendData(const std::string& data)
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
 	this->write_buffer.insert(this->write_buffer.end(), data.begin(), data.end());
 }
 
@@ -129,6 +140,7 @@ void Connection::clearReadBuffer()
 
 void Connection::clearWriteBuffer()
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS);
 	this->write_buffer.clear();
 	this->bytes_sended = 0;
 }
