@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:01:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 17:46:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 19:18:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ namespace TOML
 class Tokenizer
 {
 public:
-	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(1) {};
+	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0) {};
 	std::deque<Token>&	getTokens();
 
 	void	scan();
@@ -52,8 +52,15 @@ private:
 	void	new_line();
 
 	void	string(bool literal);
+	bool	is_multiline(char quote);
 
-	bool	triple_quote(char quote);
+	void	handle_escape(std::stringstream& ss, bool multiline);
+	void	read_unicode(std::stringstream& ss, size_t n);
+	bool	parse_string_content(std::stringstream& ss, char quote, bool multiline, bool literal);
+	bool	handle_newline(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
+	bool	handle_quote(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
+	void	flush_quotes(std::stringstream& ss, char quote, size_t& consecutive_quotes);
+	bool	validate_closing(size_t consecutive_quotes, bool multiline);
 
 	bool	handle_literals(char c);
 
@@ -62,6 +69,8 @@ private:
 
 inline char TOML::Tokenizer::consume(size_t n)
 {
+	if (n == 0)
+        return (0);
 	while (n > 1)
 	{
 		this->consume();
@@ -73,6 +82,7 @@ inline char TOML::Tokenizer::consume(size_t n)
 inline char TOML::Tokenizer::consume()
 {
 	int c = buf->sbumpc();
+	col++;
 	return c == EOF ? '\0' : static_cast<char>(c);
 }
 
@@ -85,6 +95,7 @@ inline char TOML::Tokenizer::peek()
 inline char TOML::Tokenizer::peekNext()
 {
 	this->consume();
+	col--;
 	char result = this->peek();
 	buf->sungetc();
 	return (result);

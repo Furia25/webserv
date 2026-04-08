@@ -6,40 +6,20 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 09:48:28 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 12:28:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 18:54:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Variant.hpp"
+# include "TOMLTokenizer.hpp"
 
 # include <iostream>
+# include <fstream>
 
 int main(void)
 {
-	Variant test(5LL);
-	test = std::string("fdsfdsfd");
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = 10LL;
-	test = 5LL;
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = 10LL;
-	test = 5LL;
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = 10LL;
-	test = 5LL;
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = 10LL;
-	test = 5LL;
-	test = std::string("fdsfdsfdhgjgfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhggfdgfdgfdgfdgfdhg");
-		test = std::string("fdsfdsfd");
-	test = 10LL;
-	test = 5;
-	test = "fdsfdhgfhgfhtftyiuiyuiyuiyuiyuisf";
-	std::cout << test.as<std::string &>();
+	std::fstream filestream("test.txt");
+	TOML::Tokenizer	tokenizer(filestream);
+	tokenizer.scan();
+	std::cout << "STRING PARSED : " << tokenizer.getTokens().front().getValue() << "\n";
 }

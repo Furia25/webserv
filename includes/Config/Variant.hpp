@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 11:51:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 13:01:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 18:51:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ inline Variant& Variant::operator=(const float value)
 {
 	this->destruct();
 	this->type = Variant::Type::FLOATING;
-	this->construct(value);
+	this->construct(static_cast<double>(value));
 	return (*this);
 }
 

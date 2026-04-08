@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 17:15:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 18:52:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,9 @@ public:
 	# undef X
 
 	Token(Type type, size_t line, size_t col, const std::string& value = "");
+
+	Type				getType() const;
+	const std::string&	getValue() const;
 private:
 	Type		type;
 	std::string	value;
