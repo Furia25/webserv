@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/31 11:51:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 10:53:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 13:01:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,14 @@
 # include <cstring>
 # include <vector>
 
-# include "macrosplosion.hpp"
 # include "Optional.hpp"
 # include "HashMap.hpp"
 
 class Variant
 {
 public:
-
 	typedef std::vector<Variant>			Array;
 	typedef HashMap<std::string, Variant>	Table;
-
 	# define _VARIANT_TYPES	\
 		X(STRING, std::string, &) \
 		X(BOOLEAN, bool, ) \
@@ -43,6 +40,12 @@ public:
 
 	Variant();
 	Variant(const Variant& other);
+	Variant(const char *value);
+	Variant(const char value);
+	Variant(const short value);
+	Variant(const int value);
+	Variant(const long value);
+	Variant(const float value);
 	~Variant();
 
 	# define X(name, T, ref, ...) 	explicit Variant(const T ref value);
@@ -50,7 +53,8 @@ public:
 	# undef X
 
 	Variant&	operator= (const Variant& other);
-
+	template <typename T>
+	Variant&	operator= (const T);
 	# define X(name, T, ref, ...) 	Variant&	operator= (const T ref value);
 	_VARIANT_TYPES
 	# undef X
@@ -60,6 +64,10 @@ public:
 	template <typename T> T			as();
 	template <typename T> const T	as() const;
 
+	bool				isNone() const { return this->type == NONE; }
+	static Variant		null() { return Variant(); }
+
+	std::string			*toString();
 	static const char	*toString(const Type type);
 protected:
 private:
@@ -100,9 +108,7 @@ inline void	Variant::construct(const T& value) \
 	this->check_types_errors(Type::name); \
 	this->data.name.construct(value); \
 }
-
 _VARIANT_TYPES
-
 #undef X
 
 template <>
@@ -126,18 +132,46 @@ inline Variant& Variant::operator=(const T ref value) \
 	this->construct(value); \
 	return (*this); \
 }
-
 _VARIANT_TYPES
-
 # undef X
+
+template<>
+inline Variant& Variant::operator=(const char *value)
+{
+	this->destruct();
+	this->type = Variant::Type::STRING;
+	this->construct(std::string(value));
+	return (*this);
+}
+
+template<>
+inline Variant& Variant::operator=(const float value)
+{
+	this->destruct();
+	this->type = Variant::Type::FLOATING;
+	this->construct(value);
+	return (*this);
+}
+
+# define INTEGER_PROMOTION(int_type) \
+template<> \
+inline Variant& Variant::operator=(const int_type value) \
+{ \
+	this->destruct(); \
+	this->type = Variant::Type::INTEGER; \
+	this->construct(static_cast<long long>(value)); \
+	return (*this); \
+}
+
+INTEGER_PROMOTION(char);
+INTEGER_PROMOTION(int);
+INTEGER_PROMOTION(short);
+INTEGER_PROMOTION(long);
 
 # define X(name, T, ref, ...) \
 template <> inline T ref	Variant::as() { this->check_types_errors(Type::name); return (*this->data.name.ptr()); }\
 template <> inline const T ref	Variant::as() { this->check_types_errors(Type::name); return (*this->data.name.ptr());}
-
 _VARIANT_TYPES
-
 # undef X
 
 #endif // _VARIANT_H
-

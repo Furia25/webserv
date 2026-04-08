@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 10:49:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 12:51:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,10 +44,15 @@ Variant::Variant(const T ref value) : type(name) \
 { \
 	this->construct(value); \
 }
-
 _VARIANT_TYPES
-
 # undef X
+
+Variant::Variant(const char *value) : type(NONE) { *this = value; }
+Variant::Variant(const char value) : type(NONE) { *this = value; }
+Variant::Variant(const short value) : type(NONE) { *this = value; }
+Variant::Variant(const int value) : type(NONE) { *this = value; }
+Variant::Variant(const long value) : type(NONE) { *this = value; }
+Variant::Variant(const float value) : type(NONE) { *this = value; }
 
 void	Variant::destruct()
 {
