@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 14:38:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/25 21:41:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/08 09:39:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,8 +45,6 @@ template <class T>
 class RawStorage
 {
 public:
-	RawStorage() {};
-
 	T&			operator* ();
 	const T&	operator* () const;
 

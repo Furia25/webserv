@@ -1,0 +1,76 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Variant.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/08 10:49:08 by vdurand          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Variant.hpp"
+
+Variant::Variant() : type(NONE) {}
+
+Variant::Variant(const Variant &other) : type(other.type)
+{
+	this->construct(other);
+}
+
+Variant::~Variant()
+{
+	this->destruct();
+}
+
+Variant& Variant::operator=(const Variant &other)
+{
+	if (this == &other)
+		return (*this);
+	this->destruct();
+	this->type = other.type;
+	this->construct(other);
+	return (*this);
+}
+
+Variant::Type Variant::getType() const
+{
+	return this->type;
+}
+
+# define X(name, T, ref, ...) \
+Variant::Variant(const T ref value) : type(name) \
+{ \
+	this->construct(value); \
+}
+
+_VARIANT_TYPES
+
+# undef X
+
+void	Variant::destruct()
+{
+	#define X(name, T, ref, ...) case name: this->data.name.destroy(); break;
+	switch (this->type)
+	{
+		_VARIANT_TYPES
+	default:
+		break;
+	};
+	# undef X
+}
+
+const char *Variant::toString(const Type type)
+{
+	#define X(name, T, ref, ...) case name: return #name; break;
+	switch (type)
+	{
+		_VARIANT_TYPES
+		_VARIANT_NONE
+	default:
+		break;
+	};
+	return "Unknown";
+	# undef X
+}
