@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:01:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 19:18:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 20:35:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@
 # include <iostream>
 # include <deque>
 # include <sstream>
+# include <stdint.h>
+# include <cstdio>
 
 # include "TOMLToken.hpp"
 
@@ -28,7 +30,7 @@ namespace TOML
 class Tokenizer
 {
 public:
-	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0) {};
+	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0), literal_mode(false) {};
 	std::deque<Token>&	getTokens();
 
 	void	scan();
@@ -38,9 +40,12 @@ private:
 	std::deque<Token>	tokens;
 	size_t				line;
 	size_t				col;
+	bool				literal_mode;
 
-	void	addToken(Token::Type type, const std::string& value = "");
-	void	scanToken();
+	void	addToken(Token::Type type);
+	template <typename T>
+	void	addToken(Token::Type type, const T value);
+	void	scanToken(char c);
 
 	void	error(char c);
 	char	consume();
@@ -48,6 +53,7 @@ private:
 	char	peek();
 	char	peekNext();
 	bool	match(char c);
+	bool	match_literal(const char *literal);
 	bool	eof();
 	void	new_line();
 
@@ -62,8 +68,15 @@ private:
 	void	flush_quotes(std::stringstream& ss, char quote, size_t& consecutive_quotes);
 	bool	validate_closing(size_t consecutive_quotes, bool multiline);
 
-	bool	handle_literals(char c);
+	void	handle_literals();
+	void	handle_keys(std::stringstream& literal);
+	void	handle_keywords(std::stringstream& literal);
+	void	handle_numbers(std::stringstream& literal);
 
+	template <typename T>
+	void	handle_literal(const char *literal, Token::Type type, const T value);
+	void	handle_literal(const char *literal, Token::Type type);
+	
 	int		peek_newline();
 };
 
@@ -116,6 +129,24 @@ inline bool TOML::Tokenizer::match(char c)
 	return false;
 }
 
+template <typename T>
+void TOML::Tokenizer::addToken(Token::Type type, const T value)
+{
+	this->tokens.push_back(Token(type, this->line, this->col, value));
+}
+
+template <typename T>
+inline void Tokenizer::handle_literal(const char *literal, Token::Type type, const T value)
+{
+	if (this->match_literal(literal))
+		this->addToken(type, value);
+}
+
+inline void Tokenizer::handle_literal(const char *literal, Token::Type type)
+{
+	if (this->match_literal(literal))
+		this->addToken(type);
+}
 
 } // namespace TOML
 

@@ -1,0 +1,114 @@
+[COMMENT]
+[COMMENT]
+[COMMENT]
+
+[COMMENT]
+[BARE_KEY "zero"][EQUALS][INTEGER 0]
+[BARE_KEY "positive"][EQUALS][INTEGER 42]
+[BARE_KEY "negative"][EQUALS][INTEGER -42]
+[BARE_KEY "explicit_plus"][EQUALS][INTEGER 42]
+
+[COMMENT]
+[BARE_KEY "max_int"][EQUALS][INTEGER 9223372036854775807]
+[BARE_KEY "min_int"][EQUALS][INTEGER -9223372036854775808]
+
+[COMMENT]
+[BARE_KEY "underscored"][EQUALS][INTEGER 1000000]
+[BARE_KEY "underscore_2"][EQUALS][INTEGER 1234]
+
+[COMMENT]
+[BARE_KEY "hex_lower"][EQUALS][INTEGER 3735928559]
+[BARE_KEY "hex_upper"][EQUALS][INTEGER 3735928559]
+[BARE_KEY "hex_mixed"][EQUALS][INTEGER 3735928559]
+[BARE_KEY "octal"][EQUALS][INTEGER 493]
+[BARE_KEY "binary"][EQUALS][INTEGER 214]
+
+[COMMENT]
+[COMMENT]
+[COMMENT]
+
+[COMMENT]
+[BARE_KEY "pi"][EQUALS][FLOATING 3.14159]
+[BARE_KEY "negative_f"][EQUALS][FLOATING -3.14]
+[BARE_KEY "explicit_p"][EQUALS][FLOATING 3.14]
+
+[COMMENT]
+[BARE_KEY "exp_lower"][EQUALS][FLOATING 1e+10]
+[BARE_KEY "exp_upper"][EQUALS][FLOATING 1e+10]
+[BARE_KEY "exp_positive"][EQUALS][FLOATING 1e+10]
+[BARE_KEY "exp_negative"][EQUALS][FLOATING 1e-10]
+[BARE_KEY "exp_float"][EQUALS][FLOATING 314]
+[BARE_KEY "exp_neg_float"][EQUALS][FLOATING 0.0314]
+
+[COMMENT]
+[BARE_KEY "float_under"][EQUALS][FLOATING 9.22462e+06]
+
+[COMMENT]
+[BARE_KEY "special_inf"][EQUALS][FLOATING inf]
+[BARE_KEY "positive_inf"][EQUALS][FLOATING inf]
+[BARE_KEY "negative_inf"][EQUALS][FLOATING -inf]
+[BARE_KEY "not_a_number"][EQUALS][FLOATING nan]
+[BARE_KEY "positive_nan"][EQUALS][FLOATING nan]
+[BARE_KEY "negative_nan"][EQUALS][FLOATING -nan]
+
+[COMMENT]
+[COMMENT]
+[COMMENT]
+
+[COMMENT]
+[BARE_KEY "alpha"][EQUALS][STRING "ok"]
+[BARE_KEY "UPPER"][EQUALS][STRING "ok"]
+[BARE_KEY "MiXeD"][EQUALS][STRING "ok"]
+
+[COMMENT]
+[BARE_KEY "8545"][EQUALS][STRING "numeric bare key"]
+[BARE_KEY "0"][EQUALS][STRING "zero key"]
+[BARE_KEY "123"][EQUALS][STRING "another numeric key"]
+
+[COMMENT]
+[BARE_KEY "key1"][EQUALS][STRING "ok"]
+[BARE_KEY "1key"][EQUALS][STRING "ok"]
+[BARE_KEY "k3y"][EQUALS][STRING "ok"]
+
+[COMMENT]
+[BARE_KEY "under_score"][EQUALS][STRING "ok"]
+[BARE_KEY "hy-phen"][EQUALS][STRING "ok"]
+[BARE_KEY "mix_ed-key"][EQUALS][STRING "ok"]
+[BARE_KEY "_leading"][EQUALS][STRING "ok"]
+[BARE_KEY "trailing_"][EQUALS][STRING "ok"]
+
+[COMMENT]
+[COMMENT]
+[COMMENT]
+
+[COMMENT]
+[BARE_KEY "basic"][EQUALS][STRING "hello world"]
+[BARE_KEY "empty"][EQUALS][STRING ""]
+
+[COMMENT]
+[BARE_KEY "escaped_quote"][EQUALS][STRING "she said "hello""]
+[BARE_KEY "escaped_bs"][EQUALS][STRING "back\slash"]
+[BARE_KEY "escaped_nl"][EQUALS][STRING "line1
+line2"]
+[BARE_KEY "escaped_tab"][EQUALS][STRING "col1	col2"]
+[BARE_KEY "escaped_uni"][EQUALS][STRING "unicode A"]
+[BARE_KEY "escaped_uni2"][EQUALS][STRING "unicode A"]
+
+[COMMENT]
+[BARE_KEY "literal"][EQUALS][LITERAL_STRING "C:\Users\no\escape\here"]
+[BARE_KEY "literal_empty"][EQUALS][LITERAL_STRING ""]
+[BARE_KEY "literal_win"][EQUALS][LITERAL_STRING "C:\Program Files\"]
+
+[COMMENT]
+[BARE_KEY "multiline_basic"][EQUALS][MULTI_STRING "line one
+line two
+line three
+"]
+
+[COMMENT]
+[BARE_KEY "multiline_cont"][EQUALS][MULTI_STRING "first second"]
+
+[COMMENT]
+[BARE_KEY "multiline_lit"][EQUALS][MULTI_LITERAL_STRING "no \n escape here
+raw content
+"]

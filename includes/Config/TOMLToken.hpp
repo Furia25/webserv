@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 18:52:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 17:51:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 
 # include <stddef.h>
 # include <string>
+
+# include "Variant.hpp"
 
 # define TOML_NEW_LINE	'\n'
 
@@ -35,6 +37,7 @@
 	X(DOT, '.') \
 
 # define _TOML_TOKEN_LITERALS_ \
+	X(BARE_KEY) \
 	X(STRING) \
 	X(MULTI_STRING) \
 	X(LITERAL_STRING) \
@@ -57,13 +60,15 @@ public:
 	enum Type {_TOML_TOKEN_TYPES_};
 	# undef X
 
-	Token(Type type, size_t line, size_t col, const std::string& value = "");
+	Token(Type type, size_t line, size_t col) : type(type), line(line), col(col) {}
+	template <typename T>
+	Token(Type type, size_t line, size_t col, const T value) : type(type), value(value), line(line), col(col) {}
 
-	Type				getType() const;
-	const std::string&	getValue() const;
+	Type			getType() const;
+	const Variant&	getValue() const;
 private:
 	Type		type;
-	std::string	value;
+	Variant		value;
 	size_t		line;
 	size_t		col;
 };

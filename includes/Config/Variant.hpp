@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/31 11:51:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 18:51:18 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/09 22:01:37 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,16 +25,16 @@ public:
 	typedef std::vector<Variant>			Array;
 	typedef HashMap<std::string, Variant>	Table;
 	# define _VARIANT_TYPES	\
-		X(STRING, std::string, &) \
-		X(BOOLEAN, bool, ) \
-		X(INTEGER, long long, ) \
-		X(FLOATING, double, ) \
-		X(ARRAY, Variant::Array, &) \
-		X(TABLE, Variant::Table, &)
+		X(STRING, std::string) \
+		X(BOOLEAN, bool) \
+		X(INTEGER, long long) \
+		X(FLOATING, double) \
+		X(ARRAY, Variant::Array) \
+		X(TABLE, Variant::Table)
 
 	# define _VARIANT_NONE		X(NONE, , )
 
-	# define X(name, T, ref, ...) name,
+	# define X(name, T, ...) name,
 	enum Type { _VARIANT_TYPES _VARIANT_NONE};
 	# undef X
 
@@ -48,21 +48,21 @@ public:
 	Variant(const float value);
 	~Variant();
 
-	# define X(name, T, ref, ...) 	explicit Variant(const T ref value);
+	# define X(name, T, ...) 	explicit Variant(const T& value);
 	_VARIANT_TYPES
 	# undef X
 
 	Variant&	operator= (const Variant& other);
 	template <typename T>
 	Variant&	operator= (const T);
-	# define X(name, T, ref, ...) 	Variant&	operator= (const T ref value);
+	# define X(name, T, ...) 	Variant&	operator= (const T& value);
 	_VARIANT_TYPES
 	# undef X
 
 	Type							getType() const;
 
-	template <typename T> T			as();
-	template <typename T> const T	as() const;
+	template <typename T> T&		as();
+	template <typename T> const T&	as() const;
 
 	bool				isNone() const { return this->type == NONE; }
 	static Variant		null() { return Variant(); }
@@ -74,12 +74,12 @@ private:
 	Type	type;
 	union Data
 	{
-		# define X(name, T, ref, ...) RawStorage<T>	name;
+		# define X(name, T, ...) RawStorage<T>	name;
 			_VARIANT_TYPES
 		# undef X
 	}	data;
 
-	void	check_types_errors(Variant::Type expected);
+	void	check_types_errors(Variant::Type expected) const;
 	void	destruct();
 	template <typename T> void	construct(const T& value);
 };
@@ -95,13 +95,13 @@ public:
 		: std::runtime_error(std::string("Invalid type access : got ") + Variant::toString(type) + ", expected " + Variant::toString(expected)) {}
 };
 
-inline void Variant::check_types_errors(Variant::Type expected)
+inline void Variant::check_types_errors(Variant::Type expected) const
 {
 	if (this->type != expected)
 		throw ParsedVariantException(this->type, expected);
 }
 
-# define X(name, T, ref, ...) \
+# define X(name, T, ...) \
 template <> \
 inline void	Variant::construct(const T& value) \
 { \
@@ -114,7 +114,7 @@ _VARIANT_TYPES
 template <>
 inline void Variant::construct(const Variant& other)
 {
-	#define X(name, T, ref, ...) case name: this->data.name.construct(*other.data.name.ptr()); break;
+	#define X(name, T, ...) case name: this->data.name.construct(*other.data.name.ptr()); break;
 	switch (this->type)
 	{
 		_VARIANT_TYPES
@@ -124,8 +124,8 @@ inline void Variant::construct(const Variant& other)
 	# undef X
 }
 
-# define X(name, T, ref, ...) \
-inline Variant& Variant::operator=(const T ref value) \
+# define X(name, T, ...) \
+inline Variant& Variant::operator=(const T& value) \
 { \
 	this->destruct(); \
 	this->type = name; \
@@ -168,10 +168,10 @@ INTEGER_PROMOTION(int);
 INTEGER_PROMOTION(short);
 INTEGER_PROMOTION(long);
 
-# define X(name, T, ref, ...) \
-template <> inline T ref	Variant::as() { this->check_types_errors(Type::name); return (*this->data.name.ptr()); }\
-template <> inline const T ref	Variant::as() { this->check_types_errors(Type::name); return (*this->data.name.ptr());}
+#define X(name, T) \
+template <> inline T&		Variant::as<T>()	{ this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); } \
+template <> inline const T&	Variant::as<T>() const { this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
-# undef X
+#undef X
 
 #endif // _VARIANT_H

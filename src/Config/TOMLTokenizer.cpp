@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 19:20:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 22:26:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,38 +14,162 @@
 
 void TOML::Tokenizer::scan()
 {
-	while (!eof())
-		scanToken();
-	this->addToken(Token::END_OF_FILE);
+	while (!this->eof())
+	{
+		char c = this->consume();
+		scanToken(c);
+	}
 }
 
-void TOML::Tokenizer::scanToken()
+void TOML::Tokenizer::scanToken(char c)
 {
-	char c = this->consume();
 	switch (c)
 	{
-		#define X(name, lexeme) case lexeme: this->addToken(Token::name); break;
-		_TOML_TOKEN_OPERATOR_
-		#undef X
-		case '{'			: this->addToken(match('{') ? Token::DOUBLE_LBRACKET : Token::LBRACKET);
-		case '}'			: this->addToken(match('}') ? Token::DOUBLE_RBRACKET : Token::RBRACKET);
-		case '\0'			: this->addToken(Token::END_OF_FILE); break;
-		case TOML_NEW_LINE	: this->new_line(); break;
-		case '\r'	:
-			if (match(TOML_NEW_LINE))
-				this->new_line();
-		case '#'	:
-			while (!TOML::is_control(this->peek()) || peek_newline() == 0 || eof())
-				this->consume();
-			this->addToken(Token::COMMENT);
-			break;
-		case '"'	: this->string(false); break;
-		case '\''	: this->string(true); break;
+	case '\0'	: this->addToken(Token::END_OF_FILE);	break;
+	case '('	: this->addToken(Token::LBRACE);		break;
+	case ')'	: this->addToken(Token::RBRACE);		break;
+	case '.'	: this->addToken(Token::DOT);			break;
+	case TOML_NEW_LINE:
+		this->new_line();
+		this->literal_mode = false;
+	break;
+	case '=':
+		this->literal_mode = true;
+		this->addToken(Token::EQUALS);
+		break;
+	case ',':
+		this->literal_mode = false;
+		this->addToken(Token::COMMA);
+		break;
+	case '{':
+		this->literal_mode = false;
+		this->addToken(match('{') ? Token::DOUBLE_LBRACKET : Token::LBRACKET);
+		break;
+	case '}':
+		this->addToken(match('}') ? Token::DOUBLE_RBRACKET : Token::RBRACKET);
+		break;
+	case '\r'	:
+		if (match(TOML_NEW_LINE))
+			this->new_line();
+	case '#':
+		while (!TOML::is_control(this->peek()) || peek_newline() == 0 || eof())
+			this->consume();
+		this->addToken(Token::COMMENT);
+		break;
+	case '"': this->string(false); break;
+	case '\'': this->string(true); break;
+	case '\t': break;
+	case ' ': break;
 	default:
-		if (!this->handle_literals(c))
-			this->error(c); /*UNKNOWN THING*/
+		this->buf->sungetc();
+		this->handle_literals();
 		break;
 	}
+}
+
+void TOML::Tokenizer::handle_literals()
+{
+	std::stringstream	literal;
+
+	while (!this->eof())
+	{
+		char c = this->consume();
+		this->col--;
+		if (c == '\r' || c == '\t' || c == '\0' || c == ' ' || c == '=' || c == TOML_NEW_LINE)
+		{
+			this->buf->sungetc();
+			break ;
+		}
+		literal << c;
+	}
+	if (this->literal_mode)
+		this->handle_numbers(literal);
+	else
+		this->handle_keys(literal);
+}
+
+void	TOML::Tokenizer::handle_keys(std::stringstream& literal)
+{
+	std::ostringstream	key_value;
+	while (literal.peek() != EOF && !literal.bad())
+	{
+		char c = literal.get(); col++;
+		switch (c)
+		{
+		case '0' ... '9':
+		case 'a' ... 'z':
+		case 'A' ... 'Z':
+		case '_':
+		case '-':
+			key_value << c;
+			break;
+		default:
+			this->error(c); //TODO throw : unexpected char
+			goto exit;
+		}
+	}
+exit:
+	this->addToken(Token::BARE_KEY, key_value.str());
+}
+
+void TOML::Tokenizer::handle_numbers(std::stringstream& literal)
+{
+	Token::Type			candidate = Token::INTEGER;
+	std::ostringstream	ss;
+	char				*end_ptr;
+	bool				first_char = true;
+	int					base = 10;
+
+	while (literal.peek() != EOF && !literal.bad())
+	{
+		char c = literal.get(); col++;
+		char next = literal.peek();
+		switch (c)
+		{
+		case '0':
+			if (!first_char)
+				goto write;
+			switch (next)
+			{
+			case 'x': base = 16; literal.get(); col++; break;
+			case 'o': base = 8;  literal.get(); col++; break;
+			case 'b': base = 2;  literal.get(); col++; break;
+			case '0' ... '9': this->error('0'); break; // TODO trailing zeros
+			}
+			break;
+		case '.':
+			if (first_char || !std::isdigit(next))
+				this->error('.'); // TODO unexpected .
+			candidate = Token::FLOATING;
+			goto write;
+			break;
+		case '_':
+			if (first_char || !std::isdigit(next))
+				this->error('_'); // TODO misplaced underscore
+			break;
+		case 'e':
+		case 'E':
+		case 'i':
+		case 'n':
+			if (base == 10)
+				candidate = Token::FLOATING;
+		default: write:
+			first_char = false;
+			ss << c;
+			break;
+		}
+	}
+	errno = 0;
+	if (candidate == Token::INTEGER)
+		this->addToken(candidate, std::strtoll(ss.str().c_str(), &end_ptr, base));
+	else
+		this->addToken(candidate, std::strtod(ss.str().c_str(), &end_ptr));
+	if (candidate == Token::FLOATING && base != 10)
+		this->error('f'); // TODO base on floats;
+	if (errno == ERANGE)
+		this->error('r'); // TODO throw overflow
+	if (*end_ptr != '\0')
+		this->error(*end_ptr); // TODO throw unexpected char
 }
 
 void TOML::Tokenizer::string(bool literal)
@@ -61,7 +185,8 @@ void TOML::Tokenizer::string(bool literal)
 
 	if (!this->parse_string_content(ss, quote, multiline, literal))
 		return ;
-	this->addToken(types[literal][multiline], ss.str());
+	std::string str = ss.str();
+	this->addToken(types[literal][multiline], (std::string&)str);
 }
 
 bool TOML::Tokenizer::is_multiline(char quote)
@@ -149,11 +274,6 @@ bool TOML::Tokenizer::validate_closing(size_t consecutive_quotes, bool multiline
 	return valid;
 }
 
-bool TOML::Tokenizer::handle_literals(char c)
-{
-	return false;
-}
-
 void TOML::Tokenizer::handle_escape(std::stringstream& ss, bool multiline)
 {
 	if (this->eof())
@@ -176,7 +296,7 @@ void TOML::Tokenizer::handle_escape(std::stringstream& ss, bool multiline)
 		if (!multiline || (this->peek_newline() == 0 && TOML::is_whitespace(escape)))
 		{
 			this->error('d'); /*TODO Reserved escape sequence*/
-			break ;
+			break;
 		}
 		while (!this->eof())
 		{
@@ -186,7 +306,7 @@ void TOML::Tokenizer::handle_escape(std::stringstream& ss, bool multiline)
 			else if (TOML::is_whitespace(this->peek()))
 				this->consume();
 			else
-				break ;
+				break;
 		}
 	}
 }
@@ -215,27 +335,27 @@ void TOML::Tokenizer::read_unicode(std::stringstream& ss, size_t n)
 	}
 
 	if (codepoint <= 0x7F)
-		ss << (char)(codepoint);
+		ss << static_cast<char>(codepoint);
 	else if (codepoint <= 0x7FF)
 	{
-		ss << (char)(0xC0 | (codepoint >> 6));
-		ss << (char)(0x80 | (codepoint & 0x3F));
+		ss << static_cast<char>(0xC0 | (codepoint >> 6));
+		ss << static_cast<char>(0x80 | (codepoint & 0x3F));
 	}
 	else if (codepoint <= 0xFFFF)
 	{
-		ss << (char)(0xE0 | (codepoint >> 12));
-		ss << (char)(0x80 | ((codepoint >> 6) & 0x3F));
-		ss << (char)(0x80 | (codepoint & 0x3F));
+		ss << static_cast<char>(0xE0 | (codepoint >> 12));
+		ss << static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+		ss << static_cast<char>(0x80 | (codepoint & 0x3F));
 	}
 	else if (codepoint <= 0x10FFFF)
 	{
-		ss << (char)(0xF0 | (codepoint >> 18));
-		ss << (char)(0x80 | ((codepoint >> 12) & 0x3F));
-		ss << (char)(0x80 | ((codepoint >> 6) & 0x3F));
-		ss << (char)(0x80 | (codepoint & 0x3F));
+		ss << static_cast<char>(0xF0 | (codepoint >> 18));
+		ss << static_cast<char>(0x80 | ((codepoint >> 12) & 0x3F));
+		ss << static_cast<char>(0x80 | ((codepoint >> 6) & 0x3F));
+		ss << static_cast<char>(0x80 | (codepoint & 0x3F));
 	}
 	else
-		this->error('u'); // codepoint out of valid Unicode range
+		this->error('u'); // TODO codepoint out of valid Unicode range
 }
 
 int TOML::Tokenizer::peek_newline()
@@ -250,7 +370,7 @@ int TOML::Tokenizer::peek_newline()
 
 void TOML::Tokenizer::error(char c)
 {
-	std::cout << "ERROR: Line: " << line << " Col: " << col << " char: " << c << "\n";
+	std::cout << "ERROR: Line: " << line << " Col: " << col << " char: " << c << " int: " << (int)c << "\n";
 }
 
 void TOML::Tokenizer::new_line()
@@ -260,11 +380,10 @@ void TOML::Tokenizer::new_line()
 	this->addToken(Token::NEW_LINE);
 }
 
-void TOML::Tokenizer::addToken(Token::Type type, const std::string& value)
+void TOML::Tokenizer::addToken(Token::Type type)
 {
-	this->tokens.push_back(Token(type, this->line, this->col, value));
+	this->tokens.push_back(Token(type, this->line, this->col));
 }
-
 
 std::deque<TOML::Token>& TOML::Tokenizer::getTokens()
 {

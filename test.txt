@@ -1,1 +1,117 @@
-''''That,' she said, 'is still pointless.'''' = 
+# ============================================================
+# INTEGERS
+# ============================================================
+
+# basiques
+zero          = 0
+positive      = 42
+negative      = -42
+explicit_plus = +42
+
+# grands nombres
+max_int       = 9223372036854775807
+min_int       = -9223372036854775808
+
+# underscores
+underscored   = 1_000_000
+underscore_2  = 1_2_3_4
+
+# bases
+hex_lower     = 0xdeadbeef
+hex_upper     = 0xDEADBEEF
+hex_mixed     = 0xDeAdBeEf
+octal         = 0o755
+binary        = 0b11010110
+
+# ============================================================
+# FLOATS
+# ============================================================
+
+# basiques
+pi            = 3.14159
+negative_f    = -3.14
+explicit_p    = +3.14
+
+# exposants
+exp_lower     = 1e10
+exp_upper     = 1E10
+exp_positive  = 1e+10
+exp_negative  = 1e-10
+exp_float     = 3.14e2
+exp_neg_float = 3.14e-2
+
+# underscores
+float_under   = 9_224_617.445_991_228_313
+
+# valeurs spéciales
+special_inf   = inf
+positive_inf  = +inf
+negative_inf  = -inf
+not_a_number  = nan
+positive_nan  = +nan
+negative_nan  = -nan
+
+# ============================================================
+# BARE KEYS
+# ============================================================
+
+# lettres
+alpha         = "ok"
+UPPER         = "ok"
+MiXeD         = "ok"
+
+# chiffres seuls (bare key valide en TOML)
+8545          = "numeric bare key"
+0             = "zero key"
+123           = "another numeric key"
+
+# mix chiffres + lettres
+key1          = "ok"
+1key          = "ok"
+k3y           = "ok"
+
+# underscores et tirets
+under_score   = "ok"
+hy-phen       = "ok"
+mix_ed-key    = "ok"
+_leading      = "ok"
+trailing_     = "ok"
+
+# ============================================================
+# STRINGS
+# ============================================================
+
+# basiques
+basic         = "hello world"
+empty         = ""
+
+# échappements
+escaped_quote = "she said \"hello\""
+escaped_bs    = "back\\slash"
+escaped_nl    = "line1\nline2"
+escaped_tab   = "col1\tcol2"
+escaped_uni   = "unicode \u0041"
+escaped_uni2  = "unicode \U00000041"
+
+# literal strings (pas d'échappement)
+literal       = 'C:\Users\no\escape\here'
+literal_empty = ''
+literal_win   = 'C:\Program Files\'
+
+# multiline basic
+multiline_basic = """
+line one
+line two
+line three
+"""
+
+# multiline avec backslash de continuation
+multiline_cont = """
+first \
+second"""
+
+# multiline literal
+multiline_lit = '''
+no \n escape here
+raw content
+'''

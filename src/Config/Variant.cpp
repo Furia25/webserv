@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 12:51:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 22:02:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,8 @@ Variant::Type Variant::getType() const
 	return this->type;
 }
 
-# define X(name, T, ref, ...) \
-Variant::Variant(const T ref value) : type(name) \
+# define X(name, T, ...) \
+Variant::Variant(const T& value) : type(name) \
 { \
 	this->construct(value); \
 }
@@ -56,7 +56,7 @@ Variant::Variant(const float value) : type(NONE) { *this = value; }
 
 void	Variant::destruct()
 {
-	#define X(name, T, ref, ...) case name: this->data.name.destroy(); break;
+	#define X(name, T, ...) case name: this->data.name.destroy(); break;
 	switch (this->type)
 	{
 		_VARIANT_TYPES
@@ -68,7 +68,7 @@ void	Variant::destruct()
 
 const char *Variant::toString(const Type type)
 {
-	#define X(name, T, ref, ...) case name: return #name; break;
+	#define X(name, T, ...) case name: return #name; break;
 	switch (type)
 	{
 		_VARIANT_TYPES
