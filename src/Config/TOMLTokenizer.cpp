@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 22:26:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 22:46:28 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,10 @@ void TOML::Tokenizer::handle_literals()
 		literal << c;
 	}
 	if (this->literal_mode)
-		this->handle_numbers(literal);
+	{
+		if (!this->handle_keywords(literal))
+			this->handle_numbers(literal);
+	}
 	else
 		this->handle_keys(literal);
 }
@@ -110,6 +113,24 @@ void	TOML::Tokenizer::handle_keys(std::stringstream& literal)
 	}
 exit:
 	this->addToken(Token::BARE_KEY, key_value.str());
+}
+
+bool TOML::Tokenizer::handle_keywords(std::stringstream &literal)
+{
+	/*TODO CHANGE THIS TO TRIE*/
+	std::string buf = literal.str();
+
+	if (buf.size() == 4 && buf == "true")
+	{
+		this->addToken(Token::BOOLEAN, true);
+		return true;
+	}
+	else if (buf.size() == 5 && buf == "false")
+	{
+		this->addToken(Token::BOOLEAN, false);
+		return true;
+	}
+	return (false);
 }
 
 void TOML::Tokenizer::handle_numbers(std::stringstream& literal)

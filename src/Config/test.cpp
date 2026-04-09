@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 09:48:28 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 22:29:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/09 22:45:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ int main(void)
 			case TOML::Token::BARE_KEY: std::cout << " \"" << (*it).getValue().as<std::string>() << "\""; break;
 			case TOML::Token::FLOATING: std::cout << " " << (*it).getValue().as<double>(); break;
 			case TOML::Token::INTEGER: std::cout << " " << (*it).getValue().as<long long>(); break;
+			case TOML::Token::BOOLEAN: std::cout << " " << ((*it).getValue().as<bool>() ? "TRUE" : "FALSE"); break;
 		}
 		std::cout << "]";
 	}

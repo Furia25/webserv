@@ -3,7 +3,7 @@
 # ============================================================
 
 # basiques
-zero          = 0
+zero          = true
 positive      = 42
 negative      = -42
 explicit_plus = +42
