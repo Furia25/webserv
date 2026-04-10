@@ -6,28 +6,31 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:04 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 17:49:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/10 17:48:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "TOMLToken.hpp"
 
-TOML::Token::Type TOML::Token::getType() const
+toml::Token& toml::Token::operator=(const Token &other)
 {
-	return type;
+	this->type = other.type;
+	this->line = other.line;
+	this->literal = other.literal;
+	this->col = other.col;
+	return (*this);
 }
 
-const Variant& TOML::Token::getValue() const
-{
-	return value;
-}
+toml::Token::Type toml::Token::getType() const { return type; }
 
-bool TOML::is_whitespace(char c)
+const std::string &toml::Token::getLiteral() const { return literal; }
+
+bool toml::is_whitespace(char c)
 {
 	return c == '\t' || c == ' ';
 }
 
-bool TOML::is_control(char c)
+bool toml::is_control(char c)
 {
 	return (c <= 0x08) || (c >= 0x0A && c <= 0x1F) || (c == 0x7F);
 }

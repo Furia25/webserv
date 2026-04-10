@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Variant.hpp                                        :+:      :+:    :+:   */
+/*   TOMLVariant.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 22:01:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/10 15:57:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,16 @@
 # include "Optional.hpp"
 # include "HashMap.hpp"
 
+namespace toml
+{
+
 class Variant
 {
 public:
+
 	typedef std::vector<Variant>			Array;
 	typedef HashMap<std::string, Variant>	Table;
+
 	# define _VARIANT_TYPES	\
 		X(STRING, std::string) \
 		X(BOOLEAN, bool) \
@@ -52,18 +57,18 @@ public:
 	_VARIANT_TYPES
 	# undef X
 
-	Variant&	operator= (const Variant& other);
 	template <typename T>
 	Variant&	operator= (const T);
-	# define X(name, T, ...) 	Variant&	operator= (const T& value);
+	Variant&	operator= (const Variant& other);
+
+	# define X(name, T, ...) Variant& operator= (const T& value);
 	_VARIANT_TYPES
 	# undef X
-
-	Type							getType() const;
 
 	template <typename T> T&		as();
 	template <typename T> const T&	as() const;
 
+	Type				getType() const;
 	bool				isNone() const { return this->type == NONE; }
 	static Variant		null() { return Variant(); }
 
@@ -84,6 +89,7 @@ private:
 	template <typename T> void	construct(const T& value);
 };
 
+
 class ParsedVariantException : public std::runtime_error
 {
 public:
@@ -95,7 +101,7 @@ public:
 		: std::runtime_error(std::string("Invalid type access : got ") + Variant::toString(type) + ", expected " + Variant::toString(expected)) {}
 };
 
-inline void Variant::check_types_errors(Variant::Type expected) const
+inline void toml::Variant::check_types_errors(Variant::Type expected) const
 {
 	if (this->type != expected)
 		throw ParsedVariantException(this->type, expected);
@@ -103,7 +109,7 @@ inline void Variant::check_types_errors(Variant::Type expected) const
 
 # define X(name, T, ...) \
 template <> \
-inline void	Variant::construct(const T& value) \
+inline void	toml::Variant::construct(const T& value) \
 { \
 	this->check_types_errors(Type::name); \
 	this->data.name.construct(value); \
@@ -112,7 +118,7 @@ _VARIANT_TYPES
 #undef X
 
 template <>
-inline void Variant::construct(const Variant& other)
+inline void toml::Variant::construct(const Variant& other)
 {
 	#define X(name, T, ...) case name: this->data.name.construct(*other.data.name.ptr()); break;
 	switch (this->type)
@@ -125,7 +131,7 @@ inline void Variant::construct(const Variant& other)
 }
 
 # define X(name, T, ...) \
-inline Variant& Variant::operator=(const T& value) \
+inline toml::Variant& toml::Variant::operator=(const T& value) \
 { \
 	this->destruct(); \
 	this->type = name; \
@@ -136,7 +142,7 @@ _VARIANT_TYPES
 # undef X
 
 template<>
-inline Variant& Variant::operator=(const char *value)
+inline toml::Variant& toml::Variant::operator=(const char *value)
 {
 	this->destruct();
 	this->type = Variant::Type::STRING;
@@ -145,7 +151,7 @@ inline Variant& Variant::operator=(const char *value)
 }
 
 template<>
-inline Variant& Variant::operator=(const float value)
+inline toml::Variant& toml::Variant::operator=(const float value)
 {
 	this->destruct();
 	this->type = Variant::Type::FLOATING;
@@ -155,7 +161,7 @@ inline Variant& Variant::operator=(const float value)
 
 # define INTEGER_PROMOTION(int_type) \
 template<> \
-inline Variant& Variant::operator=(const int_type value) \
+inline toml::Variant& toml::Variant::operator=(const int_type value) \
 { \
 	this->destruct(); \
 	this->type = Variant::Type::INTEGER; \
@@ -169,9 +175,15 @@ INTEGER_PROMOTION(short);
 INTEGER_PROMOTION(long);
 
 #define X(name, T) \
-template <> inline T&		Variant::as<T>()	{ this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); } \
-template <> inline const T&	Variant::as<T>() const { this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); }
+template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); } \
+template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
 #undef X
+
+typedef Variant::Array	Array;
+typedef Variant::Table	Table;
+typedef Variant			Value;
+
+};
 
 #endif // _VARIANT_H

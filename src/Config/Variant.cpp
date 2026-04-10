@@ -6,25 +6,25 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 22:02:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/10 16:55:37 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Variant.hpp"
+#include "TOMLVariant.hpp"
 
-Variant::Variant() : type(NONE) {}
+toml::Variant::Variant() : type(NONE) {}
 
-Variant::Variant(const Variant &other) : type(other.type)
+toml::Variant::Variant(const Variant &other) : type(other.type)
 {
 	this->construct(other);
 }
 
-Variant::~Variant()
+toml::Variant::~Variant()
 {
 	this->destruct();
 }
 
-Variant& Variant::operator=(const Variant &other)
+toml::Variant& toml::Variant::operator=(const Variant &other)
 {
 	if (this == &other)
 		return (*this);
@@ -34,27 +34,25 @@ Variant& Variant::operator=(const Variant &other)
 	return (*this);
 }
 
-Variant::Type Variant::getType() const
-{
-	return this->type;
-}
+toml::Variant::Type toml::Variant::getType() const { return this->type; }
 
 # define X(name, T, ...) \
-Variant::Variant(const T& value) : type(name) \
+toml::Variant::Variant(const T& value) : type(name) \
 { \
 	this->construct(value); \
 }
 _VARIANT_TYPES
+
 # undef X
 
-Variant::Variant(const char *value) : type(NONE) { *this = value; }
-Variant::Variant(const char value) : type(NONE) { *this = value; }
-Variant::Variant(const short value) : type(NONE) { *this = value; }
-Variant::Variant(const int value) : type(NONE) { *this = value; }
-Variant::Variant(const long value) : type(NONE) { *this = value; }
-Variant::Variant(const float value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const char *value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const char value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const short value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const int value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const long value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const float value) : type(NONE) { *this = value; }
 
-void	Variant::destruct()
+void	toml::Variant::destruct()
 {
 	#define X(name, T, ...) case name: this->data.name.destroy(); break;
 	switch (this->type)
@@ -66,7 +64,7 @@ void	Variant::destruct()
 	# undef X
 }
 
-const char *Variant::toString(const Type type)
+const char *toml::Variant::toString(const Type type)
 {
 	#define X(name, T, ...) case name: return #name; break;
 	switch (type)

@@ -6,46 +6,47 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:01:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/09 22:42:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/10 19:43:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _TOMLTOKENIZER_H
-# define _TOMLTOKENIZER_H
+# define _TOMLTOKENIZER_
 
 # include <stdexcept>
 # include <stddef.h>
 # include <string>
 # include <iostream>
 # include <deque>
+
 # include <sstream>
 # include <stdint.h>
 # include <cstdio>
 
 # include "TOMLToken.hpp"
 
-namespace TOML
+namespace toml
 {
 
 class Tokenizer
 {
 public:
-	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0), literal_mode(false) {};
-	std::deque<Token>&	getTokens();
-
-	void	scan();
+	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0) {};
+	Token	next_token();
+	Token	peek_token();
+	bool	eof();
 protected:
 private:
-	std::streambuf*		buf;
-	std::deque<Token>	tokens;
+	std::streambuf		*buf;
+	Optional<Token>		actual;
+	Optional<Token>		next;
 	size_t				line;
 	size_t				col;
-	bool				literal_mode;
 
 	void	addToken(Token::Type type);
-	template <typename T>
-	void	addToken(Token::Type type, const T value);
-	void	scanToken(char c);
+	void	addToken(Token::Type type, const std::string& str);
+
+	void	scanToken();
 
 	void	error(char c);
 	char	consume();
@@ -53,29 +54,25 @@ private:
 	char	peek();
 	char	peekNext();
 	bool	match(char c);
-	bool	eof();
-	void	new_line();
+
+	void	newLine();
 
 	void	string(bool literal);
 	bool	is_multiline(char quote);
 
-	void	handle_escape(std::stringstream& ss, bool multiline);
-	void	read_unicode(std::stringstream& ss, size_t n);
-	bool	parse_string_content(std::stringstream& ss, char quote, bool multiline, bool literal);
-	bool	handle_newline(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
-	bool	handle_quote(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
-	void	flush_quotes(std::stringstream& ss, char quote, size_t& consecutive_quotes);
-	bool	validate_closing(size_t consecutive_quotes, bool multiline);
-
-	void	handle_literals();
-	void	handle_keys(std::stringstream& literal);
-	bool	handle_keywords(std::stringstream& literal);
-	void	handle_numbers(std::stringstream& literal);
+	void	lexLiterals();
+	void	handleEscape(std::stringstream& ss, bool multiline);
+	void	readUnicode(std::stringstream& ss, size_t n);
+	bool	parseStringContent(std::stringstream& ss, char quote, bool multiline, bool literal);
+	bool	handleNewline(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
+	bool	handleQuote(std::stringstream& ss, char quote, bool multiline, size_t& consecutive_quotes);
+	void	flushQuotes(std::stringstream& ss, char quote, size_t& consecutive_quotes);
+	bool	validateClosing(size_t consecutive_quotes, bool multiline);
 
 	int		peek_newline();
 };
 
-inline char TOML::Tokenizer::consume(size_t n)
+inline char toml::Tokenizer::consume(size_t n)
 {
 	if (n == 0)
         return (0);
@@ -87,20 +84,20 @@ inline char TOML::Tokenizer::consume(size_t n)
 	return this->consume();
 }
 
-inline char TOML::Tokenizer::consume()
+inline char toml::Tokenizer::consume()
 {
 	int c = buf->sbumpc();
 	col++;
 	return c == EOF ? '\0' : static_cast<char>(c);
 }
 
-inline char TOML::Tokenizer::peek()
+inline char toml::Tokenizer::peek()
 {
 	int c = buf->sgetc();
 	return c == EOF ? '\0' : static_cast<char>(c);
 }
 
-inline char TOML::Tokenizer::peekNext()
+inline char toml::Tokenizer::peekNext()
 {
 	this->consume();
 	col--;
@@ -109,12 +106,12 @@ inline char TOML::Tokenizer::peekNext()
 	return (result);
 }
 
-inline bool TOML::Tokenizer::eof()
+inline bool toml::Tokenizer::eof()
 {
 	return buf->sgetc() == EOF;
 }
 
-inline bool TOML::Tokenizer::match(char c)
+inline bool toml::Tokenizer::match(char c)
 {
 	if (this->peek() == c)
 	{
@@ -124,12 +121,6 @@ inline bool TOML::Tokenizer::match(char c)
 	return false;
 }
 
-template <typename T>
-void TOML::Tokenizer::addToken(Token::Type type, const T value)
-{
-	this->tokens.push_back(Token(type, this->line, this->col, value));
-}
-
-} // namespace TOML
+} // namespace toml
 
 #endif // _TOMLTOKENIZER_H
