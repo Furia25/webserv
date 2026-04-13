@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 17:48:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/11 02:01:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,8 @@ public:
 	Token(Type type, size_t line, size_t col, const std::string& str) : type(type), line(line), col(col), literal(str) {};
 	Token(const Token& other) { *this = other; };
 
-	Token& operator= (const Token& other);
+	void	swap(Token& other);
+	Token&	operator= (const Token& other);
 
 	Type				getType() const;
 	const std::string&	getLiteral() const;

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 15:57:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/13 21:54:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,8 @@ public:
 
 	Type				getType() const;
 	bool				isNone() const { return this->type == NONE; }
+	bool				isExplicit() const { return this->is_explicit; };
+	void				setExplicit() { this->is_explicit = true; };
 	static Variant		null() { return Variant(); }
 
 	std::string			*toString();
@@ -77,6 +79,7 @@ public:
 protected:
 private:
 	Type	type;
+	bool	is_explicit;
 	union Data
 	{
 		# define X(name, T, ...) RawStorage<T>	name;

@@ -6,15 +6,15 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 16:55:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/13 21:55:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "TOMLVariant.hpp"
 
-toml::Variant::Variant() : type(NONE) {}
+toml::Variant::Variant() : type(NONE), is_explicit(false) {}
 
-toml::Variant::Variant(const Variant &other) : type(other.type)
+toml::Variant::Variant(const Variant &other) : type(other.type), is_explicit(false)
 {
 	this->construct(other);
 }
@@ -37,7 +37,7 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 toml::Variant::Type toml::Variant::getType() const { return this->type; }
 
 # define X(name, T, ...) \
-toml::Variant::Variant(const T& value) : type(name) \
+toml::Variant::Variant(const T& value) : type(name), is_explicit(false) \
 { \
 	this->construct(value); \
 }

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 20:12:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/11 02:03:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@ toml::Token toml::Tokenizer::next_token()
 	if (!this->actual.has_value())
 		this->scanToken();
 	this->scanToken();
-	Token temp_token(*this->actual);
+	Token temp_token;
+	temp_token.swap(*this->actual);
 	this->actual.swap(this->next);
 	this->next.reset();
 	return temp_token;

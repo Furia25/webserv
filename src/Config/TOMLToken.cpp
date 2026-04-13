@@ -6,13 +6,21 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:04 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 17:48:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/11 02:02:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "TOMLToken.hpp"
 
-toml::Token& toml::Token::operator=(const Token &other)
+void toml::Token::swap(Token& other)
+{
+	std::swap(this->type, other.type);
+	std::swap(this->line, other.line);
+	std::swap(this->col, other.col);
+	this->literal.swap(other.literal);
+}
+
+toml::Token &toml::Token::operator=(const Token &other)
 {
 	this->type = other.type;
 	this->line = other.line;

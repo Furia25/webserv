@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 16:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 16:33:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 00:24:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,11 @@ public:
 
 	void	from_stream(std::istream& stream, bool append = false);
 	void	from_file(const std::string& path, bool append = false);
+
+	toml::Value&	getRoot();
 protected:
 private:
-	toml::Table	root;
+	toml::Value	root;
 };
 
 } // namespace toml

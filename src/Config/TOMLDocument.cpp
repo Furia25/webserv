@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 16:31:26 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 16:34:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 00:32:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,3 +27,5 @@ void toml::Document::from_file(const std::string &path, bool append)
 		throw std::runtime_error("TOML: could not open '" + path + "': " + std::strerror(errno));
 	from_stream(file, append);
 }
+
+toml::Value& toml::Document::getRoot() { return this->root; }
