@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:01:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/10 19:43:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 01:08:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,14 +32,15 @@ class Tokenizer
 {
 public:
 	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0) {};
-	Token	next_token();
-	Token	peek_token();
+	Token			next_token();
+	const Token&	peek_token();
 	bool	eof();
 protected:
 private:
 	std::streambuf		*buf;
 	Optional<Token>		actual;
 	Optional<Token>		next;
+	Token				empty;
 	size_t				line;
 	size_t				col;
 

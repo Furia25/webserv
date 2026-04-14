@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/11 02:03:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 02:01:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,18 +26,18 @@ toml::Token toml::Tokenizer::next_token()
 	return temp_token;
 }
 
-toml::Token toml::Tokenizer::peek_token()
+const toml::Token& toml::Tokenizer::peek_token()
 {
 	if (!this->actual.has_value())
 	{
 		if (eof())
-			return Token();
+			return empty;
 		this->scanToken();
 	}
 	if (!this->next.has_value())
 	{
 		if (eof())
-			return Token();
+			return empty;
 		this->scanToken();
 	}
 	return *this->next;
@@ -99,7 +99,7 @@ void toml::Tokenizer::lexLiterals()
 		char c = this->consume();
 		this->col--;
 		if (c == '\r' || c == '\t' || c == '\0' || c == ' ' || c == '.'
-			|| c == '=' || c == ',' || c == ']' || c == '}' || c == '"')
+			|| c == '=' || c == ',' || c == ']' || c == '}' || c == '"' || c == '\n')
 			{
 				this->buf->sungetc();
 				break;

@@ -6,12 +6,18 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 16:31:26 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 00:32:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 01:44:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "TOMLDocument.hpp"
 # include  "TOMLParser.hpp"
+
+toml::Document::Document() {}
+
+toml::Document::Document(const Document &other) {}
+
+toml::Document::~Document() {}
 
 void toml::Document::from_stream(std::istream &stream, bool append)
 {

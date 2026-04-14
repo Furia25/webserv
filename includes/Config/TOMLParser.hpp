@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 00:43:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 01:52:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,21 +59,17 @@ private:
 	bool	validateKey(const std::string& str);
 
 	void	resolveNode(Token& token, bool& previously_created);
-	void	error(char c);
+	void	error(const char *str);
 };
 
 template <typename T>
 inline void TOMLParser::addValue(const T& value)
 {
-	if (this->nesting.size() != 0 && this->nesting.top().type == NestContext::NEST_BRACE)
-	{
-		if (this->current_node->getType() != Value::ARRAY)
-			this->current_node = Array();
-		this->current_node.as<toml::Array>().push_back(Variant(value));
-	}
+	if (this->nesting.size() != 0 && this->nesting.top().type == NestContext::NEST_BRACKET)
+		this->nesting.top().node->as<toml::Array>().push_back(toml::Value(value));
 	else
-		this->current_node = value;
-	this->current_node->setExplicit = true;
+		*this->current_node = value;
+	this->current_node->setExplicit();
 }
 
 }; // namespace toml

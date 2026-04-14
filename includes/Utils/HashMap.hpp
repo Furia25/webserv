@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:54:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 01:43:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,8 @@ public: /*Iterator*/
 				this->index++; \
 		} \
 	public: \
-		iterator_type(HashMap* map, size_t index) : map(map), index(index) { this->skip_empty(); }; \
+		iterator_type(HashMap* map, size_t index) : map(map), index(index) { this->skip_empty(); } \
+		iterator_type(const HashMap* map, size_t index) : map(const_cast<HashMap*>(map)), index(index) { this->skip_empty(); } \
 		value_type&		operator* () const	{ return *this->map->table[this->index].ptr(); }; \
 		value_type		*operator->() const	{ return this->map->table[this->index].operator->(); }; \
 		bool			operator==(const iterator_type& other) const { return index == other.index; } \
