@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 14:15:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 17:45:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ private:
 	toml::Document&		document;
 	Tokenizer			tokenizer;
 
-	enum State	{EXPECT_KEY, EXPECT_VALUE, AFTER_VALUE};
+	enum State	{EXPECT_KEY, AFTER_KEY, EXPECT_VALUE, AFTER_VALUE};
 	enum State	state;
 
 	template <typename T>
@@ -58,6 +58,7 @@ private:
 	void	handleKeys(Token& token);
 	void	handleHeaders(Token& token);
 	bool	validateKey(const std::string& str);
+	void	handleNewline(Token& token);
 
 	void	resolveNode(Token& token, bool& previously_created);
 	void	error(const char *str, Token::Type type);
@@ -67,7 +68,13 @@ template <typename T>
 inline void TOMLParser::addValue(const T& value)
 {
 	if (this->nesting.size() != 0 && this->nesting.top().type == NestContext::BRACKET)
-		this->nesting.top().node->as<toml::Array>().push_back(toml::Value(value));
+	{
+		toml::Value variant(value);
+		variant.setExplicit();
+		this->nesting.top().node->as<toml::Array>().push_back(variant);
+		if (!this->nesting.top().node->as<toml::Array>().back().isExplicit())
+			std::cout << "ZIZI";
+	}
 	else
 		*this->current_node = value;
 	this->current_node->setExplicit();

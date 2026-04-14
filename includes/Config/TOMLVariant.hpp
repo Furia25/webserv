@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/13 21:54:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 17:23:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 
 # include "Optional.hpp"
 # include "HashMap.hpp"
+# include <iostream>
 
 namespace toml
 {
@@ -71,7 +72,7 @@ public:
 	Type				getType() const;
 	bool				isNone() const { return this->type == NONE; }
 	bool				isExplicit() const { return this->is_explicit; };
-	void				setExplicit() { this->is_explicit = true; };
+	Variant&			setExplicit() { this->is_explicit = true; return *this; };
 	static Variant		null() { return Variant(); }
 
 	std::string			*toString();

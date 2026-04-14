@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 13:26:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 18:05:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,59 +35,60 @@ const toml::Token& toml::Tokenizer::peek_token()
 			return empty;
 		this->scanToken();
 	}
-	if (!this->next.has_value())
-	{
-		if (eof())
-			return *this->actual;
-		this->scanToken();
-	}
 	return *this->actual;
 }
 
 void toml::Tokenizer::scanToken()
 {
-	char c = this->consume();
-	switch (c)
+	while (true)
 	{
-	case '\0': this->addToken(Token::END_OF_FILE);	break;
-	case '.': this->addToken(Token::DOT);			break;
-	case '{':
-		this->addToken(Token::LBRACE);
-		break;
-	case '}':
-		this->addToken(Token::RBRACE);
-		break;
-	case TOML_NEW_LINE:
-		this->newLine();
-	break;
-	case '=':
-		this->addToken(Token::EQUALS);
-		break;
-	case ',':
-		this->addToken(Token::COMMA);
-		break;
-	case '[':
-		this->addToken(match('[') ? Token::DOUBLE_LBRACKET : Token::LBRACKET);
-		break;
-	case ']':
-		this->addToken(match(']') ? Token::DOUBLE_RBRACKET : Token::RBRACKET);
-		break;
-	case '\r'	:
-		if (match(TOML_NEW_LINE))
+		char c = this->consume();
+		switch (c)
+		{
+		case '\0': this->addToken(Token::END_OF_FILE); return ;
+		case '.': this->addToken(Token::DOT); return ;
+		case '{':
+			this->addToken(Token::LBRACE);
+			return ;
+		case '}':
+			this->addToken(Token::RBRACE);
+			return ;
+		case '=':
+			this->addToken(Token::EQUALS);
+			return ;
+		case ',':
+			this->addToken(Token::COMMA);
+			return ;
+		case '[':
+			this->addToken(match('[') ? Token::DOUBLE_LBRACKET : Token::LBRACKET);
+			return ;
+		case ']':
+			this->addToken(match(']') ? Token::DOUBLE_RBRACKET : Token::RBRACKET);
+			return ;
+		
+		case '#':
+			while (!eof() && (!toml::is_control(this->peek()) || peek_newline() == 0))
+				this->consume();
+			this->addToken(Token::COMMENT);
+			return ;
+		case '"': this->string(false); return ;
+		case '\'': this->string(true); return ;
+
+		case '\t':
+		case ' ': continue ;
+		case TOML_NEW_LINE:
 			this->newLine();
-	case '#':
-		while (!toml::is_control(this->peek()) || peek_newline() == 0 || eof())
-			this->consume();
-		this->addToken(Token::COMMENT);
-		break;
-	case '"': this->string(false); break;
-	case '\'': this->string(true); break;
-	case '\t': break;
-	case ' ': break;
-	default:
-		this->buf->sungetc();
-		this->lexLiterals();
-		break;
+			return ;
+		case '\r'	:
+			if (match(TOML_NEW_LINE))
+				this->newLine();
+			return ;
+
+		default:
+			this->buf->sungetc();
+			this->lexLiterals();
+			return ;
+		}
 	}
 }
 
@@ -95,7 +96,7 @@ void toml::Tokenizer::lexLiterals()
 {
 	std::stringstream	literal;
 
-	while (!this->eof())
+	while (1)
 	{
 		char c = this->consume();
 		this->col--;
@@ -304,12 +305,14 @@ int toml::Tokenizer::peek_newline()
 		return (1);
 	if (next == '\r' && this->peekNext() == TOML_NEW_LINE)
 		return (2);
-	return (0); 
+	return (0);
 }
 
 void toml::Tokenizer::error(char c)
 {
-	std::cout << "ERROR: Line: " << line << " Col: " << col << " char: " << c << " int: " << (int)c << "\n";
+	std::stringstream ss;
+	ss << "ERROR: Line: " << line << " Col: " << col << " char: " << c << " int: " << (int)c << "\n";
+	throw std::runtime_error(ss.str());
 }
 
 void toml::Tokenizer::newLine()

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 14:28:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 17:49:29 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,25 +15,27 @@
 toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : state(EXPECT_KEY), tokenizer(stream),
 	document(document), header_node(&document.getRoot()), current_node(&document.getRoot())
 {
-	while (!this->tokenizer.eof())
+	while (1)
 	{
 		Token token = this->tokenizer.next_token();
 		switch (token.getType())
 		{
 			case Token::COMMENT: break;
-			case Token::END_OF_FILE: return ;
+			case Token::END_OF_FILE:
+				this->handleNewline(token);
+				goto exit;
 			case Token::NEW_LINE:
-				if (state == EXPECT_VALUE)
-					this->error("Unspecified values are invalid.", token.getType());
-				state = EXPECT_KEY;
+				this->handleNewline(token);
 				break;
+
 			case Token::EQUALS:
-				if (state != EXPECT_KEY)
+				if (state != AFTER_KEY)
 					goto unexpected_token;
 				state = EXPECT_VALUE;
 				break;
 
 			case Token::STRING:
+			case Token::LITERAL_STRING:
 				if (state == AFTER_VALUE)
 					goto unexpected_token;
 				if (state == EXPECT_VALUE)
@@ -42,7 +44,6 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 					this->handleKeys(token);
 				break;
 			case Token::MULTI_STRING:
-			case Token::LITERAL_STRING:
 			case Token::MULTI_LITERAL_STRING:
 				if (state != EXPECT_VALUE)
 					goto unexpected_token;
@@ -50,9 +51,20 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 				break;
 
 			case Token::DOUBLE_LBRACKET:
-				if (state != EXPECT_KEY)
+				if (state == AFTER_VALUE)
 					goto unexpected_token;
-				this->handleHeaders(token);
+				else if (state == EXPECT_VALUE)
+				{
+					this->nest(NestContext::BRACKET);
+					this->nest(NestContext::BRACKET);
+				}
+				else
+					this->handleHeaders(token);
+				break;
+
+			case Token::DOUBLE_RBRACKET:
+					this->unest(NestContext::BRACKET);
+					this->unest(NestContext::BRACKET);
 				break;
 
 			case Token::RBRACKET:
@@ -93,6 +105,7 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 				break;
 		}
 	}
+	exit:
 	if (this->nesting.size() != 0)
 		this->error("unclosed nested", Token::RBRACE);
 }
@@ -133,20 +146,21 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created)
 	do
 	{
 		#define ERROR(x, y) do {this->error(x, y); return ;} while (false)
-
-		if (token.getType() != Token::IDENT && token.getType() != Token::STRING)
-			ERROR("unexpected token", token.getType());
-		if (token.getType() == Token::IDENT && !this->validateKey(token.getLiteral()))
+		Token::Type	token_type = token.getType();
+		if (token_type != Token::IDENT && token_type != Token::STRING && token_type != Token::LITERAL_STRING)
+			ERROR("unexpected token", token_type);
+		if (token_type == Token::IDENT && !this->validateKey(token.getLiteral()))
 			return;
 		if (current_node->getType() == toml::Value::ARRAY)
 		{
 			Array& arr = current_node->as<Array>();
 			if (arr.empty())
-				ERROR("unexpected token", token.getType());
+				ERROR("redefine array", token_type);
 			current_node = &arr.back();
 		}
-		if (this->current_node->isExplicit() || current_node->getType() != toml::Value::TABLE)
-			ERROR("unexpected token", token.getType());
+		if (this->current_node != header_node &&
+				(this->current_node->isExplicit() || current_node->getType() != toml::Value::TABLE))
+			ERROR("redefine table", token_type);
 
 		toml::Table& current_table = current_node->as<toml::Table>();
 		previously_created = current_table.contain(token.getLiteral());
@@ -164,10 +178,11 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created)
 
 void toml::TOMLParser::handleKeys(Token& token)
 {
+	this->state = AFTER_KEY;
 	this->current_node = header_node;
 	if (this->nesting.size() != 0)
 		this->current_node = this->nesting.top().node;
-	bool previously_created;
+	bool previously_created = false;
 	this->resolveNode(token, previously_created);
 	if (previously_created)
 	{
@@ -181,22 +196,23 @@ void toml::TOMLParser::handleHeaders(Token& token)
 	this->current_node = &this->document.getRoot();
 	bool table_array = token.getType() == Token::DOUBLE_LBRACKET;
 	token = this->tokenizer.next_token();
-	bool previously_created;
+	bool previously_created = false;
 	this->resolveNode(token, previously_created);
+	if (current_node->isExplicit() && 
+		(!table_array || current_node->as<Array>().empty() || current_node->as<Array>().front().isExplicit()))
+		return this->error("Redefine header", token.getType());
 	token = this->tokenizer.next_token();
-	if (!table_array && previously_created)
-		return this->error("Cant redefine table", token.getType());
 	if (table_array ? token.getType() != Token::DOUBLE_RBRACKET : token.getType() != Token::RBRACKET)
 		return this->error("Unclosed header", token.getType());
+	if (!previously_created)
+		*this->current_node = table_array ? Value(Array()) : Value(Table());
+	this->current_node->setExplicit();
 	if (table_array)
 	{
-		if (!previously_created)
-			*this->current_node = Value(Array());
-		this->current_node->as<Array>().push_back(Variant(Table()));
-		this->current_node = &this->current_node->as<Array>().back();
+		Array& array = this->current_node->as<Array>();
+		array.push_back(Variant(Table()));
+		this->current_node = &array.back();
 	}
-	else
-		*this->current_node = Value(Table());
 	this->header_node = this->current_node;
 }
 
@@ -220,9 +236,26 @@ bool toml::TOMLParser::validateKey(const std::string& str)
 	return true;
 }
 
+void toml::TOMLParser::handleNewline(Token& token)
+{
+	if (state == EXPECT_VALUE)
+	{
+		if (this->nesting.empty() || this->nesting.top().type != NestContext::BRACKET)
+			this->error("Value expected before newline", token.getType());
+	}
+	else if (state == AFTER_KEY)
+	{
+		this->error("Key ended without value ", token.getType());
+	}
+	if (!this->nesting.empty() && this->nesting.top().type == NestContext::BRACKET)
+		state = EXPECT_VALUE;
+	else
+		state = EXPECT_KEY;
+}
+
 void toml::TOMLParser::error(const char *str, Token::Type type)
 {
-	std::cout << "Error: " << str << " " << Token::toString(type);
+	throw std::runtime_error(std::string("Error: ") + str + " " + Token::toString(type));
 }
 
 void toml::TOMLParser::handleLiterals(Token& token)
@@ -231,12 +264,15 @@ void toml::TOMLParser::handleLiterals(Token& token)
 	{
 		std::stringstream	ss;
 		ss << token.getLiteral();
+		
 		while (this->tokenizer.peek_token().getType() == Token::DOT)
 		{
+			token = this->tokenizer.next_token();
+			ss << '.';
 			if (this->tokenizer.peek_token().getType() != Token::IDENT)
 				break;
-			Token next = this->tokenizer.next_token();
-			ss << '.' << next.getLiteral();
+			token = this->tokenizer.next_token();
+			ss << token.getLiteral();
 		}
 		return handleNumbers(ss);
 	}
@@ -282,18 +318,18 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 			case 'o': base = 8;  literal.get(); break;
 			case 'b': base = 2;  literal.get(); break;
 			default:
-				if (std::isdigit((unsigned char)next))
+				if (std::isdigit(next))
 					this->error("leading zeros", Token::IDENT);
 				break;
 			}
 			break;
 		case '.':
-			if (first_char || !std::isdigit((unsigned char)next))
+			if (first_char || !std::isdigit(next))
 				this->error("unexpected dot", Token::IDENT);
 			candidate = Value::FLOATING;
 			goto write;
 		case '_':
-			if (first_char || !std::isdigit((unsigned char)next))
+			if (first_char || !std::isdigit(next))
 				this->error("unexpected underscore", Token::IDENT);
 			break;
 		case 'e':

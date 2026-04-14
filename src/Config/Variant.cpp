@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/13 21:55:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 17:23:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 toml::Variant::Variant() : type(NONE), is_explicit(false) {}
 
-toml::Variant::Variant(const Variant &other) : type(other.type), is_explicit(false)
+toml::Variant::Variant(const Variant &other) : type(other.type), is_explicit(other.is_explicit)
 {
 	this->construct(other);
 }
@@ -30,6 +30,7 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 		return (*this);
 	this->destruct();
 	this->type = other.type;
+	this->is_explicit = other.is_explicit;
 	this->construct(other);
 	return (*this);
 }

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 01:39:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 01:39:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 17:36:43 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,9 @@ static std::string valueToJson(const toml::Value& val, int indent = 0)
     std::ostringstream out;
     std::string pad(indent * 2, ' ');
     std::string inner((indent + 1) * 2, ' ');
+
+    if (val.isExplicit())
+        out << " ¤ ";
 
     switch (val.getType())
     {
