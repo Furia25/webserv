@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 17:49:29 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 01:31:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,6 +113,7 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 void toml::TOMLParser::nest(NestContext::Type type)
 {
 	Variant node = (type == NestContext::BRACKET ? toml::Value(toml::Array()) : toml::Value(toml::Table()));
+	node.setExplicit();
 	if (this->nesting.size() > 0 && this->nesting.top().type == NestContext::BRACKET)
 	{
 		toml::Array& array = this->nesting.top().node->as<toml::Array>();
@@ -140,7 +141,22 @@ void toml::TOMLParser::unest(NestContext::Type type)
 	this->state = AFTER_VALUE;
 }
 
-void toml::TOMLParser::resolveNode(Token& token, bool& previously_created)
+void toml::TOMLParser::handleKeys(Token& token)
+{
+	this->state = AFTER_KEY;
+	this->current_node = header_node;
+	if (this->nesting.size() != 0)
+		this->current_node = this->nesting.top().node;
+	bool previously_created = false;
+	this->resolveNode(token, previously_created, true);
+	if (previously_created)
+	{
+		this->error("Cant redefine key", Token::IDENT);
+		return ;
+	}
+}
+
+void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool exclude_header)
 {
 	bool	last;
 	do
@@ -148,26 +164,27 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created)
 		#define ERROR(x, y) do {this->error(x, y); return ;} while (false)
 		Token::Type	token_type = token.getType();
 		if (token_type != Token::IDENT && token_type != Token::STRING && token_type != Token::LITERAL_STRING)
-			ERROR("unexpected token", token_type);
+			ERROR("unexpected token as key", token_type);
 		if (token_type == Token::IDENT && !this->validateKey(token.getLiteral()))
-			return;
+			ERROR("invalid key", token_type);
 		if (current_node->getType() == toml::Value::ARRAY)
 		{
 			Array& arr = current_node->as<Array>();
 			if (arr.empty())
-				ERROR("redefine array", token_type);
+				ERROR("unexpected token", token.getType());
 			current_node = &arr.back();
 		}
-		if (this->current_node != header_node &&
-				(this->current_node->isExplicit() || current_node->getType() != toml::Value::TABLE))
-			ERROR("redefine table", token_type);
-
 		toml::Table& current_table = current_node->as<toml::Table>();
 		previously_created = current_table.contain(token.getLiteral());
 		last = this->tokenizer.peek_token().getType() != Token::DOT;
 		if (!previously_created)
 			current_table.insert(token.getLiteral(), last ? Value() : Value(Table()));
 		current_node = &current_table.find(token.getLiteral())->second;
+		if (this->nesting.size() == 0 || this->current_node != this->nesting.top().node)
+		{
+			if (this->current_node->isExplicit() || (exclude_header && this->current_node->isHeader()))
+				ERROR("redefine table", token_type);
+		}
 		if (!last)
 		{
 			this->tokenizer.next_token();
@@ -176,37 +193,21 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created)
 	} while (!last);
 }
 
-void toml::TOMLParser::handleKeys(Token& token)
-{
-	this->state = AFTER_KEY;
-	this->current_node = header_node;
-	if (this->nesting.size() != 0)
-		this->current_node = this->nesting.top().node;
-	bool previously_created = false;
-	this->resolveNode(token, previously_created);
-	if (previously_created)
-	{
-		this->error("Cant redefine key", Token::IDENT);
-		return ;
-	}
-}
-
 void toml::TOMLParser::handleHeaders(Token& token)
 {
 	this->current_node = &this->document.getRoot();
 	bool table_array = token.getType() == Token::DOUBLE_LBRACKET;
 	token = this->tokenizer.next_token();
 	bool previously_created = false;
-	this->resolveNode(token, previously_created);
-	if (current_node->isExplicit() && 
-		(!table_array || current_node->as<Array>().empty() || current_node->as<Array>().front().isExplicit()))
+	this->resolveNode(token, previously_created, false);
+	if (current_node->isHeader() && !table_array)
 		return this->error("Redefine header", token.getType());
 	token = this->tokenizer.next_token();
 	if (table_array ? token.getType() != Token::DOUBLE_RBRACKET : token.getType() != Token::RBRACKET)
 		return this->error("Unclosed header", token.getType());
 	if (!previously_created)
 		*this->current_node = table_array ? Value(Array()) : Value(Table());
-	this->current_node->setExplicit();
+	this->current_node->setHeader();
 	if (table_array)
 	{
 		Array& array = this->current_node->as<Array>();
@@ -214,6 +215,7 @@ void toml::TOMLParser::handleHeaders(Token& token)
 		this->current_node = &array.back();
 	}
 	this->header_node = this->current_node;
+	this->state = AFTER_VALUE;
 }
 
 bool toml::TOMLParser::validateKey(const std::string& str)
@@ -293,6 +295,8 @@ bool toml::TOMLParser::handleKeywords(const std::string& literal)
 	return (false);
 }
 
+#include <ios>
+
 void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 {
 	Value::Type			candidate = Value::INTEGER;
@@ -315,11 +319,12 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 			switch (next)
 			{
 			case 'x': base = 16; literal.get(); break;
-			case 'o': base = 8;  literal.get(); break;
-			case 'b': base = 2;  literal.get(); break;
+			case 'o': base = 8; literal.get(); break;
+			case 'b': base = 2; literal.get(); break;
 			default:
 				if (std::isdigit(next))
 					this->error("leading zeros", Token::IDENT);
+				goto write;
 				break;
 			}
 			break;
@@ -329,7 +334,7 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 			candidate = Value::FLOATING;
 			goto write;
 		case '_':
-			if (first_char || !std::isdigit(next))
+			if (first_char || !std::isalnum(next))
 				this->error("unexpected underscore", Token::IDENT);
 			break;
 		case 'e':
@@ -345,9 +350,11 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 		}
 	}
 
-	errno = 0;
+	if (first_char)
+		this->error("Empty", Token::IDENT);
 	if (candidate == Value::FLOATING && base != 10)
 		this->error("base in float", Token::IDENT);
+	errno = 0;
 	if (candidate == Value::INTEGER)
 		this->addValue(std::strtoll(ss.str().c_str(), &end_ptr, base));
 	else

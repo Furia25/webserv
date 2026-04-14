@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 18:05:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 22:46:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ void toml::Tokenizer::scanToken()
 			return ;
 		
 		case '#':
-			while (!eof() && (!toml::is_control(this->peek()) || peek_newline() == 0))
+			while (!eof() && !toml::is_control(this->peek()) && peek_newline() == 0)
 				this->consume();
 			this->addToken(Token::COMMENT);
 			return ;
@@ -100,8 +100,10 @@ void toml::Tokenizer::lexLiterals()
 	{
 		char c = this->consume();
 		this->col--;
-		if (c == '\r' || c == '\t' || c == '\0' || c == ' ' || c == '.'
-			|| c == '=' || c == ',' || c == ']' || c == '}' || c == '"' || c == '\''
+		if (c == '\0')
+			break ;
+		if (c == '\r' || c == '\t' || c == ' ' || c == '.' || c == '\''
+			|| c == '=' || c == ',' || c == ']' || c == '}' || c == '"'
 			|| c == '\n')
 			{
 				this->buf->sungetc();

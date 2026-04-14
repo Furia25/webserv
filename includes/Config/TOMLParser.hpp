@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 17:45:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 01:01:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ private:
 	bool	validateKey(const std::string& str);
 	void	handleNewline(Token& token);
 
-	void	resolveNode(Token& token, bool& previously_created);
+	void	resolveNode(Token& token, bool& previously_created, bool exclude_header);
 	void	error(const char *str, Token::Type type);
 };
 
@@ -72,8 +72,6 @@ inline void TOMLParser::addValue(const T& value)
 		toml::Value variant(value);
 		variant.setExplicit();
 		this->nesting.top().node->as<toml::Array>().push_back(variant);
-		if (!this->nesting.top().node->as<toml::Array>().back().isExplicit())
-			std::cout << "ZIZI";
 	}
 	else
 		*this->current_node = value;

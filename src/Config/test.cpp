@@ -1,13 +1,8 @@
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include "TOMLDocument.hpp"
-#include "TOMLTokenizer.hpp"
-#include "TOMLDebugJson.hpp"
-
 // ============================================================
-//  TOML Test Suite — comprehensive edge-case coverage
-//  Build: g++ -std=c++17 -o toml_test toml_test.cpp
+//  TOML 1.1.0 Extended Test Suite — additional edge cases,
+//  error paths, and complex structural validations.
+//  No date/datetime tests included.
+//  Build: g++ -std=c++17 -o toml_test_ext toml_test_extended.cpp
 // ============================================================
 
 #include <iostream>
@@ -18,8 +13,9 @@
 #include <functional>
 #include <iomanip>
 
-
-// ────────────────────────────────────────────────────────────
+#include "TOMLDocument.hpp"
+#include "TOMLTokenizer.hpp"
+#include "TOMLDebugJson.hpp"
 
 // ============================================================
 //  Lexer helper
@@ -31,11 +27,10 @@ static void printTokens(std::istream& ss)
     while (1)
     {
         toml::Token tok = tokenizer.next_token();
-        if (tok.getType() == toml::Token::END_OF_FILE) {std::cout << '\n'; return ;}
-        if (tok.getType() == toml::Token::NEW_LINE) { std::cout << "↵ "; continue; }
+        if (tok.getType() == toml::Token::END_OF_FILE) { std::cout << '\n'; return; }
+        if (tok.getType() == toml::Token::NEW_LINE)    { std::cout << "↵ "; continue; }
         if (!first) std::cout << " ";
         first = false;
-
         std::cout << tok.toString();
         switch (tok.getType())
         {
@@ -55,24 +50,16 @@ static void printTokens(std::istream& ss)
 // ============================================================
 //  Test infrastructure
 // ============================================================
-struct TestResult
-{
-    std::string label;
-    bool        passed;
-    std::string detail;   // shown only on failure
-};
-
+struct TestResult { std::string label; bool passed; std::string detail; };
 static std::vector<TestResult> g_results;
-
 enum class Expect { SUCCESS, FAILURE };
 
 static void runTest(
-    const std::string&              label,
-    const std::string&              toml_src,
-    Expect                          expect,
-    // optional validator: receives the parsed doc, returns "" on ok or an error msg
+    const std::string& label,
+    const std::string& toml_src,
+    Expect             expect,
     std::function<std::string(const toml::Document&)> validate = nullptr,
-    bool                            show_tokens = false)
+    bool               show_tokens = false)
 {
     TestResult r{ label, false, "" };
 
@@ -82,10 +69,9 @@ static void runTest(
         std::istringstream ts(toml_src);
         printTokens(ts);
     }
-
+    toml::Document doc;
     try
     {
-        toml::Document doc;
         std::istringstream ss(toml_src);
         doc.from_stream(ss);
 
@@ -93,35 +79,28 @@ static void runTest(
         {
             r.passed = false;
             r.detail = "Expected a parse error but parsing succeeded.\n"
-                       "  JSON output: " + toml::toJson(doc);
+                       "  JSON: " + toml::toJson(doc);
         }
         else
         {
             if (validate)
             {
                 std::string err = validate(doc);
-                if (!err.empty())
-                {
-                    r.passed = false;
-                    r.detail = "Validation failed: " + err + "\n"
-                               "  JSON: " + toml::toJson(doc);
-                }
-                else r.passed = true;
+                r.passed = err.empty();
+                if (!r.passed)
+                    r.detail = "Validation failed: " + err + "\n  JSON: " + toml::toJson(doc);
             }
             else r.passed = true;
         }
     }
     catch (const std::exception& e)
     {
-        if (expect == Expect::FAILURE)
-        {
-            r.passed = true;   // error was expected
-        }
+        if (expect == Expect::FAILURE) r.passed = true;
         else
         {
             r.passed = false;
-            r.detail = std::string("Unexpected parse error: ") + e.what() + "\n"
-                       "  Source:\n" + toml_src;
+            r.detail = std::string("Unexpected parse error: ") + e.what()
+                       + "\n  Source:\n" + toml_src + "\n  JSON: " + toml::toJson(doc);
         }
     }
 
@@ -131,20 +110,13 @@ static void runTest(
 static void printSummary()
 {
     int pass = 0, fail = 0;
-    const int W = 58;
-
-    std::cout << "\n";
-    std::cout << std::string(W + 12, '=') << "\n";
-    std::cout << "  RESULTS\n";
-    std::cout << std::string(W + 12, '=') << "\n";
-
+    const int W = 64;
+    std::cout << "\n" << std::string(W, '=') << "\n  RESULTS\n" << std::string(W, '=') << "\n";
     for (auto& r : g_results)
     {
-        std::string status = r.passed ? "  PASS  " : "  FAIL  ";
-        std::cout << status << r.label << "\n";
+        std::cout << (r.passed ? "  PASS  " : "  FAIL  ") << r.label << "\n";
         if (!r.passed && !r.detail.empty())
         {
-            // indent detail lines
             std::istringstream ds(r.detail);
             std::string line;
             while (std::getline(ds, line))
@@ -152,465 +124,951 @@ static void printSummary()
         }
         r.passed ? ++pass : ++fail;
     }
-
-    std::cout << std::string(W + 12, '-') << "\n";
-    std::cout << "  " << pass << " passed, " << fail << " failed"
-              << "  (" << g_results.size() << " total)\n";
-    std::cout << std::string(W + 12, '=') << "\n\n";
+    std::cout << std::string(W, '-') << "\n"
+              << "  " << pass << " passed, " << fail << " failed"
+              << "  (" << g_results.size() << " total)\n"
+              << std::string(W, '=') << "\n\n";
 }
 
 // ============================================================
-//  Convenience helpers for building validators
-// ============================================================
-// These assume toml::Document exposes a get<T>(key) style accessor.
-// Adjust the accessor calls to match your actual API.
-
-// ============================================================
-//  Test definitions
+//  Tests
 // ============================================================
 static void registerTests()
 {
-    // ── 1. BASIC KEY / VALUE TYPES ─────────────────────────
+    // ══════════════════════════════════════════════════════
+    //  A. INTEGERS — extra numeric forms
+    // ══════════════════════════════════════════════════════
 
-    runTest("Integer: decimal",
-        "val = 42",
+    runTest("Integer: +0 is valid",
+        "val = +0",
         Expect::SUCCESS);
 
-    runTest("Integer: positive sign",
-        "val = +17",
+    runTest("Integer: hex uppercase letters",
+        "val = 0xDEADBEEF",
         Expect::SUCCESS);
 
-    runTest("Integer: negative",
-        "val = -100",
+    runTest("Integer: hex mixed case",
+        "val = 0xDeAdBeEf",
         Expect::SUCCESS);
 
-    runTest("Integer: underscore separator",
-        "val = 1_000_000",
+    runTest("Integer: hex with underscores",
+        "val = 0xDEAD_BEEF",
         Expect::SUCCESS);
 
-    runTest("Integer: hex prefix",
-        "val = 0xFF",
+    runTest("Integer: octal zero",
+        "val = 0o0",
         Expect::SUCCESS);
 
-    runTest("Integer: octal prefix",
-        "val = 0o77",
+    runTest("Integer: binary all ones (8-bit)",
+        "val = 0b11111111",
         Expect::SUCCESS);
 
-    runTest("Integer: binary prefix",
-        "val = 0b1010",
-        Expect::SUCCESS);
-
-    runTest("Integer: leading underscore (invalid)",
-        "val = _42",
+    runTest("Integer: octal digit 8 is invalid",
+        "val = 0o8",
         Expect::FAILURE);
 
-    runTest("Integer: trailing underscore (invalid)",
-        "val = 42_",
+    runTest("Integer: binary digit 2 is invalid",
+        "val = 0b2",
         Expect::FAILURE);
 
-    runTest("Integer: double underscore (invalid)",
-        "val = 1__000",
+    runTest("Integer: hex prefix alone is invalid",
+        "val = 0x",
         Expect::FAILURE);
 
-    runTest("Float: basic",
-        "val = 3.14",
+    runTest("Integer: octal prefix alone is invalid",
+        "val = 0o",
+        Expect::FAILURE);
+
+    runTest("Integer: binary prefix alone is invalid",
+        "val = 0b",
+        Expect::FAILURE);
+
+    runTest("Integer: underscore in hex",
+        "val = 0xFF_FF",
         Expect::SUCCESS);
 
-    runTest("Float: with exponent",
-        "val = 6.626e-34",
+    runTest("Integer: leading underscore in hex (invalid)",
+        "val = 0x_FF",
+        Expect::FAILURE);
+
+    runTest("Integer: trailing underscore in hex (invalid)",
+        "val = 0xFF_",
+        Expect::FAILURE);
+
+    runTest("Integer: multiple leading zeros (invalid)",
+        "val = 007",
+        Expect::FAILURE);
+
+    runTest("Integer: solo sign is invalid",
+        "val = +",
+        Expect::FAILURE);
+
+    runTest("Integer: double sign is invalid",
+        "val = --1",
+        Expect::FAILURE);
+
+    // ══════════════════════════════════════════════════════
+    //  B. FLOATS — extra cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Float: positive zero",
+        "val = +0.0",
         Expect::SUCCESS);
 
-    runTest("Float: +inf",
-        "val = +inf",
+    runTest("Float: negative zero",
+        "val = -0.0",
         Expect::SUCCESS);
 
-    runTest("Float: -inf",
-        "val = -inf",
+    runTest("Float: exponent with capital E",
+        "val = 1E10",
         Expect::SUCCESS);
 
-    runTest("Float: nan",
-        "val = nan",
+    runTest("Float: positive exponent",
+        "val = 1e+10",
         Expect::SUCCESS);
 
-    runTest("Float: no digit before dot (invalid)",
+    runTest("Float: negative exponent",
+        "val = 1e-10",
+        Expect::SUCCESS);
+
+    runTest("Float: zero-dot-zero",
+        "val = 0.0",
+        Expect::SUCCESS);
+
+    runTest("Float: underscore in integer part",
+        "val = 1_000.5",
+        Expect::SUCCESS);
+
+    runTest("Float: underscore in fractional part",
+        "val = 1.000_500",
+        Expect::SUCCESS);
+
+    runTest("Float: only exponent, no mantissa (invalid)",
+        "val = e10",
+        Expect::FAILURE);
+
+    runTest("Float: leading dot (invalid)",
         "val = .5",
         Expect::FAILURE);
 
-    runTest("Float: no digit after dot (invalid)",
+    runTest("Float: trailing dot (invalid)",
         "val = 5.",
         Expect::FAILURE);
 
-    runTest("Boolean: true",
-        "val = true",
+    runTest("Float: +nan",
+        "val = +nan",
         Expect::SUCCESS);
 
-    runTest("Boolean: false",
-        "val = false",
+    runTest("Float: -nan",
+        "val = -nan",
         Expect::SUCCESS);
 
-    runTest("Boolean: capitalised (invalid)",
-        "val = True",
+    runTest("Float: inf without sign",
+        "val = inf",
+        Expect::SUCCESS);
+
+    runTest("Float: NaN capitalised is invalid",
+        "val = NaN",
         Expect::FAILURE);
 
-    // ── 2. STRINGS ─────────────────────────────────────────
-
-    runTest("Basic string: simple",
-        R"(val = "hello world")",
-        Expect::SUCCESS);
-
-    runTest("Basic string: escape sequences",
-        R"(val = "tab:\there\nnewline")",
-        Expect::SUCCESS);
-
-    runTest("Basic string: unicode escape \\uXXXX",
-        R"(val = "\u00e9")",
-        Expect::SUCCESS);
-
-    runTest("Basic string: unicode escape \\UXXXXXXXX",
-        R"(val = "\U0001F600")",
-        Expect::SUCCESS);
-
-    runTest("Basic string: invalid escape",
-        R"(val = "\q")",
+    runTest("Float: Inf capitalised is invalid",
+        "val = Inf",
         Expect::FAILURE);
 
-    runTest("Basic string: unterminated (invalid)",
-        R"(val = "oops)",
+    // ══════════════════════════════════════════════════════
+    //  C. STRINGS — corner cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Basic string: null byte is invalid (control char)",
+        "val = \"\x00\"",
         Expect::FAILURE);
 
-    runTest("Literal string: no escapes",
-        R"(val = 'C:\Users\tom')",
-        Expect::SUCCESS);
-
-    runTest("Literal string: backslash stays literal",
-        R"(val = 'backslash: \')",
-        Expect::SUCCESS);
-
-    runTest("Multi-line basic string: simple",
-        "val = \"\"\"\nhello\nworld\n\"\"\"",
-        Expect::SUCCESS);
-
-    runTest("Multi-line basic string: escape newline (line continuation)",
-        "val = \"\"\"\nThe quick \\\n    brown fox\"\"\"",
-        Expect::SUCCESS);
-
-    runTest("Multi-line basic string: first newline stripped",
-        "val = \"\"\"\nfoo\"\"\"",
-        Expect::SUCCESS);
-
-    runTest("Multi-line basic string: embedded quotes (up to 2)",
-        "val = \"\"\"She said \"hi\".\"\"\"",
-        Expect::SUCCESS);
-
-    runTest("Multi-line literal string: simple",
-        "val = '''\nhello\n'''",
-        Expect::SUCCESS);
-
-    runTest("Multi-line literal string: no escape processing",
-        "val = '''\n\\n is not a newline\n'''",
-        Expect::SUCCESS);
-
-    runTest("String: empty basic",
-        R"(val = "")",
-        Expect::SUCCESS);
-
-    runTest("String: empty literal",
-        R"(val = '')",
-        Expect::SUCCESS);
-
-    // ── 3. KEYS ────────────────────────────────────────────
-
-    runTest("Bare key: alphanumeric and dashes",
-        "some-key_1 = true",
-        Expect::SUCCESS);
-
-    runTest("Quoted key: basic string",
-        R"("dotted.key" = 1)",
-        Expect::SUCCESS);
-
-    runTest("Quoted key: literal string",
-        R"('127.0.0.1' = "ip")",
-        Expect::SUCCESS);
-
-    runTest("Dotted key: simple",
-        "a.b.c = 1",
-        Expect::SUCCESS);
-
-    runTest("Dotted key: whitespace around dots",
-        "a . b . c = 1",
-        Expect::SUCCESS);
-
-    runTest("Dotted key: implicit table creation",
-        "fruit.name = \"apple\"\nfruit.color = \"red\"",
-        Expect::SUCCESS);
-
-    runTest("Key: empty bare key (invalid)",
-        "= 1",
+    runTest("Basic string: DEL character (0x7F) is invalid",
+        "val = \"\x7f\"",
         Expect::FAILURE);
 
-    runTest("Key: redefine existing key (invalid)",
-        "key = 1\nkey = 2",
+    runTest("Basic string: lone backslash is invalid",
+        "val = \"\\\"",
         Expect::FAILURE);
 
-    // ── 4. ARRAYS ──────────────────────────────────────────
-
-    runTest("Array: integers",
-        "arr = [1, 2, 3]",
-        Expect::SUCCESS);
-
-    runTest("Array: strings",
-        R"(arr = ["a", "b", "c"])",
-        Expect::SUCCESS);
-
-    runTest("Array: nested",
-        "arr = [[1, 2], [3, 4]]",
-        Expect::SUCCESS);
-
-    runTest("Array: trailing comma",
-        "arr = [1, 2, 3,]",
-        Expect::SUCCESS);
-
-    runTest("Array: multiline",
-        "arr = [\n  1,\n  2,\n  3\n]",
-        Expect::SUCCESS);
-
-    runTest("Array: empty",
-        "arr = []",
-        Expect::SUCCESS);
-
-    runTest("Array of tables inline",
-        "arr = [{a=1}, {a=2}]",
-        Expect::SUCCESS);
-
-    // ── 5. INLINE TABLES ───────────────────────────────────
-
-    runTest("Inline table: simple",
-        R"(point = {x = 1, y = 2})",
-        Expect::SUCCESS);
-
-    runTest("Inline table: nested",
-        R"(a = {b = {c = 1}})",
-        Expect::SUCCESS);
-
-    runTest("Inline table: trailing comma",
-        R"(t = {a = 1,})",
-        Expect::SUCCESS);
-
-    runTest("Inline table: multiline",
-        "t = {\n  a = 1\n}",
-        Expect::SUCCESS);
-
-    runTest("Inline table: empty",
-        "t = {}",
-        Expect::SUCCESS);
-
-    // ── 6. STANDARD TABLES ─────────────────────────────────
-
-    runTest("Table: basic header",
-        "[table]\nkey = 1",
-        Expect::SUCCESS);
-
-    runTest("Table: multiple",
-        "[a]\nkey = 1\n[b]\nkey = 2",
-        Expect::SUCCESS);
-
-    runTest("Table: dotted header",
-        "[a.b.c]\nval = true",
-        Expect::SUCCESS);
-
-    runTest("Table: redefine existing table (invalid)",
-        "[t]\na = 1\n[t]\nb = 2",
+    runTest("Basic string: \\a is invalid escape",
+        R"(val = "\a")",
         Expect::FAILURE);
 
-    runTest("Table: super-table after sub-table",
+    runTest("Basic string: \\v is invalid escape",
+        R"(val = "\v")",
+        Expect::FAILURE);
+
+    runTest("Basic string: \\0 is invalid escape (TOML has no null escape)",
+        R"(val = "\0")",
+        Expect::FAILURE);
+
+    runTest("Basic string: short unicode \\uXXX (only 3 hex digits, invalid)",
+        R"(val = "\u00e")",
+        Expect::FAILURE);
+
+    runTest("Basic string: \\UXXXXXXX (only 7 digits, invalid)",
+        R"(val = "\U0001F60")",
+        Expect::FAILURE);
+
+    runTest("Basic string: \\u of surrogate half (invalid codepoint)",
+        R"(val = "\uD800")",
+        Expect::FAILURE);
+
+    runTest("Basic string: valid emoji via \\U",
+        R"(val = "\U0001F4A9")",
+        Expect::SUCCESS);
+
+    runTest("Basic string: \\u0000 is invalid (null codepoint)",
+        R"(val = "\u0000")",
+        Expect::FAILURE);
+
+    runTest("Literal string: cannot contain single-quote (no escaping)",
+        "val = 'it''s'",
+        Expect::FAILURE);
+
+    runTest("Multi-line basic string: escaped whitespace trimming",
+        "val = \"\"\"\n  hello  \\\n   \n   world\"\"\"",
+        Expect::SUCCESS);
+
+    runTest("Multi-line basic string: two quotes mid-string are allowed",
+        "val = \"\"\"a\"\"b\"\"\"",
+        Expect::SUCCESS);
+
+    runTest("Multi-line basic string: six consecutive quotes is invalid",
+        "val = \"\"\"\"\"\"\"\"\"\"",
+        Expect::FAILURE);
+
+    runTest("Multi-line literal string: two single-quotes mid-string are allowed",
+        "val = '''a''b'''",
+        Expect::SUCCESS);
+
+    runTest("String: tab character inside basic string is allowed",
+        "val = \"hello\tworld\"",
+        Expect::SUCCESS);
+
+    runTest("Multi-line basic string: first-line newline stripped, second kept",
+        "val = \"\"\"\n\nfoo\"\"\"",
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  D. KEYS — corner cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Key: digit-only bare key",
+        "1234 = true",
+        Expect::SUCCESS);
+
+    runTest("Key: single-char bare key",
+        "x = 1",
+        Expect::SUCCESS);
+
+    runTest("Key: empty quoted key",
+        R"("" = 1)",
+        Expect::SUCCESS);
+
+    runTest("Key: empty literal key",
+        "'' = 1",
+        Expect::SUCCESS);
+
+    runTest("Key: quoted key with whitespace",
+        R"("hello world" = 1)",
+        Expect::SUCCESS);
+
+    runTest("Key: quoted key with unicode",
+        R"("héllo" = 1)",
+        Expect::SUCCESS);
+
+    runTest("Dotted key: quoted empty segments",
+        R"("".""."" = 1)",
+        Expect::SUCCESS);
+
+    runTest("Dotted key: extend implicit table with new sub-key",
+        "a.b = 1\na.c = 2",
+        Expect::SUCCESS);
+
+    runTest("Dotted key: redefine scalar via dotted key (invalid)",
+        "a = 1\na.b = 2",
+        Expect::FAILURE);
+
+    runTest("Dotted key: redefine from dotted to scalar (invalid)",
+        "a.b = 1\na = 2",
+        Expect::FAILURE);
+
+    runTest("Key: bare key with only digits and dashes",
+        "1-2-3 = true",
+        Expect::SUCCESS);
+
+    runTest("Key: bare key starting with digit",
+        "0abc = true",
+        Expect::SUCCESS);
+
+    runTest("Key: bare key with cyrillic (invalid)",
+        u8"ключ = 1",
+        Expect::FAILURE);
+
+    runTest("Key: duplicate in inline table (invalid)",
+        "t = {a = 1, a = 2}",
+        Expect::FAILURE);
+
+    runTest("Key: duplicate across dotted key and table header (invalid)",
+        "a.b = 1\n[a]\nb = 2",
+        Expect::FAILURE);
+
+    // ══════════════════════════════════════════════════════
+    //  E. ARRAYS — corner cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Array: deeply nested empty arrays",
+        "arr = [[[[]]]]",
+        Expect::SUCCESS);
+
+    runTest("Array: single element no trailing comma",
+        "arr = [42]",
+        Expect::SUCCESS);
+
+    runTest("Array: only a trailing comma (invalid)",
+        "arr = [,]",
+        Expect::FAILURE);
+
+    runTest("Array: double comma (invalid)",
+        "arr = [1,,2]",
+        Expect::FAILURE);
+
+    runTest("Array: leading comma (invalid)",
+        "arr = [,1]",
+        Expect::FAILURE);
+
+    runTest("Array: mixed integers and floats (TOML 1.1 allows mixed types)",
+        "arr = [1, 2.0]",
+        Expect::SUCCESS);
+
+    runTest("Array: mixed integers and strings (TOML 1.1 allows mixed types)",
+        "arr = [1, \"two\"]",
+        Expect::SUCCESS);
+
+    runTest("Array: mixed booleans and integers (TOML 1.1 allows mixed types)",
+        "arr = [true, 1]",
+        Expect::SUCCESS);
+
+    runTest("Array: comment after trailing comma",
+        "arr = [1, 2, # comment\n]",
+        Expect::SUCCESS);
+
+    runTest("Array: newline before closing bracket",
+        "arr = [1,\n2\n]",
+        Expect::SUCCESS);
+
+    runTest("Array: 100 elements",
+        [](){
+            std::string s = "arr = [";
+            for (int i = 0; i < 100; ++i) { if (i) s += ", "; s += std::to_string(i); }
+            return s + "]";
+        }(),
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  F. INLINE TABLES — corner cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Inline table: newline inside is allowed (TOML 1.1)",
+        "t = {\na = 1,\nb = 2\n}",
+        Expect::SUCCESS);
+
+    runTest("Inline table: nested inline table three levels deep",
+        "t = {a = {b = {c = 42}}}",
+        Expect::SUCCESS);
+
+    runTest("Inline table: value is an array",
+        "t = {a = [1, 2, 3]}",
+        Expect::SUCCESS);
+
+    runTest("Inline table: value is a multi-line basic string",
+        "t = {a = \"\"\"hello\nworld\"\"\"}",
+        Expect::SUCCESS);
+
+    runTest("Inline table: cannot extend after definition via table header (invalid)",
+        "t = {a = 1}\n[t]\nb = 2",
+        Expect::FAILURE);
+
+    runTest("Inline table: cannot extend after definition via dotted key (invalid)",
+        "t = {a = 1}\nt.b = 2",
+        Expect::FAILURE);
+
+    runTest("Inline table: dotted keys inside inline table",
+        "t = {a.b = 1, a.c = 2}",
+        Expect::SUCCESS);
+
+    runTest("Inline table: duplicate dotted keys inside inline table (invalid)",
+        "t = {a.b = 1, a.b = 2}",
+        Expect::FAILURE);
+
+    // ══════════════════════════════════════════════════════
+    //  G. STANDARD TABLES — complex interactions
+    // ══════════════════════════════════════════════════════
+
+    runTest("Table: empty header with no body",
+        "[empty]",
+        Expect::SUCCESS);
+
+    runTest("Table: implicit parent table, then explicit parent",
         "[a.b]\nval = 1\n[a]\nother = 2",
         Expect::SUCCESS);
 
-    runTest("Table: key clash with table (invalid)",
-        "[a]\nb = 1\n[a.b]\nc = 2",
+    runTest("Table: explicit parent then implicit child",
+        "[a]\nother = 2\n[a.b]\nval = 1",
+        Expect::SUCCESS);
+
+    runTest("Table: two levels of implicit parents",
+        "[a.b.c]\nval = 1",
+        Expect::SUCCESS);
+
+    runTest("Table: reopen explicit table (invalid)",
+        "[t]\na = 1\n[t]\nb = 2",
         Expect::FAILURE);
 
-    // ── 7. ARRAY OF TABLES ─────────────────────────────────
+    runTest("Table: reopen implicit parent twice (invalid)",
+        "[a.b]\nval = 1\n[a]\nother = 2\n[a]\nmore = 3",
+        Expect::FAILURE);
 
-    runTest("Array of tables: basic",
-        "[[products]]\nname = \"hammer\"\n[[products]]\nname = \"nail\"",
+    runTest("Table: header with quoted segment containing dot",
+        "[\"a.b\".c]\nval = 1",
         Expect::SUCCESS);
 
-    runTest("Array of tables: with subtable",
-        "[[fruits]]\nname = \"apple\"\n[fruits.physical]\ncolor = \"red\"",
+    runTest("Table: header with spaces around dot",
+        "[ a . b ]\nval = 1",
         Expect::SUCCESS);
 
-    runTest("Array of tables: redefine as plain table (invalid)",
+    runTest("Table: root key defined before any table header",
+        "root = 1\n[t]\nval = 2",
+        Expect::SUCCESS);
+
+    runTest("Table: dotted key extends implicit parent created by table header",
+        "[a]\nb.c = 1\nb.d = 2",
+        Expect::SUCCESS);
+
+    runTest("Table: inline table value, then table header for same key (invalid)",
+        "a = {b = 1}\n[a]\nc = 2",
+        Expect::FAILURE);
+
+    runTest("Table: key defined in root, then table with different name",
+        "x = 1\n[y]\nz = 2",
+        Expect::SUCCESS);
+
+    runTest("Table: key in sub-table does not clash with root key of same name",
+        "name = \"root\"\n[section]\nname = \"section\"",
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  H. ARRAY OF TABLES — complex interactions
+    // ══════════════════════════════════════════════════════
+
+    runTest("AoT: empty array of tables",
+        "[[arr]]",
+        Expect::SUCCESS);
+
+    runTest("AoT: three entries",
+        "[[arr]]\nval = 1\n[[arr]]\nval = 2\n[[arr]]\nval = 3",
+        Expect::SUCCESS);
+
+    runTest("AoT: sub-table inside AoT entry",
+        "[[arr]]\nval = 1\n[arr.meta]\ninfo = \"ok\"",
+        Expect::SUCCESS);
+
+    runTest("AoT: sub-AoT inside AoT",
+        "[[arr]]\nname = \"a\"\n[[arr.sub]]\nval = 1\n[[arr]]\nname = \"b\"\n[[arr.sub]]\nval = 2",
+        Expect::SUCCESS);
+
+    runTest("AoT: cannot redefine as plain table (invalid)",
         "[[arr]]\nval = 1\n[arr]\nval = 2",
         Expect::FAILURE);
 
-    runTest("Array of tables: statically defined array clash (invalid)",
-        "arr = [1,2]\n[[arr]]\nval = 3",
+    runTest("AoT: cannot redefine static array as AoT (invalid)",
+        "arr = [1]\n[[arr]]\nval = 1",
         Expect::FAILURE);
 
-    // ── 8. COMMENTS ────────────────────────────────────────
-
-    runTest("Comment: end of line",
-        "key = 1  # this is a comment",
+    runTest("AoT: cannot redefine AoT as static array",
+        "[[arr]]\nval = 1\narr = [1]",
         Expect::SUCCESS);
 
-    runTest("Comment: full line",
-        "# entire line comment\nkey = 1",
+    runTest("AoT: sub-AoT in entry that was later explicitly defined (invalid)",
+        "[[a]]\n[[a.b]]\nval = 1\n[a]\nother = 2",
+        Expect::FAILURE);
+
+    runTest("AoT: dotted key inside AoT entry",
+        "[[products]]\nname.first = \"drill\"\nname.last = \"pro\"",
         Expect::SUCCESS);
 
-    runTest("Comment: hash inside string is NOT a comment",
-        R"(key = "hello # world")",
+    runTest("AoT: inline table array inside AoT entry",
+        "[[items]]\nflags = [true, false]\n[[items]]\nflags = [false, true]",
         Expect::SUCCESS);
 
-    // ── 9. WHITESPACE / NEWLINES ───────────────────────────
-
-    runTest("Whitespace: CRLF line endings",
-        "key = 1\r\nother = 2",
+    runTest("AoT: deep sub-AoT two levels",
+        "[[a]]\n[[a.b]]\n[[a.b.c]]\nval = 1",
         Expect::SUCCESS);
 
-    runTest("Whitespace: blank lines between key-vals",
-        "a = 1\n\n\nb = 2",
+    runTest("AoT: scalar defined then AoT with same key (invalid)",
+        "arr = 1\n[[arr]]\nval = 2",
+        Expect::FAILURE);
+
+    // ══════════════════════════════════════════════════════
+    //  I. WHITESPACE / ENCODING edge cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Whitespace: only CRLF line",
+        "\r\n",
         Expect::SUCCESS);
 
-    runTest("Whitespace: spaces around equals",
-        "key   =   42",
+    runTest("Whitespace: tab before key",
+        "\tkey = 1",
         Expect::SUCCESS);
 
-    // ── 10. EDGE / ERROR CASES ─────────────────────────────
-
-    runTest("Empty document",
-        "",
+    runTest("Whitespace: tab between key and equals",
+        "key\t=\t1",
         Expect::SUCCESS);
 
-    runTest("Only comments and blank lines",
-        "# comment\n\n# another\n",
+    runTest("Whitespace: bare carriage return (invalid — CR not followed by LF)",
+        "key = 1\rother = 2",
+        Expect::FAILURE);
+
+    runTest("Whitespace: form-feed (0x0C) inside basic string (invalid control char)",
+        "key = \"\x0c\"",
+        Expect::FAILURE);
+
+    runTest("Whitespace: vertical tab (0x0B) inside basic string (invalid control char)",
+        "key = \"\x0b\"",
+        Expect::FAILURE);
+
+    runTest("Whitespace: multiple blank lines between tables",
+        "[a]\nx = 1\n\n\n\n[b]\ny = 2",
         Expect::SUCCESS);
 
-    runTest("Key without value (invalid)",
-        "key",
-        Expect::FAILURE);
-
-    runTest("Value without key (invalid)",
-        "= 1",
-        Expect::FAILURE);
-
-    runTest("Bare key with space (invalid)",
-        "key one = 1",
-        Expect::FAILURE);
-
-    runTest("Unclosed table header (invalid)",
-        "[table",
-        Expect::FAILURE);
-
-    runTest("Unclosed array (invalid)",
-        "arr = [1, 2",
-        Expect::FAILURE);
-
-    runTest("Unclosed inline table (invalid)",
-        "t = {a = 1",
-        Expect::FAILURE);
-
-    runTest("Integer overflow (beyond int64 — implementation-defined)",
-        "val = 99999999999999999999",
-        Expect::FAILURE);   // adjust to SUCCESS if your lib wraps silently
-
-    runTest("Float: double decimal point (invalid)",
-        "val = 1.2.3",
-        Expect::FAILURE);
-
-    runTest("Bare key with dot treated as dotted (not single key)",
-        "a.b = 1\n[a]\nc = 2",
-        Expect::SUCCESS);   // a.b and [a].c coexist
-
-    runTest("Redefine implicit table via dotted key (invalid)",
-        "a.b = 1\n[a]\nb = 2",
-        Expect::FAILURE);   // b already defined via dotted key
-
-    runTest("Deep nesting: table inside array of tables",
-        "[[a]]\n[[a.b]]\nval = 1\n[[a]]\n[[a.b]]\nval = 2",
+    runTest("Whitespace: trailing spaces after value",
+        "key = 1   ",
         Expect::SUCCESS);
 
-    runTest("Multi-line basic string: three quotes inside (invalid)",
-        "val = \"\"\"foo \"\"\" bar\"\"\"",
-        // The first \"\"\" closes the string; 'bar' is stray.
+    runTest("Whitespace: trailing spaces after table header",
+        "[t]   \nval = 1",
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  J. COMMENTS — edge cases
+    // ══════════════════════════════════════════════════════
+
+    runTest("Comment: hash inside literal string is not a comment",
+        "key = '#not a comment'",
+        Expect::SUCCESS);
+
+    runTest("Comment: hash inside multi-line literal string is not a comment",
+        "key = '''\n# not a comment\n'''",
+        Expect::SUCCESS);
+
+    runTest("Comment: NUL byte inside comment (invalid)",
+        "# hello\x00world\nkey = 1",
         Expect::FAILURE);
 
-    runTest("Unicode bare key characters (invalid)",
-        u8"héllo = 1",
-        Expect::FAILURE);   // bare keys are restricted to A-Z a-z 0-9 - _
-
-    runTest("Literal string: single quotes inside (invalid — no escaping)",
-        "val = 'it\\'s'",
+    runTest("Comment: DEL (0x7F) inside comment (invalid)",
+        "# hello\x7fworld\nkey = 1",
         Expect::FAILURE);
 
-    runTest("Large table: many keys in one table",
+    runTest("Comment: inline after array element",
+        "arr = [\n  1, # first\n  2  # second\n]",
+        Expect::SUCCESS);
+
+    runTest("Comment: between table header and first key",
+        "[t] # comment\nval = 1",
+        Expect::SUCCESS);
+
+    runTest("Comment: between AoT header and first key",
+        "[[arr]] # comment\nval = 1",
+        Expect::SUCCESS);
+
+    runTest("Comment: entire document is comments",
+        "# line 1\n# line 2\n# line 3\n",
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  K. COMPLEX / REALISTIC DOCUMENTS
+    // ══════════════════════════════════════════════════════
+
+    runTest("Complex: realistic server config",
+        R"(
+[server]
+host = "localhost"
+port = 8080
+workers = 4
+debug = false
+
+[server.tls]
+enabled = true
+cert_file = "/etc/ssl/cert.pem"
+key_file  = "/etc/ssl/key.pem"
+
+[[server.virtual_hosts]]
+domain = "example.com"
+root   = "/var/www/example"
+
+[[server.virtual_hosts]]
+domain = "api.example.com"
+root   = "/var/www/api"
+)",
+        Expect::SUCCESS);
+
+    runTest("Complex: deeply nested implicit tables via dotted key",
+        "a.b.c.d.e.f.g = 42",
+        Expect::SUCCESS);
+
+    runTest("Complex: mix of inline tables and AoT",
+        R"(
+[[users]]
+name = "Alice"
+roles = ["admin", "user"]
+address = {city = "Paris", zip = "75001"}
+
+[[users]]
+name = "Bob"
+roles = ["user"]
+address = {city = "Lyon", zip = "69001"}
+)",
+        Expect::SUCCESS);
+
+    runTest("Complex: AoT with nested AoT and subtables",
+        R"(
+[[books]]
+title = "TOML for Beginners"
+
+[[books.authors]]
+name = "Alice"
+
+[[books.authors]]
+name = "Bob"
+
+[[books]]
+title = "Advanced TOML"
+
+[[books.authors]]
+name = "Carol"
+)",
+        Expect::SUCCESS);
+
+    runTest("Complex: all scalar types in one document",
+        R"(
+int_val     = 42
+neg_int     = -7
+hex_val     = 0xCAFE
+oct_val     = 0o755
+bin_val     = 0b1100_1010
+float_val   = 3.14159
+sci_val     = 6.022e23
+inf_val     = inf
+nan_val     = nan
+bool_true   = true
+bool_false  = false
+str_basic   = "hello\nworld"
+str_literal = 'C:\Users\toml'
+str_multi   = """
+line one
+line two
+"""
+str_lit_ml  = '''
+no \n escape here
+'''
+)",
+        Expect::SUCCESS);
+
+    runTest("Complex: large AoT with 50 entries",
         [](){
-            std::string s = "[big]\n";
-            for (int i = 0; i < 100; ++i)
-                s += "key" + std::to_string(i) + " = " + std::to_string(i) + "\n";
+            std::string s;
+            for (int i = 0; i < 50; ++i)
+                s += "[[items]]\nid = " + std::to_string(i)
+                   + "\nname = \"item_" + std::to_string(i) + "\"\n";
             return s;
         }(),
         Expect::SUCCESS);
 
-    runTest("Deeply dotted key: 5 levels",
-        "a.b.c.d.e = 42",
+    runTest("Complex: dotted keys and table headers building same tree",
+        R"(
+[database]
+host = "db.local"
+port = 5432
+credentials.user = "admin"
+credentials.pass = "secret"
+)",
         Expect::SUCCESS);
 
-    runTest("Mixed array of arrays (same inner type)",
-        "arr = [[1,2],[3,4]]",
+    runTest("Complex: table header followed by many dotted sub-keys",
+        R"(
+[config]
+a.b.c = 1
+a.b.d = 2
+a.e   = 3
+f     = 4
+)",
         Expect::SUCCESS);
 
-    runTest("Inline table in array",
-        "arr = [{x=1, y=2}, {x=3, y=4}]",
+    runTest("Complex: AoT entry contains inline array of inline tables",
+        R"(
+[[routes]]
+path = "/api"
+middleware = [{name = "auth"}, {name = "log"}]
+)",
         Expect::SUCCESS);
 
-    runTest("Key: only dashes",
-        "--- = true",
+    runTest("Complex: multiple root keys interleaved with tables",
+        R"(
+version = "1.0"
+debug = false
+
+[build]
+target = "release"
+
+name = "myapp"
+)",
+        // 'name' after [build] belongs to [build], not root — valid
         Expect::SUCCESS);
 
-    runTest("Key: only underscores",
-        "___ = true",
-        Expect::SUCCESS);
+    // ══════════════════════════════════════════════════════
+    //  L. PRECISE ERROR IDENTIFICATION
+    // ══════════════════════════════════════════════════════
 
-    runTest("Quoted dotted key segments",
-        R"("a.b"."c.d" = 1)",
-        Expect::SUCCESS);
-
-    runTest("String: all standard escape sequences",
-        R"(val = "\b\t\n\f\r\"\\"")",
-        Expect::SUCCESS);
-
-    runTest("Float: underscore in mantissa",
-        "val = 9_224_617.445_991_228_313",
-        Expect::SUCCESS);
-
-    runTest("Integer: zero",
-        "val = 0",
-        Expect::SUCCESS);
-
-    runTest("Integer: negative zero",
-        "val = -0",
-        Expect::SUCCESS);
-
-    runTest("Array: booleans",
-        "arr = [true, false, true]",
-        Expect::SUCCESS);
-
-    runTest("Array: floats",
-        "arr = [1.0, 2.5, -3.14]",
-        Expect::SUCCESS);
-
-    runTest("Duplicate array-of-table key across parent tables (invalid)",
-        "[[a]]\n[[a.b]]\nval = 1\n[a]\nother = 2",
+    runTest("Error: value on same line as table header (invalid)",
+        "[t] val = 1",
         Expect::FAILURE);
 
-    runTest("Newline inside basic string (invalid)",
-        "val = \"line1\nline2\"",
+    runTest("Error: two values on same line without separator (invalid)",
+        "a = 1 b = 2",
         Expect::FAILURE);
 
-    runTest("Newline inside literal string (invalid)",
-        "val = 'line1\nline2'",
+    runTest("Error: unterminated multi-line basic string",
+        "val = \"\"\"\nno close",
         Expect::FAILURE);
+
+    runTest("Error: unterminated multi-line literal string",
+        "val = '''\nno close",
+        Expect::FAILURE);
+
+    runTest("Error: AoT header with trailing garbage (invalid)",
+        "[[arr]] garbage\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: table header with trailing garbage (invalid)",
+        "[t] garbage\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: equals without value (invalid)",
+        "key =",
+        Expect::FAILURE);
+
+    runTest("Error: equals without value followed by newline (invalid)",
+        "key =\n",
+        Expect::FAILURE);
+
+    runTest("Error: key with only whitespace (invalid)",
+        "   = 1",
+        Expect::FAILURE);
+
+    runTest("Error: float exponent with no digits (invalid)",
+        "val = 1e",
+        Expect::FAILURE);
+
+    runTest("Error: float with double exponent (invalid)",
+        "val = 1e2e3",
+        Expect::FAILURE);
+
+    runTest("Error: array with only whitespace and comment is valid empty array",
+        "arr = [ # nothing\n]",
+        Expect::SUCCESS);
+
+    runTest("Error: define scalar then AoT with same name (invalid)",
+        "arr = 1\n[[arr]]\nval = 2",
+        Expect::FAILURE);
+
+    runTest("Error: AoT then define scalar with same name",
+        "[[arr]]\nval = 1\narr = 2",
+        Expect::SUCCESS);
+
+    runTest("Error: table header missing closing bracket (invalid)",
+        "[t\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: AoT header missing closing brackets (invalid)",
+        "[[arr\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: empty table header (invalid)",
+        "[]\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: empty AoT header (invalid)",
+        "[[]]\nval = 1",
+        Expect::FAILURE);
+
+    runTest("Error: key with newline inside quoted key (invalid)",
+        "\"ke\ny\" = 1",
+        Expect::FAILURE);
+
+    // ══════════════════════════════════════════════════════
+    //  M. BOUNDARY / OVERFLOW
+    // ══════════════════════════════════════════════════════
+
+    runTest("Integer: INT64_MAX (9223372036854775807)",
+        "val = 9223372036854775807",
+        Expect::SUCCESS);
+
+    runTest("Integer: INT64_MAX + 1 (overflow, invalid)",
+        "val = 9223372036854775808",
+        Expect::FAILURE);
+
+    runTest("Integer: INT64_MIN (-9223372036854775808)",
+        "val = -9223372036854775808",
+        Expect::SUCCESS);
+
+    runTest("Integer: INT64_MIN - 1 (overflow, invalid)",
+        "val = -9223372036854775809",
+        Expect::FAILURE);
+
+    runTest("Float: large but valid exponent (1e308)",
+        "val = 1e308",
+        Expect::SUCCESS);
+
+    runTest("Float: exponent causing double overflow (invalid)",
+        "val = 1e99999",
+        Expect::FAILURE);
+
+    runTest("String: very long basic string (1000 chars)",
+        "val = \"" + std::string(1000, 'x') + "\"",
+        Expect::SUCCESS);
+
+    runTest("Key: very long bare key (128 chars)",
+        std::string(128, 'a') + " = 1",
+        Expect::SUCCESS);
+
+    runTest("Nesting: 20-level deep dotted key",
+        [](){
+            std::string s;
+            for (int i = 0; i < 20; ++i) { if (i) s += "."; s += "k" + std::to_string(i); }
+            return s + " = true";
+        }(),
+        Expect::SUCCESS);
+
+    runTest("Array: deeply nested arrays 10 levels",
+        [](){
+            std::string s(10, '[');
+            s += "1";
+            s += std::string(10, ']');
+            return "arr = " + s;
+        }(),
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  N. UNICODE IN VALUES
+    // ══════════════════════════════════════════════════════
+
+    runTest("Unicode: multi-byte UTF-8 in basic string literal",
+        u8"val = \"日本語テスト\"",
+        Expect::SUCCESS);
+
+    runTest("Unicode: emoji directly in basic string",
+        u8"val = \"🍕🍔\"",
+        Expect::SUCCESS);
+
+    runTest("Unicode: right-to-left text in basic string",
+        u8"val = \"مرحبا\"",
+        Expect::SUCCESS);
+
+    runTest("Unicode: NUL codepoint via \\u0000 (invalid)",
+        R"(val = "\u0000")",
+        Expect::FAILURE);
+
+    runTest("Unicode: surrogate half via \\uDC00 (invalid)",
+        R"(val = "\uDC00")",
+        Expect::FAILURE);
+
+    runTest("Unicode: max valid codepoint \\U0010FFFF",
+        R"(val = "\U0010FFFF")",
+        Expect::SUCCESS);
+
+    runTest("Unicode: one above max codepoint \\U00110000 (invalid)",
+        R"(val = "\U00110000")",
+        Expect::FAILURE);
+
+    runTest("Unicode: non-breaking space via \\u00A0",
+        R"(val = "\u00A0")",
+        Expect::SUCCESS);
+
+    runTest("Unicode: UTF-8 in literal string key value (allowed)",
+        u8"val = 'héllo wörld'",
+        Expect::SUCCESS);
+
+    runTest("Unicode: replacement character U+FFFD in basic string",
+        u8"val = \"\xef\xbf\xbd\"",
+        Expect::SUCCESS);
+
+    // ══════════════════════════════════════════════════════
+    //  O. TRICKY STRUCTURAL INTERACTIONS
+    // ══════════════════════════════════════════════════════
+
+    runTest("Structure: AoT entry sub-table, then next AoT entry re-introduces sub-table",
+        "[[a]]\n[a.b]\nval = 1\n[[a]]\n[a.b]\nval = 2",
+        Expect::SUCCESS);
+
+    runTest("Structure: dotted key creating implicit table, then AoT under it (invalid)",
+        "a.b = 1\n[[a.c]]\nval = 1",
+        // a.b defined a as an implicit table; [[a.c]] creates AoT under a — should be valid
+        Expect::SUCCESS);
+
+    runTest("Structure: inline table as AoT element value",
+        "[[arr]]\nentry = {x = 1, y = 2}",
+        Expect::SUCCESS);
+
+    runTest("Structure: key shadow — sub-key same name as parent table key",
+        "[a]\nb = 1\n[a.c]\nb = 2",
+        // a.b and a.c.b are distinct — valid
+        Expect::SUCCESS);
+
+    runTest("Structure: empty inline table as array element",
+        "arr = [{}, {}, {}]",
+        Expect::SUCCESS);
+
+    runTest("Structure: array of empty arrays",
+        "arr = [[], [], []]",
+        Expect::SUCCESS);
+
+    runTest("Structure: boolean array in inline table in AoT",
+        "[[items]]\nflags = {on = true, off = false}",
+        Expect::SUCCESS);
+
+    runTest("Structure: self-referential dotted key in inline table",
+        "t = {a.b.c = {d.e = 1}}",
+        Expect::SUCCESS);
+
+    runTest("Structure: inline table trailing comma then close (TOML 1.1 allows)",
+        "t = {a = 1, b = 2,}",
+        Expect::SUCCESS);
+
+    runTest("Structure: deeply nested AoT, 3 levels",
+        R"(
+[[a]]
+[[a.b]]
+[[a.b.c]]
+val = 1
+[[a.b]]
+[[a.b.c]]
+val = 2
+[[a]]
+[[a.b]]
+[[a.b.c]]
+val = 3
+)",
+        Expect::SUCCESS);
+
+    runTest("Structure: integer key in dotted path",
+        "1.2.3 = true",
+        Expect::SUCCESS);
+
+    runTest("Structure: mixed quoted and bare segments in dotted key",
+        "bare.\"quoted\".again = 1",
+        Expect::SUCCESS);
 }
 
 // ============================================================
@@ -618,7 +1076,6 @@ static void registerTests()
 // ============================================================
 int main(int argc, char** argv)
 {
-    // ── optional: run against a file from the command line
     if (argc > 1)
     {
         std::cout << "=== File: " << argv[1] << " ===\n";
@@ -627,7 +1084,6 @@ int main(int argc, char** argv)
             std::fstream fs(argv[1]);
             std::cout << "Tokens: ";
             printTokens(fs);
-
             toml::Document doc;
             doc.from_file(argv[1]);
             std::cout << "JSON:\n" << toml::toJson(doc) << "\n";
@@ -639,11 +1095,9 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    // ── run test suite
     registerTests();
     printSummary();
 
-    // exit code: 0 = all passed, 1 = some failed
     for (auto& r : g_results)
         if (!r.passed) return 1;
     return 0;

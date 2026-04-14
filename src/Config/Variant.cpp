@@ -6,15 +6,15 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 17:23:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 00:49:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "TOMLVariant.hpp"
 
-toml::Variant::Variant() : type(NONE), is_explicit(false) {}
+toml::Variant::Variant() : type(NONE), context(IMPLICIT) {}
 
-toml::Variant::Variant(const Variant &other) : type(other.type), is_explicit(other.is_explicit)
+toml::Variant::Variant(const Variant &other) : type(other.type), context(other.context)
 {
 	this->construct(other);
 }
@@ -30,7 +30,7 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 		return (*this);
 	this->destruct();
 	this->type = other.type;
-	this->is_explicit = other.is_explicit;
+	this->context = other.context;
 	this->construct(other);
 	return (*this);
 }
@@ -38,7 +38,7 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 toml::Variant::Type toml::Variant::getType() const { return this->type; }
 
 # define X(name, T, ...) \
-toml::Variant::Variant(const T& value) : type(name), is_explicit(false) \
+toml::Variant::Variant(const T& value) : type(name), context(IMPLICIT) \
 { \
 	this->construct(value); \
 }
