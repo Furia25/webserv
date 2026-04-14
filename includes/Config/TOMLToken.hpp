@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/11 02:01:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 13:23:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,9 @@ public:
 
 	void	swap(Token& other);
 	Token&	operator= (const Token& other);
+
+	const char			*toString() const;
+	static const char	*toString(Token::Type type);
 
 	Type				getType() const;
 	const std::string&	getLiteral() const;

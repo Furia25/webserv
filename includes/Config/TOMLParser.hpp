@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 01:52:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/14 14:15:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ public:
 private:
 	struct NestContext
 	{
-		enum Type{NEST_BRACE, NEST_BRACKET};
+		enum Type{BRACE, BRACKET};
 		NestContext(enum Type type, toml::Value *node) : type(type), node(node) {};
 		Type			type;
 		toml::Value		*node;
@@ -40,6 +40,7 @@ private:
 	std::stack<NestContext, std::vector<NestContext>>	nesting;
 
 	toml::Value			*current_node;
+	toml::Value			*header_node;
 	toml::Document&		document;
 	Tokenizer			tokenizer;
 
@@ -53,23 +54,24 @@ private:
 	void	unest(enum NestContext::Type type);
 	void	handleLiterals(Token& token);
 	bool	handleKeywords(const std::string& literal);
-	void	handleNumbers(const std::string& literal);
+	void	handleNumbers(std::stringstream& literal);
 	void	handleKeys(Token& token);
 	void	handleHeaders(Token& token);
 	bool	validateKey(const std::string& str);
 
 	void	resolveNode(Token& token, bool& previously_created);
-	void	error(const char *str);
+	void	error(const char *str, Token::Type type);
 };
 
 template <typename T>
 inline void TOMLParser::addValue(const T& value)
 {
-	if (this->nesting.size() != 0 && this->nesting.top().type == NestContext::NEST_BRACKET)
+	if (this->nesting.size() != 0 && this->nesting.top().type == NestContext::BRACKET)
 		this->nesting.top().node->as<toml::Array>().push_back(toml::Value(value));
 	else
 		*this->current_node = value;
 	this->current_node->setExplicit();
+	this->state = AFTER_VALUE;
 }
 
 }; // namespace toml
