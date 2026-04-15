@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/30 17:46:10 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/15 18:16:20 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,29 +14,6 @@
 #include "Server/Request.hpp"
 #include <algorithm>
 #include <iterator>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#define PROTOCOL "HTTP"
-#define _MAX_BODY_SIZE_ 10485760
-#define _MAX_PATH_SIZE_ 2048
-
-enum	PathType
-{
-	INVALID,
-	FILES,
-	DIR,
-};
-
-static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
-
-enum	Method
-{
-	GET,
-	POST,
-	METHOD,
-	UNKNOWN,
-};
 
 Request::Request() : parsing_is_complete(false), header_is_parsed(false), is_validated(false),
 	content_length(0), method(""), request_path(""), protocol("")
@@ -155,8 +132,8 @@ void Request::validateHeader()
 	long long	val;
 
 	HashMap<std::string,
-		std::string>::iterator it = headers.find("Content-Length");
-	if (headers.find("Host") == headers.end())
+		std::string>::iterator it = headers.find("content-length");
+	if (headers.find("host") == headers.end())
 		throw std::runtime_error("400 Bad Request: Missing Host header");
 	if (it != headers.end())
 	{
@@ -237,22 +214,6 @@ void Request::validateProtocol() const
 	}
 }
 
-int Request::checkPathType(const std::string &path)
-{
-	struct stat	buffer;
-	int			status;
-
-	status = stat(path.c_str(), &buffer);
-	if (status == 0)
-	{
-		if (S_ISDIR(buffer.st_mode))
-			return (DIR);
-		if (S_ISREG(buffer.st_mode))
-			return (FILES);
-	}
-	return (INVALID);
-}
-
 void	Request::invalidPath()
 {
 	if (request_path.size() > _MAX_PATH_SIZE_)
@@ -275,28 +236,6 @@ void Request::validatePath()
 		query_path = request_path.substr(q_path + 1);
 		request_path = request_path.substr(0, q_path);
 	}
-	
-	if (request_path == "/")
-		request_path = "/index.html";
-	
-	std::string full_path = "./www" + request_path;
-	
-	int type = checkPathType(full_path);
-	if (type == INVALID)
-		throw std::runtime_error("404 Not found");
-
-	if (type == DIR)
-	{
-		if (full_path[full_path.size() - 1] != '/')
-            full_path += "/";
-        full_path += "index.html";
-		if (checkPathType(full_path) != FILES)
-            throw std::runtime_error("403 Forbidden: No index file");
-	}
-	if (access(full_path.c_str(), R_OK) != 0)
-        throw std::runtime_error("403 Forbidden: Access denied");
-
-    request_path = full_path;
 }
 
 void Request::print() const 

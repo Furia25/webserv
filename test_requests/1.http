@@ -1,5 +1,5 @@
 GET /index.html HTTP/1.1
-host: localhost:8080
+Host: couille
 User-Agent: test
 Accept: */*
 

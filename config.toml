@@ -9,8 +9,6 @@ max_connections	= 1024
 max_body_size_kb = 4096
 keepalive_timeout_s = 60
 
-# ── Routes ─────────────────────────────────────────────────────────────
-
 [[routes]]
 path = "/"
 type = "static"
@@ -31,8 +29,6 @@ dest = "./uploads"
 methods = ["POST", "DELETE"]
 max_file_kb = 10240
 
-# ── Virtual hosts ───────────────────────────────────────────────────────
-
 [[vhosts]]
 host = "example.com"
 port = 8080
@@ -43,14 +39,10 @@ host = "blog.example.com"
 port = 8080
 root = "./www/blog"
 
-# ── Pages d'erreur ──────────────────────────────────────────────────────
-
 [errors]
 404	 = "./www/errors/404.html"
 403	 = "./www/errors/403.html"
 500	 = "./www/errors/500.html"
-
-# ── Logs ────────────────────────────────────────────────────────────────
 
 [logging]
 level	  = "info"

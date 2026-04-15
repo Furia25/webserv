@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/30 17:46:20 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/15 18:24:52 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include "EnumClass.hpp"
 # include "../Utils/HashMap.hpp"
 
+
 class Request
 {
 	
@@ -30,7 +31,7 @@ public:
 	void 		feed(const uint8_t *buffer, size_t length);
 	void		check();
 	void		print() const;
-	// Getters
+
 	const bool 			&getCompleteStatus() const;
 	const std::string 	&getMethod() const;
 	const std::string 	&getRequestPath() const;
@@ -67,5 +68,4 @@ private:
 	void 			validateHeader();
 	void 			validatePath();
 	void 			invalidPath();
-	int 			checkPathType(const std::string &path);
 };
