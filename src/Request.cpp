@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/26 16:55:40 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/15 18:14:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ enum	PathType
 	DIR,
 };
 
-static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
+static const std::string allowed_method[] = {[GET] = "GET", [POST] = "POST", "DELETE"};
 
 enum	Method
 {

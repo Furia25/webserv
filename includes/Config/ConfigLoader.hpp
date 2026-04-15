@@ -1,31 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   IRequestHandler.hpp                                :+:      :+:    :+:   */
+/*   ConfigLoader.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 18:02:39 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/15 17:28:59 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/15 18:10:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef _CONFIGLOADER_H
+# define _CONFIGLOADER_H
 
-#ifndef _IREQUESTHANDLER_H
-# define _IREQUESTHANDLER_H
+# include <string>
 
-# include <vector>
-# include <stdint.h>
+# include "toml.hpp"
 
-# include "Connection.hpp"
-
-class IRequestHandler
+class ConfigLoader
 {
 public:
-	virtual void	onDataReceived(Connection& connection) = 0;
-	virtual void	onConnection(Connection& connection) = 0;
-	virtual void	onDisconnection(Connection& connection) = 0;
-	virtual void	onError(Connection& connection) = 0;
+protected:
+private:
+	toml::Document	config;
 };
 
-#endif // _IREQUESTHANDLER_H
+#endif // _CONFIGLOADER_H

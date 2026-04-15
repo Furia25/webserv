@@ -1,31 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   IRequestHandler.hpp                                :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 17:54:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 18:02:39 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/15 18:10:23 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/15 18:11:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef _CONFIG_H
+# define _CONFIG_H
 
-#ifndef _IREQUESTHANDLER_H
-# define _IREQUESTHANDLER_H
+# include "ConfigStructs.hpp"
 
-# include <vector>
-# include <stdint.h>
-
-# include "Connection.hpp"
-
-class IRequestHandler
+class Config
 {
 public:
-	virtual void	onDataReceived(Connection& connection) = 0;
-	virtual void	onConnection(Connection& connection) = 0;
-	virtual void	onDisconnection(Connection& connection) = 0;
-	virtual void	onError(Connection& connection) = 0;
+	Config();
+	Config(const Config& other);
+	~Config();
+	Config& operator=(const Config& other);
+protected:
+private:
 };
 
-#endif // _IREQUESTHANDLER_H
+#endif // _CONFIG_H
