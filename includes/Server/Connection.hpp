@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 19:26:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:16:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,16 @@
 
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
+# include "HashedTimingWheel.hpp"
 
 # define READ_SIZE	4096
 # define READ_LIMIT	16384
 
 # define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
+
+# define CLOSING_TIMEOUT	10
+# define ABSOLUTE_TIMEOUT	30
 
 # define _CONNECTION_STATES \
 	X(ERRORED)\
@@ -42,14 +46,13 @@ public:
 		#undef X
 	};
 
-	Connection(Socket& server_socket);
+	Connection(TCPServer& server, Socket& server_socket);
 	virtual ~Connection();
 
 	void			handleEvent(TCPServer &server, uint32_t events);
 
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
-
 
 	void			clearReadBuffer();
 	void			clearWriteBuffer();
@@ -73,6 +76,7 @@ public:
 	friend std::ostream&	operator<<(std::ostream& os, const Connection& connection);
 protected:
 private:
+	TCPServer&				server;
 	Socket					client_socket;
 	size_t					id;
 
@@ -85,12 +89,18 @@ private:
 	static size_t			last_id;
 	State					state;
 
+	Alarm<Connection *>		alarmTimeout;
+
+	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
+	void			timeout(Alarm<Connection *>& alarm);
 	void			setDeletable(void);
 	void			handleRead(void);
 	void			handleWrite(void);
 	Connection(const Connection& other);
 	Connection&		operator=(const Connection& other);
 };
+
+void	timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 
 bool	operator==(const Connection& lhs, const Connection& rhs);
 

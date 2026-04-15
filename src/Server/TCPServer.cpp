@@ -6,11 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 18:05:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:36:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/TCPServer.hpp"
+
+HashedTimingWheel<1000> TCPServer::AlarmManager;
 
 volatile sig_atomic_t	g_running = true;
 
@@ -31,6 +33,7 @@ TCPServer::TCPServer()
 TCPServer::~TCPServer()
 {
 	this->clearListeners();
+	this->cleanConnections();
 	this->clearConnections();
 	close(this->epoll_fd);
 }
@@ -38,17 +41,21 @@ TCPServer::~TCPServer()
 void TCPServer::run(void)
 {
 	std::signal(SIGINT, signal_handler);
+	std::signal(SIGPIPE, SIG_IGN);
 	epoll_event	events[MAX_EVENTS];
 
 	while (g_running)
 	{
-		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, EPOLL_TIMEOUT);
+		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
+		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout);
 		for (int i = 0; i < n; ++i)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
 		Logger::tick();
+		AlarmManager.tick();
+		this->cleanConnections();
 	}
 }
 
@@ -71,9 +78,16 @@ void TCPServer::openListener(const char *host, const char *service)
 	this->addPollEvent(*listener, LISTENER_EVENTS);
 }
 
+void TCPServer::cleanConnections(void)
+{
+	for (std::vector<Connection *>::iterator it = this->deletable_connections.begin(); it != this->deletable_connections.end(); ++it)
+		delete *it;
+	this->deletable_connections.clear();
+}
+
 void TCPServer::registerConnection(Connection *connection)
 {
-	this->connections[connection->getSocket().getFd()] = connection;
+	this->connections.insert(connection->getSocket().getFd(), connection);
 	this->handler->onConnection(*connection);
 	this->addPollEvent(*connection, CONNECTION_EVENTS);
 	this->actual_connections++;
@@ -84,7 +98,8 @@ void TCPServer::dropConnection(Connection *connection)
 	this->connections.erase(connection->getSocket().getFd());
 	this->handler->onDisconnection(*connection);
 	this->removePollEvent(*connection);
-	delete connection;
+	this->deletable_connections.push_back(connection);
+	Logger::INFO() << "Connection dropped: Client " << connection->getSocket().getAddress();
 	this->actual_connections--;
 }
 
@@ -113,8 +128,17 @@ void TCPServer::recoverListener(Listener& listener)
 	this->openListener(address.getHost(), address.getService());
 }
 
-void TCPServer::addPollEvent(IEpollHandler &event_handler, uint32_t events)
+void TCPServer::setPollEvent(IEpollHandler &event_handler, uint32_t events)
 {
+	epoll_event ev;
+	ev.events = events;
+	ev.data.ptr = &event_handler;
+	errno = 0;
+	if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, event_handler.getSocket().getFd(), &ev) == -1)
+		throw std::runtime_error("Unable to add a polling event: " + std::string(strerror(errno)));
+}
+
+void TCPServer::addPollEvent(IEpollHandler &event_handler, uint32_t events){
 	epoll_event ev;
 	ev.events = events;
 	ev.data.ptr = &event_handler;
@@ -140,7 +164,7 @@ void TCPServer::clearListeners()
 
 void TCPServer::clearConnections()
 {
-	for (std::map<int, Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
+	for (HashMap<int, Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
 		delete (*it).second;
 	this->connections.clear();
 }
@@ -161,7 +185,7 @@ void TCPServer::tickCallback(void *instance)
 	Logger::DEBUG() << "Heartbeat: Server is running...";
 	LogMessage debug = Logger::DEBUG();
 	debug << "Connections: ";
-	for (std::map<int, Connection *>::iterator it = server->connections.begin(); it != server->connections.end(); ++it)
+	for (HashMap<int, Connection *>::iterator it = server->connections.begin(); it != server->connections.end(); ++it)
 	{
 		debug << (*(*it).second);
 		if (it != server->connections.end())

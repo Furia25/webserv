@@ -1,0 +1,58 @@
+
+[server]
+host = "0.0.0.0"
+port = 8080
+name = "monsite"
+
+[server.limits]
+max_connections	= 1024
+max_body_size_kb = 4096
+keepalive_timeout_s = 60
+
+# ── Routes ─────────────────────────────────────────────────────────────
+
+[[routes]]
+path = "/"
+type = "static"
+root = "./www"
+index   = "index.html"
+listing = false
+
+[[routes]]
+path = "/api"
+type = "cgi"
+cgi_bin = "./cgi-bin"
+methods = ["GET", "POST"]
+
+[[routes]]
+path = "/upload"
+type = "upload"
+dest = "./uploads"
+methods = ["POST", "DELETE"]
+max_file_kb = 10240
+
+# ── Virtual hosts ───────────────────────────────────────────────────────
+
+[[vhosts]]
+host = "example.com"
+port = 8080
+root = "./www/example"
+
+[[vhosts]]
+host = "blog.example.com"
+port = 8080
+root = "./www/blog"
+
+# ── Pages d'erreur ──────────────────────────────────────────────────────
+
+[errors]
+404	 = "./www/errors/404.html"
+403	 = "./www/errors/403.html"
+500	 = "./www/errors/500.html"
+
+# ── Logs ────────────────────────────────────────────────────────────────
+
+[logging]
+level	  = "info"
+access_log = "./logs/access.log"
+error_log  = "./logs/error.log"

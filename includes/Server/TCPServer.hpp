@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/16 18:36:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:33:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,14 +34,16 @@
 # include "Listener.hpp"
 # include "Connection.hpp"
 # include "Logger.hpp"
+# include "Utils/HashMap.hpp"
+# include "HashedTimingWheel.hpp"
 
 # define MAX_CLIENTS	1024
 # define MAX_EVENTS	512
 # define MAX_PENDING_CONNECTION	10
-# define EPOLL_TIMEOUT	5
+# define EPOLL_TIMEOUT	1000
 
 # define LISTENER_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
-# define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
+# define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP
 
 class TCPServer
 {
@@ -57,12 +59,13 @@ public:
 	void				openListener(const char *host, const char *service);
 
 	void				cleanConnections(void);
-	
+
 	void				bindHandler(IRequestHandler& handler);
 	IRequestHandler&	getHandler(void);
 
 	static void			tickCallback(void *instance);
 
+	static	HashedTimingWheel<1000> AlarmManager;
 	friend class Connection;
 	friend class Listener;
 protected:
@@ -73,10 +76,12 @@ private:
 	int							epoll_fd;
 	IRequestHandler				*handler;
 	std::vector<Listener*>		listeners;
-	std::map<int, Connection*>	connections;
+	HashMap<int, Connection*>	connections;
+	std::vector<Connection *>	deletable_connections;
 
 	void	recoverListener(Listener& listener);
 
+	void	setPollEvent(IEpollHandler& event_handler, uint32_t events);
 	void	addPollEvent(IEpollHandler& event_handler, uint32_t events);
 	void	removePollEvent(IEpollHandler& event_handler);
 	void	registerConnection(Connection *connection);

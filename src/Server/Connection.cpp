@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/21 13:41:28 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/31 11:33:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,14 @@
 
 size_t Connection::last_id = 0;
 
-Connection::Connection(Socket& server_socket) : bytes_sended(0), bytes_received(0), state(CONNECTED)
+Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0), bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(READ_BUFFER_DEFAULT_SIZE);
 	this->write_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
 	this->id = Connection::last_id;
 	Connection::last_id++;
+	TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
 }
 
 Connection::~Connection() {}
@@ -29,20 +30,33 @@ Connection::~Connection() {}
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
-	if (events & EPOLLHUP)
+	if (events & EPOLLHUP && events & EPOLLRDHUP)
 		this->setDeletable();
 	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
 		this->setDeletable();
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
+	if (events & EPOLLOUT && this->state != DELETABLE)
+	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CLOSING_TIMEOUT);
+		this->handleWrite();
+	}
 }
 
-void Connection::setDeletable(void)
+void Connection::timeout(Alarm<Connection *>& alarm)
+{
+	(void) alarm;
+	this->setDeletable();
+}
+
+void Connection::setDeletable(void) 
 {
 	this->state = DELETABLE;
+	this->server.dropConnection(this);
 }
 
 void Connection::handleRead(void)
@@ -59,7 +73,10 @@ void Connection::handleRead(void)
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
+	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CLOSING_TIMEOUT);
 		this->state = CLOSING;
+	}
 	/*Logger::DEBUG() << this->read_buffer;*/
 }
 
@@ -81,11 +98,13 @@ void Connection::handleWrite(void)
 
 void Connection::sendData(const uint8_t *data, size_t len)
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
 	this->write_buffer.insert(this->write_buffer.end(), data, data + len);
 }
 
 void Connection::sendData(const std::string& data)
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
 	this->write_buffer.insert(this->write_buffer.end(), data.begin(), data.end());
 }
 
@@ -119,6 +138,7 @@ void Connection::clearReadBuffer()
 
 void Connection::clearWriteBuffer()
 {
+	this->server.setPollEvent(*this, CONNECTION_EVENTS);
 	this->write_buffer.clear();
 	this->bytes_sended = 0;
 }
@@ -171,6 +191,11 @@ const char *Connection::getStateString(State state)
 				return "Unknown";
 		#undef X
 	}
+}
+
+void timeoutCallback(Alarm<Connection *> &alarm, Connection* connection)
+{
+	connection->timeout(alarm);
 }
 
 bool operator==(const Connection &lhs, const Connection &rhs)
