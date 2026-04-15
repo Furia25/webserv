@@ -1,37 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Socket.hpp                                         :+:      :+:    :+:   */
+/*   ConfigLoader.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 20:19:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 21:30:00 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/15 17:28:59 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/15 18:10:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _SOCKET_H
-# define _SOCKET_H
+#ifndef _CONFIGLOADER_H
+# define _CONFIGLOADER_H
 
-# include <unistd.h>
-# include <sys/types.h>
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <netdb.h>
+# include <string>
 
-class Socket
+# include "toml.hpp"
+
+class ConfigLoader
 {
 public:
-	Socket();
-	~Socket();
-
-	void	listen(void);
-	void	bind(void);
-	int		getFD(void)	const;
 protected:
 private:
-	const int	socket_fd;
-	
+	toml::Document	config;
 };
 
-#endif // _SOCKET_H
+#endif // _CONFIGLOADER_H

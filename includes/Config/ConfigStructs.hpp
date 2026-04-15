@@ -1,27 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Socket.cpp                                         :+:      :+:    :+:   */
+/*   ConfigStructs.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 20:26:56 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/15 18:37:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Socket.hpp"
+#ifndef _CONFIGSTRUCTS_H
+# define _CONFIGSTRUCTS_H
 
-Socket::Socket() : socket_fd(-1) {}
-Socket::Socket(int fd) : socket_fd(fd) {}
-
-Socket::~Socket()
+struct ServerConfig
 {
-	if (this->socket_fd != -1)
-		close(this->socket_fd);
-}
+	/* data */
+};
 
-int Socket::getFD(void) const
+struct RouteConfig
 {
-	return this->socket_fd;
-}
+
+};
+
+#endif // _CONFIGSTRUCTS_H

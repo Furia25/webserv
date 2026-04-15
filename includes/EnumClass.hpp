@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 16:05:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/02/05 18:34:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 14:22:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,21 +14,29 @@
 #ifndef _ENUMCLASS_H
 # define _ENUMCLASS_H
 
+# include "macrosplosion.hpp"
 # include <exception>
-# include <string.h>
-# include <map>
+# include <cstring>
 
-#define ENUM_CLASS_ENUM(val, ...) val,
+#define ENUM_BASIC(val, ...) val __VA_ARGS__
+#define ENUM_BASIC_STRING(val, ...) val __VA_ARGS__
 
 #define ENUM_CLASS(name, enum_tuple, enum_macro, ...)\
 struct name {\
 public:\
 	enum E {\
-		M_TUPLE_FOREACH(enum_tuple, enum_macro, ~)\
+		M_TUPLE_FOREACH(enum_tuple, enum_macro, M_COMMA())\
 	};\
 	name(E e) : _t(e) {};\
 	E operator()() const {return _t;}\
 	static size_t	length() {return (M_TUPLE_SIZE(enum_tuple));};\
+	bool operator==(const name& other) const { return _t == other._t; }\
+	bool operator!=(const name& other) const { return _t != other._t; }\
+	bool operator<(const name& other) const { return _t < other._t; }\
+	bool operator<=(const name& other) const { return _t <= other._t; }\
+	bool operator>(const name& other) const { return _t > other._t; }\
+	bool operator>=(const name& other) const { return _t >= other._t; }\
+	bool operator==(E e) const { return _t == e; }\
 \
 __VA_ARGS__ \
 \
@@ -36,21 +44,25 @@ private:\
 	E _t;\
 }
 
-#define _ENUM_CLASS_STRING_CASE(tuple, string_macro, ...) case M_TUPLE_ELEMENT(tuple, 0): return (M_STR(string_macro(tuple, __VA_ARGS__))); break;
-#define _ENUM_CLASS_STRING_CMP(tuple, string_macro, ...)\
-else if (strcmp(M_STR(string_macro(tuple, __VA_ARGS__)), c_str) == 0)\
-	return (M_TUPLE_ELEMENT(tuple, 0));
+#define _ENUM_CLASS_STRING_CASE(el, enum_macro, string_macro, ...) case enum_macro(el): return (M_STR(string_macro(el, __VA_ARGS__))); break;
+#define _ENUM_CLASS_STRING_CMP(el, enum_macro, string_macro, ...)\
+else if (std::strcmp(M_STR(string_macro(el, __VA_ARGS__)), c_str) == 0)\
+	return (enum_macro(el));
 
 #define _ENUM_CLASS_STRING_ERROR(c_str)	\
 	throw std::domain_error(std::string("Illegal conversion from string to enum, str: ") + "'" + c_str + "'" + " (function: " + __PRETTY_FUNCTION__ + ")")
 
-#define ENUM_LITERALS(enum_tuple, string_macro, ...)\
+#define ENUM_LITERALS(enum_tuple, enum_macro, string_macro, ...)\
 public:\
 	static const char *toString(size_t e)\
 	{\
-		switch (static_cast<E>(e))\
+		return (toString(static_cast<E>(e)));\
+	}\
+	static const char *toString(E e)\
+	{\
+		switch (e)\
 		{\
-			M_TUPLE_FOREACH(enum_tuple, _ENUM_CLASS_STRING_CASE, string_macro, __VA_ARGS__)\
+			M_TUPLE_FOREACH(enum_tuple, _ENUM_CLASS_STRING_CASE, enum_macro, string_macro, __VA_ARGS__)\
 			default:\
 				return (unknown());\
 		}\
@@ -66,7 +78,7 @@ public:\
 	{\
 		if (c_str == NULL)\
 			_ENUM_CLASS_STRING_ERROR(c_str);\
-		M_TUPLE_FOREACH(enum_tuple, _ENUM_CLASS_STRING_CMP, string_macro, __VA_ARGS__)\
+		M_TUPLE_FOREACH(enum_tuple, _ENUM_CLASS_STRING_CMP,  enum_macro, string_macro, __VA_ARGS__)\
 		else\
 			_ENUM_CLASS_STRING_ERROR(c_str);\
 		return (static_cast<E>(0));\

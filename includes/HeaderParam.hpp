@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:41:18 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/05 17:42:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/03/13 13:30:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,6 @@
 #ifndef _HEADERPARAM_H
 # define _HEADERPARAM_H
 
-# include <string>
-# include <ostream>
-
-# include "macrosplosion.hpp"
 # include "EnumClass.hpp"
 
 #define _HEADER_PARAM (\
@@ -26,9 +22,9 @@
 ) \
 
 
-# define X(tuple, ...)	M_TUPLE_ELEMENT(tuple,0),
-# define X_STRING(tuple, ...)	M_TUPLE_ELEMENT(tuple, 1)
-ENUM_CLASS(HEADER_PARAM, _HEADER_PARAM, X, ENUM_LITERALS(_HEADER_PARAM, X_STRING, ~); );
+# define X(tuple, ...)	M_TUPLE_ELEMENT(tuple,0) __VA_ARGS__
+# define X_STRING(tuple, ...)	M_TUPLE_ELEMENT(tuple, 1) __VA_ARGS__
+ENUM_CLASS(HeaderParam, _HEADER_PARAM, X, ENUM_LITERALS(_HEADER_PARAM, X, X_STRING););
 # undef X
 # undef X_STRING
 

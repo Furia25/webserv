@@ -1,0 +1,74 @@
+
+[engine]
+max_events = 1024
+timeout_ms = 5000
+
+[logging]
+level = "debug"
+access_log = "./logs/access.log"
+error_log = "./logs/error.log"
+
+# --- Main Website (Port 8080) ---
+[[servers]]
+host = "0.0.0.0"
+port = 8080
+server_name = "website.com"
+
+	[servers.limits]
+	max_connections = 1000
+	max_body_size = 10485760
+	keepalive_timeout = 60
+	request_timeout = 10
+
+	[servers.errors]
+	404 = "./www/errors/404.html"
+	500 = "./www/errors/500.html"
+
+	# Static files route
+	[[servers.routes]]
+	path = "/"
+	methods = ["GET"]
+	handler = "static"
+	root = "./www/site1"
+	index = "index.html"
+	autoindex = true
+
+	# File upload route
+	[[servers.routes]]
+	path = "/upload"
+	methods = ["POST"]
+	handler = "upload"
+	upload_store = "./www/site1/uploads"
+	max_file_size = 5242880
+
+	# CGI script route
+	[[servers.routes]]
+	path = "/api"
+	methods = ["GET", "POST", "DELETE"]
+	handler = "cgi"
+	cgi_bin = "./cgi-bin/api_handler.py"
+
+# --- Admin Panel (Virtual Host on same port) ---
+[[servers]]
+host = "0.0.0.0"
+port = 8080
+server_name = "admin.local"
+
+	[[servers.routes]]
+	path = "/"
+	methods = ["GET"]
+	handler = "static"
+	root = "./www/admin"
+	index = "admin.html"
+
+# --- Legacy API (Dedicated Port) ---
+[[servers]]
+host = "127.0.0.1"
+port = 9090
+server_name = "localhost"
+
+	[[servers.routes]]
+	path = "/"
+	methods = ["GET"]
+	handler = "cgi"
+	cgi_bin = "./cgi-bin/legacy_api"
