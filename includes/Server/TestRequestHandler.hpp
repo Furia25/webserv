@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TestRequestHandler.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:08:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/27 19:22:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 13:08:23 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ public:
 	void	onError(Connection& connection);
 protected:
 private:
+        std::map<int, Request> ongoingRequests;
 };
 
 #endif // _TESTREQUESTHANDLER_H
