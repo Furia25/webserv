@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/15 22:39:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 00:47:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,9 +41,7 @@ Request &Request::operator=(const Request &other)
 	return (*this);
 }
 
-Request::~Request()
-{
-}
+Request::~Request() {}
 
 size_t Request::find_header_end() 
 {
@@ -98,8 +96,7 @@ void Request::feed(const uint8_t *fragment, size_t length)
 	if (!header_is_parsed)
 	{
 		if (raw_buffer.size() > 8192)
-			throw std::runtime_error("431 Request Header Fields Too Large");
-			
+			throw HTTPException(HTTPCode::HEADER_FIELDS_TOO_LARGE);
 		size_t pos = find_header_end();
 		if (pos != std::string::npos)
 		{
@@ -134,22 +131,22 @@ void Request::validateHeader()
 	HashMap<std::string,
 		std::string>::iterator it = headers.find("content-length");
 	if (headers.find("host") == headers.end())
-		throw std::runtime_error("400 Bad Request: Missing Host header");
+		throw HTTPException(HTTPCode::BAD_REQUEST, "Missing Host Header");
 	if (it != headers.end())
 	{
 		val = std::atoll((*it).second.c_str());
 		if (val < 0)
-			throw std::runtime_error("400 Bad Request: Negative Content-Length");
+			throw HTTPException(HTTPCode::BAD_REQUEST, "Negative Content-Length");
 		content_length = static_cast<size_t>(val);
 	}
 	else
 	{
 		content_length = 0;
 		if (method == "POST")
-			throw std::runtime_error("411 Length Required");
+			throw HTTPException(HTTPCode::LENGTH_REQUIRED);
 	}
-	if (content_length > _MAX_BODY_SIZE_)
-		throw std::runtime_error("413 Content too large");
+	if (content_length > _DEFAULT_MAX_BODY_SIZE_)
+		throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 }
 
 void Request::parseRequestLine(std::string &line)
@@ -160,9 +157,9 @@ void Request::parseRequestLine(std::string &line)
 	ss >> request_path;
 	ss >> protocol;
 	if (method.empty() || request_path.empty() || protocol.empty())
-		throw std::runtime_error("400 Bad Request: missing elements");
+		throw HTTPException(HTTPCode::BAD_REQUEST, "Missing elements");
 	if (ss >> extra)
-		throw std::runtime_error("400 Bad Request: Too many elements in request line");
+		throw HTTPException(HTTPCode::BAD_REQUEST, "Too many elements in request line");
 	if (!protocol.empty() && protocol[protocol.size() - 1] == '\r')
 	{
 		protocol.erase(protocol.size() - 1);
@@ -195,7 +192,7 @@ void Request::validateMethod() const
 		Method temp = Method::from(method);
 	} catch(const std::domain_error& e)
 	{
-		throw std::runtime_error("405 Method Not Allowed");
+		throw HTTPException(HTTPCode::NOT_IMPLEMENTED);
 	}
 }
 
@@ -204,27 +201,23 @@ void Request::validateProtocol() const
 	if (protocol.length() > 4)
 	{
 		if (protocol.substr(0, 4) != PROTOCOL)
-			throw std::runtime_error("400 Bad Request: Invalid Protocol Name");
+			throw HTTPException(HTTPCode::BAD_REQUEST, "Invalid Protocol Name");
 	}
 
 	std::string version = protocol.substr(5);
 
 	if (version == "0.9" || version.empty())
-	{
-		throw std::runtime_error("505 HTTP Version Not Supported");
-	}
+		throw HTTPException(HTTPCode::HTTP_VERSION_NOT_SUPPORTED);
 }
 
 void	Request::invalidPath()
 {
-	if (request_path.size() > _MAX_PATH_SIZE_)
-		throw std::runtime_error("414 Request-URI Too Long");
-		
+	if (request_path.size() > _DEFAULT_MAX_PATH_SIZE_)
+		throw HTTPException(HTTPCode::URI_TOO_LONG);
 	if (request_path.find("..") != std::string::npos)
-		throw std::runtime_error("403 Forbidden: Path security violation");
-		
+		throw HTTPException(HTTPCode::FORBIDDEN, "Path security violation");
 	if (request_path[0] != '/')
-			throw std::runtime_error("400 Bad Request: Path must start with /");
+			throw HTTPException(HTTPCode::BAD_REQUEST, "Path must start with /");
 }
 
 void Request::validatePath()

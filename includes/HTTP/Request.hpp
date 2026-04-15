@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/15 22:34:51 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 00:25:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,6 @@ public:
 	void				setValidateStatus(int status);
 
 private:
-
 	std::vector<uint8_t> 			raw_buffer;
 	bool 							parsing_is_complete;
 	bool 							header_is_parsed;
