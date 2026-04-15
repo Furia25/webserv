@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:07:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:27:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,11 +86,12 @@
 	(ttc, font/collection)\
 ) \
 
-# define X(tuple, ...)	M_TUPLE_ELEM_0 __VA_ARGS__
-# define X_STRING(tuple, ...)	M_TUPLE_ELEM_1 __VA_ARGS__
+# define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple __VA_ARGS__
+# define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
 ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING););
 # undef X
 # undef X_STRING
+# undef MIME_TYPE
 
 
 #endif // _MIME_H

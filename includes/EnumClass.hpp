@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 16:05:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 14:22:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:48:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,9 @@ public:\
 		M_TUPLE_FOREACH(enum_tuple, enum_macro, M_COMMA())\
 	};\
 	name(E e) : _t(e) {};\
+	operator E() const { return _t; }\
 	E operator()() const {return _t;}\
-	static size_t	length() {return (M_TUPLE_SIZE(enum_tuple));};\
+	static const size_t	length = M_TUPLE_SIZE(enum_tuple);\
 	bool operator==(const name& other) const { return _t == other._t; }\
 	bool operator!=(const name& other) const { return _t != other._t; }\
 	bool operator<(const name& other) const { return _t < other._t; }\

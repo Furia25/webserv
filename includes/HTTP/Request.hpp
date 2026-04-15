@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/15 18:24:52 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/15 22:34:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,10 @@
 # include <stdexcept>
 # include <stdint.h>
 # include <vector>
-# include "EnumClass.hpp"
-# include "../Utils/HashMap.hpp"
 
+# include "EnumClass.hpp"
+# include "Utils/HashMap.hpp"
+# include "HttpTypes.hpp"
 
 class Request
 {
@@ -42,7 +43,6 @@ public:
 
 private:
 
-  
 	std::vector<uint8_t> 			raw_buffer;
 	bool 							parsing_is_complete;
 	bool 							header_is_parsed;
@@ -55,8 +55,7 @@ private:
   	std::string 						query_path;
 	std::string 						protocol;
 	std::vector<uint8_t> 				body;
-	
-	
+
 	void 			toLowerCase(std::string &str);
 	size_t 			find_header_end();
 	void			parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos);

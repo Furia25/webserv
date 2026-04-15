@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
+#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/15 13:17:57 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/15 22:40:53 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -66,7 +66,6 @@ SRC_FILES = \
 	Server/Socket.cpp \
 	Server/TCPServer.cpp \
 	Server/TestRequestHandler.cpp \
-	Server/Request.cpp \
 	Logger.cpp \
 	main.cpp
 

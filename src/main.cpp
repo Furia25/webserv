@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/25 21:41:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:48:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include "HeaderParam.hpp"
 #include "Server/TestRequestHandler.hpp"
 #include "Logger.hpp"
+#include "HTTP/HttpTypes.hpp"
 
 int main()
 {

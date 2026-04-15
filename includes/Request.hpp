@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/04 19:17:15 by antoine           #+#    #+#             */
-/*   Updated: 2026/03/07 16:09:57 by antoine          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:45:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,16 +16,6 @@
 #include <stdexcept>
 #include <stdint.h>
 #include <vector>
-
-static const std::string allowed_method[] = {"GET", "POST", "DELETE"};
-
-enum	Method
-{
-	GET,
-	POST,
-	METHOD,
-	UNKNOWN,
-};
 
 class Request
 {
@@ -37,7 +27,6 @@ class Request
 	void feed(const std::vector<uint8_t> &fragment);
 
 	// Getters
-	const bool &is_complete() const;
 	const std::string &getMethod() const;
 	const std::string &getRequestPath() const;
 	const std::string &getProtocol() const;

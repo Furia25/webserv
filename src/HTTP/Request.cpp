@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/15 18:41:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:39:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils/HashMap.hpp"
-#include "Server/Request.hpp"
+#include "HTTP/Request.hpp"
 #include <algorithm>
 #include <iterator>
 
@@ -190,12 +190,13 @@ void Request::parseHeaderLine(std::string &line)
 
 void Request::validateMethod() const
 {
-	for (size_t i = 0; i < UNKNOWN; i++)
+	try
 	{
-		if (method == allowed_method[i])
-			return ;
+		Method temp = Method::from(method);
+	} catch(const std::domain_error& e)
+	{
+		throw std::runtime_error("405 Method Not Allowed");
 	}
-	throw std::runtime_error("405 Method Not Allowed");
 }
 
 void Request::validateProtocol() const

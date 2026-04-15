@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:33:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 22:18:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@
 # include "Connection.hpp"
 # include "Logger.hpp"
 # include "Utils/HashMap.hpp"
-# include "HashedTimingWheel.hpp"
+# include "Utils/HashedTimingWheel.hpp"
 
 # define MAX_CLIENTS	1024
 # define MAX_EVENTS	512

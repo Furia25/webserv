@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 00:48:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/15 18:45:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,10 +82,9 @@ public:
 	static const char	*toString(const Type type);
 protected:
 private:
-	Type	type;
-
 	enum Tag {IMPLICIT, EXPLICIT, HEADER};
 
+	Type	type;
 	Tag		context;
 	union Data
 	{
