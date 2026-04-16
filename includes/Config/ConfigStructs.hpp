@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:29:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 19:48:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,8 @@
 # define _CONFIGSTRUCTS_H
 
 # include <string>
+
+# include "ConfigDefault.hpp"
 
 # include "Optional.hpp"
 # include "RadixTree.hpp"
@@ -84,7 +86,10 @@ struct ServerConfig
 struct EngineConfig
 {
 	size_t			max_events;
-	timestamp_ms	timeout;
+	timestamp_ms	max_timeout;
+	timestamp_ms	closing_timeout;
+	size_t			read_size;
+	size_t			max_read_limit;
 };
 
 struct LoggingConfig

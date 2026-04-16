@@ -33,7 +33,10 @@ public:
 	void	from_stream(std::istream& stream, bool append = false);
 	void	from_file(const std::string& path, bool append = false);
 
-	toml::Value&	operator[](const std::string& key);
+	const toml::Value&	operator[](const std::string& key) const;
+
+	bool			contain(const std::string& key) const;
+
 	toml::Value&	getRoot();
 protected:
 private:

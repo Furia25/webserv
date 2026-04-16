@@ -42,4 +42,14 @@ void toml::Document::from_file(const std::string &path, bool append)
 	from_stream(file, append);
 }
 
+const toml::Value& toml::Document::operator[](const std::string &key) const
+{
+	return this->root[key];
+}
+
+bool toml::Document::contain(const std::string &key) const
+{
+	return this->root.as<toml::Table>().contain(key);
+}
+
 toml::Value& toml::Document::getRoot() { return this->root; }

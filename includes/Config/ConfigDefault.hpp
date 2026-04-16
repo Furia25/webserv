@@ -1,20 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigLoader.cpp                                   :+:      :+:    :+:   */
+/*   ConfigDefault.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/16 18:34:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:39:04 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/16 19:47:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ConfigLoader.hpp"
+#ifndef _CONFIGDEFAULT_H
+# define _CONFIGDEFAULT_H
 
-void ConfigBuilder::from_file(Config& config, const std::string &toml_file)
-{
-	toml::Document	document;
+# define CONFIG_READ_SIZE	4096
+# define CONFIG_READ_LIMIT	16384
 
-	document.from_file(toml_file, false);
-}
+# define CONFIG_CLOSING_TIMEOUT	10
+# define CONFIG_ABSOLUTE_TIMEOUT	30
+
+#endif // _CONFIGDEFAULT_H

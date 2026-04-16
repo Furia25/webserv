@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Variant.cpp                                        :+:      :+:    :+:   */
+/*   TOMLVariant.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:47:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 19:43:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,15 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 	this->context = other.context;
 	this->construct(other);
 	return (*this);
+}
+
+const toml::Variant& toml::Variant::operator[](const std::string &key) const
+{
+	const toml::Table&	table = this->as<Table>();
+	toml::Table::const_iterator it = table.find(key);
+	if (it == table.end())
+		throw toml::Variant::ParsedException("Unspecified Key");
+	return it->second;
 }
 
 toml::Variant::Type toml::Variant::getType() const { return this->type; }

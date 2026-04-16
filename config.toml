@@ -2,6 +2,9 @@
 [engine]
 max_events = 1024
 max_timeout = 50
+closing_timeout = 30
+read_size = 4096
+max_read_limit = 16384
 
 [logging]
 level = "debug"
