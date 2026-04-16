@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 21:57:29 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 02:11:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include "Optional.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "HashedTimingWheel.hpp"
+# include "HashMap.hpp"
 
 struct ServerLimits
 {
@@ -31,17 +32,39 @@ struct RouteConfig
 	std::string	path;
 	HandlerType	handler;
 	bool		method_allowed[Method::length];
+
+	std::string	root;
+	std::string	alias;
+
+	virtual ~RouteConfig() {}
+};
+
+struct StaticConfig : public RouteConfig
+{
+	std::string	index;
+	bool		autoindex;	
+};
+
+struct UploadConfig : public RouteConfig
+{
+	std::vector<MIME>	allowed_extensions;
+	std::string			upload_store;
+	uint64_t			max_file_size;
+	bool				allow_overwrite;
 };
 
 struct RedirectConfig : public RouteConfig
 {
-	
+	std::string	redirect_location;
+	HTTPCode	status;
 };
 
 struct CGIConfig : public RouteConfig
 {
-	std::string		cgi_path;
-	timestamp_ms	timeout;
+	HashMap<std::string, std::string>	env;
+	std::string							interpreter;
+	std::string							bin;
+	timestamp_ms						timeout;
 };
 
 struct ServerConfig

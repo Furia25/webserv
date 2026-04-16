@@ -46,6 +46,13 @@ server_name = "website.com"
 	methods = ["GET", "POST", "DELETE"]
 	handler = "cgi"
 	cgi_bin = "./cgi-bin/api_handler.py"
+	cgi_timeout = 5
+
+	[[servers.routes]]
+	path = "/old-api"
+	handler = "redirect"
+	location = "/api"
+	status = 301
 
 # --- Admin Panel (Virtual Host on same port) ---
 [[servers]]
