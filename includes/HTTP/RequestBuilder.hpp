@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 15:25:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/16 17:28:45 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,22 @@
 # include "Utils/HashMap.hpp"
 # include "HttpTypes.hpp"
 # include "Request.hpp"
+
+
+struct MethodMap 
+{
+    const char* str;
+    Method val;
+};
+
+static const MethodMap map[] 
+{
+    { _HTTP_GET_, Method::GET },
+    { _HTTP_POST_, Method::POST },
+    { _HTTP_DELETE_, Method::DELETE }
+};
+
+static const size_t map_size = sizeof(map) / sizeof(map[0]);
 
 class RequestBuilder
 {

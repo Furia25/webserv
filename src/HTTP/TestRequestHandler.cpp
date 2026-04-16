@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 15:40:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/16 18:47:08 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 	}
 	if (req.getCompleteStatus() && req.isValidated())
 	{
+		
 		req.print();
 		Request final_request = req.build();
 		ongoingRequests.erase(id);

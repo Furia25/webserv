@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 16:00:12 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/16 17:29:25 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -192,11 +192,14 @@ void RequestBuilder::check()
 Request RequestBuilder::build() const
 {
     Method m = Method::UNKNOWN;
-    
-    if (method == _HTTP_GET_) m = Method::GET;
-    else if (method == _HTTP_POST_) m = Method::POST;
-    else if (method == _HTTP_DELETE_) m = Method::DELETE;
-    
+    for (size_t i = 0; i < map_size; ++i) 
+    {
+        if (method == map[i].str) 
+        {
+            m = map[i].val;
+            break;
+        }
+    }
     return Request(m, request_path, query_path, protocol, content_length, headers, body);
 }
 

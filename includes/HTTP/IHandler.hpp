@@ -1,28 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Response.hpp                                       :+:      :+:    :+:   */
+/*   IHandler.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 18:42:41 by antbonin         ###   ########.fr       */
+/*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
+/*   Updated: 2026/04/16 18:43:38 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-#ifndef _RESPONSE_H
-# define _RESPONSE_H
+# ifndef _IHANDLER_H
+# define _IHANDLER_H
+# include "Request.hpp"
+# include "../Config/Config.hpp"
+# include "Response.hpp"
 
-class Response
+class IHandler
 {
 public:
-    Response();
-    Response(const Response& other);
-    ~Response();
-    Response& operator=(const Response& other);
-protected:
-private:
+    virtual Response handle(const Request &req, const RouteConfig &config) = 0;
+    
+    virtual ~IHandler() {};
+
 };
 
-#endif // _RESPONSE_H
+#endif // _IHANDLER_H

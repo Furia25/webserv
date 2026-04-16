@@ -1,28 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Response.hpp                                       :+:      :+:    :+:   */
+/*   Handler.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 18:42:41 by antbonin         ###   ########.fr       */
+/*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
+/*   Updated: 2026/04/16 18:45:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-#ifndef _RESPONSE_H
-# define _RESPONSE_H
+#ifndef _HANDLER_H
+# define _HANDLER_H
 
-class Response
+# include "IHandler.hpp"
+
+class StaticHandler: public IHandler
 {
 public:
-    Response();
-    Response(const Response& other);
-    ~Response();
-    Response& operator=(const Response& other);
-protected:
-private:
+    Response handle(const Request &req, const RouteConfig &config);
 };
 
-#endif // _RESPONSE_H
+class CgiHandler: public IHandler
+{
+public:
+    Response handle(const Request &req, const RouteConfig &config);
+};
+
+#endif // _HANDLER_H
