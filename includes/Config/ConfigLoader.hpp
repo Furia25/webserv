@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:28:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 18:10:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:55:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,14 +15,13 @@
 
 # include <string>
 
+# include "Config.hpp"
+
 # include "toml.hpp"
 
-class ConfigLoader
+namespace ConfigBuilder
 {
-public:
-protected:
-private:
-	toml::Document	config;
+	void	from_file(Config& config, const std::string& toml_file);
 };
 
 #endif // _CONFIGLOADER_H

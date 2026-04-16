@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 21:23:34 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 01:01:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:54:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,6 @@
 #ifndef _TOML_H
 # define _TOML_H
 
-# include "TOMLDocument.hpp"
+# include "toml.hpp"
 
 #endif // _TOML_H

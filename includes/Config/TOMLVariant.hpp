@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 18:45:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:52:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,8 +78,9 @@ public:
 	Variant&			setHeader() { this->context = HEADER; return *this; };
 	static Variant		null() { return Variant(); }
 
-	std::string			*toString();
+	const char			*toString();
 	static const char	*toString(const Type type);
+
 protected:
 private:
 	enum Tag {IMPLICIT, EXPLICIT, HEADER};
@@ -93,8 +94,9 @@ private:
 		# undef X
 	}	data;
 
-	void	check_types_errors(Variant::Type expected) const;
-	void	destruct();
+	void		check_types_errors(Variant::Type expected) const;
+	void		destruct();
+
 	template <typename T> void	construct(const T& value);
 };
 

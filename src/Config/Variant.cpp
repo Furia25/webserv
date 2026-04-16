@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 00:49:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:47:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,11 @@ void	toml::Variant::destruct()
 		break;
 	};
 	# undef X
+}
+
+const char *toml::Variant::toString()
+{
+	return toml::Variant::toString(this->type);
 }
 
 const char *toml::Variant::toString(const Type type)

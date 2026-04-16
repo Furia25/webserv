@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 02:11:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:29:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,11 @@
 # include <string>
 
 # include "Optional.hpp"
+# include "RadixTree.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "HashedTimingWheel.hpp"
 # include "HashMap.hpp"
+# include "Logger.hpp"
 
 struct ServerLimits
 {
@@ -69,10 +71,26 @@ struct CGIConfig : public RouteConfig
 
 struct ServerConfig
 {
-	std::string	name;
-	std::string	host;
-	std::string	service;
-	std::string	root;
+	std::string		name;
+	std::string		host;
+	std::string		service;
+	std::string		root;
+	ServerLimits	limits;
+
+	RadixTree<RouteConfig *>		routes;
+	HashMap<HTTPCode, std::string>	error_fallbacks;
+};
+
+struct EngineConfig
+{
+	size_t			max_events;
+	timestamp_ms	timeout;
+};
+
+struct LoggingConfig
+{
+	std::string	log_file;
+	LogLevel	log_level;
 };
 
 #endif // _CONFIGSTRUCTS_H

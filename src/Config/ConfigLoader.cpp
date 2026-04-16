@@ -1,31 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Config.hpp                                         :+:      :+:    :+:   */
+/*   ConfigLoader.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/15 18:10:23 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:34:22 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/16 18:34:43 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/16 18:39:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _CONFIG_H
-# define _CONFIG_H
+#include "ConfigLoader.hpp"
 
-# include "ConfigStructs.hpp"
-
-class Config
+void ConfigBuilder::from_file(Config& config, const std::string &toml_file)
 {
-public:
-	Config();
-	~Config();
-protected:
-private:
-	EngineConfig	engineConfig;
-	LoggingConfig	loggingConfig;
+	toml::Document	document;
 
-	std::vector<ServerConfig>	servers;
-};
-
-#endif // _CONFIG_H
+	document.from_file(toml_file, false);
+}

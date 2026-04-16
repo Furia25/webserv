@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 01:01:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:54:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include <stack>
 
 # include "TOMLTokenizer.hpp"
-# include "TOMLDocument.hpp"
+# include "toml.hpp"
 
 namespace toml
 {

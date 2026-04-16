@@ -13,7 +13,7 @@
 #include <functional>
 #include <iomanip>
 
-#include "TOMLDocument.hpp"
+#include "toml.hpp"
 #include "TOMLTokenizer.hpp"
 #include "TOMLDebugJson.hpp"
 
