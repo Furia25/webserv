@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TestRequestHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 00:55:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 15:40:08 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 	size_t			dataSize;
 
 	id = connection.getClientID();
-	Request &req = ongoingRequests[id];
+	RequestBuilder &req = ongoingRequests[id];
 	dataSize = connection.getReadBufferSize();
 	if (dataSize > 0)
 	{
@@ -53,6 +53,7 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 	if (req.getCompleteStatus() && req.isValidated())
 	{
 		req.print();
+		Request final_request = req.build();
 		ongoingRequests.erase(id);
 	}
 }

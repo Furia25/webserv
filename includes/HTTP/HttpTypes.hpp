@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   HttpTypes.hpp                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
+/*   Updated: 2026/04/16 16:00:35 by antbonin         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 
 #ifndef _HTTPTYPES_H
 # define _HTTPTYPES_H
@@ -5,17 +17,24 @@
 # include <string>
 # include <stdexcept>
 # include <iostream>
+# include <sstream>
 
 # include "EnumClass.hpp"
 # include "MIME.hpp"
 
-#define PROTOCOL "HTTP"
 #define _DEFAULT_MAX_BODY_SIZE_ 10485760
 #define _DEFAULT_MAX_PATH_SIZE_ 2048
+#define _HTTP_GET_ "GET"
+#define _HTTP_POST_ "POST"
+#define _HTTP_DELETE_ "DELETE"
+#define _HTTP_VERSION_ "HTTP/1.1"
+
+#define _HEADER_CONTENT_LENGTH_ "content-length"
+#define _HEADER_HOST_ "host"
 
 ENUM_CLASS(HandlerType, (STATIC, UPLOAD, CGI, REDIRECT, STATUS), ENUM_BASIC);
 
-# define _METHODS_ (GET, POST, DELETE, HEAD, PUT)
+# define _METHODS_ (GET, POST, DELETE, HEAD, PUT, UNKNOWN)
 ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC););
 # undef _METHODS_
 
@@ -58,7 +77,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 	(BAD_GATEWAY,				502, Bad Gateway), \
 	(SERVICE_UNAVAILABLE,		503, Service Unavailable), \
 	(GATEWAY_TIMEOUT,			504, Gateway Timeout), \
-	(HTTP_VERSION_NOT_SUPPORTED,505, HTTP Version Not Supported) \
+	(_HTTP_VERSION__NOT_SUPPORTED,505, HTTP Version Not Supported) \
 )
 
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__
@@ -75,14 +94,16 @@ class HTTPException : public std::exception
 public:
 	HTTPException(HTTPCode code, const std::string& summary) : code(code), summary(summary)
 	{
-		message = std::to_string(static_cast<int>(code)) + " " + HTTPCode::toString(code);
+		std::stringstream ss;
+        ss << static_cast<int>(code);
+		message = ss.str() + " " + HTTPCode::toString(code);
         if (!summary.empty())
             message += " (" + summary + ")";
 	}
 	HTTPException(HTTPCode code) : code(code) {}
-	virtual ~HTTPException() noexcept {}
+	virtual ~HTTPException()  throw() {}
 
-	virtual const char* what() const noexcept override { return message.c_str(); };
+	virtual const char* what() const throw() { return message.c_str(); };
 	HTTPCode			getStatusCode() const { return this->code; };
 	const std::string&	getSummary() const { return this->summary; };
 private:
