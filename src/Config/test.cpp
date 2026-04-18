@@ -13,9 +13,9 @@
 #include <functional>
 #include <iomanip>
 
-#include "toml.hpp"
-#include "TOMLTokenizer.hpp"
-#include "TOMLDebugJson.hpp"
+#include "Config/toml.hpp"
+#include "Config/TOML/TOMLTokenizer.hpp"
+#include "Config/TOML/TOMLDebugJson.hpp"
 
 // ============================================================
 //  Lexer helper

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 21:32:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:23:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 
 # include "TOMLError.hpp"
 # include "TOMLTokenizer.hpp"
-# include "toml.hpp"
+# include "Config/toml.hpp"
 
 namespace toml
 {
@@ -27,10 +27,11 @@ namespace toml
 class TOMLParser
 {
 public:
-	TOMLParser(std::istream& stream, toml::Document& document);
+	TOMLParser(std::istream& stream, toml::Document& document, toml::TOMLErrorManager& errorManager);
 	~TOMLParser();
 
 private:
+	enum State	{EXPECT_KEY, AFTER_KEY, EXPECT_VALUE, AFTER_VALUE};
 	struct NestContext
 	{
 		enum Type{BRACE, BRACKET};
@@ -40,17 +41,15 @@ private:
 		size_t			line;
 		size_t			col;
 	};
+
 	std::stack<NestContext, std::vector<NestContext>>	nesting;
 
-	toml::Value			*current_node;
-	toml::Value			*header_node;
+	toml::Value			*currentNode;
+	toml::Value			*headerNode;
 	toml::Document&		document;
-
-	TOMLErrorManager	error_manager;
+	TOMLErrorManager&	errorManager;
 	Tokenizer			tokenizer;
-
-	enum State	{EXPECT_KEY, AFTER_KEY, EXPECT_VALUE, AFTER_VALUE};
-	enum State	state;
+	enum State			state;
 
 	template <typename T>
 	void	addValue(const T& value);
@@ -80,8 +79,8 @@ inline void TOMLParser::addValue(const T& value)
 		this->nesting.top().node->as<toml::Array>().push_back(variant);
 	}
 	else
-		*this->current_node = value;
-	this->current_node->setExplicit();
+		*this->currentNode = value;
+	this->currentNode->setExplicit();
 	this->state = AFTER_VALUE;
 }
 

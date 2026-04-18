@@ -6,14 +6,19 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:11:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:39:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOMLParser.hpp"
+#include "Config/TOML/TOMLParser.hpp"
 
-toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : state(EXPECT_KEY), tokenizer(stream, this->error_manager),
-	document(document), header_node(&document.getRoot()), current_node(&document.getRoot())
+toml::TOMLParser::TOMLParser(std::istream& stream, toml::Document& document, toml::TOMLErrorManager& errorManager) :
+	currentNode(&document.getRoot()),
+	headerNode(&document.getRoot()),
+	document(document),
+	errorManager(errorManager),
+	tokenizer(stream, this->errorManager),
+	state(EXPECT_KEY)
 {
 	while (1)
 	{
@@ -117,11 +122,11 @@ void toml::TOMLParser::nest(const Token& token, NestContext::Type type)
 	{
 		toml::Array& array = this->nesting.top().node->as<toml::Array>();
 		array.push_back(node);
-		this->current_node = &array.back();
+		this->currentNode = &array.back();
 	}
 	else
-		*this->current_node = node;
-	this->nesting.push(NestContext(type, this->current_node, token.getLine(), token.getColumn()));
+		*this->currentNode = node;
+	this->nesting.push(NestContext(type, this->currentNode, token.getLine(), token.getColumn()));
 	this->state = (type == NestContext::BRACE) ? EXPECT_KEY : EXPECT_VALUE;
 }
 
@@ -134,18 +139,18 @@ void toml::TOMLParser::unest(const Token& token, NestContext::Type type)
 
 	this->nesting.pop();
 	if (this->nesting.size() > 0)
-		this->current_node = this->nesting.top().node;
+		this->currentNode = this->nesting.top().node;
 	else
-		this->current_node = &this->document.getRoot();
+		this->currentNode = &this->document.getRoot();
 	this->state = AFTER_VALUE;
 }
 
 void toml::TOMLParser::handleKeys(Token& token)
 {
 	this->state = AFTER_KEY;
-	this->current_node = header_node;
+	this->currentNode = headerNode;
 	if (this->nesting.size() != 0)
-		this->current_node = this->nesting.top().node;
+		this->currentNode = this->nesting.top().node;
 	bool previously_created = false;
 	this->resolveNode(token, previously_created, true);
 	if (previously_created)
@@ -168,22 +173,22 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool 
 			ERROR("Invalid Token as key", token);
 		if (token_type == Token::IDENT && !validateKey(token.getLiteral()))
 			ERROR("Invalid character in key", token);
-		if (current_node->getType() == toml::Value::ARRAY)
+		if (currentNode->getType() == toml::Value::ARRAY)
 		{
-			Array& arr = current_node->as<Array>();
+			Array& arr = currentNode->as<Array>();
 			if (arr.empty())
 				throw std::runtime_error("Fatal Error in toml parsing, array should not be empty");
-			current_node = &arr.back();
+			currentNode = &arr.back();
 		}
-		toml::Table& current_table = current_node->as<toml::Table>();
+		toml::Table& current_table = currentNode->as<toml::Table>();
 		previously_created = current_table.contain(token.getLiteral());
 		last = this->tokenizer.peek_token().getType() != Token::DOT;
 		if (!previously_created)
 			current_table.insert(token.getLiteral(), last ? Value() : Value(Table()));
-		current_node = &current_table.find(token.getLiteral())->second;
-		if (this->nesting.size() == 0 || this->current_node != this->nesting.top().node)
+		currentNode = &current_table.find(token.getLiteral())->second;
+		if (this->nesting.size() == 0 || this->currentNode != this->nesting.top().node)
 		{
-			if (this->current_node->isExplicit() || (exclude_header && this->current_node->isHeader()))
+			if (this->currentNode->isExplicit() || (exclude_header && this->currentNode->isHeader()))
 				ERROR("Key already defined, tables can't be redefined", token);
 		}
 		if (!last)
@@ -196,26 +201,26 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool 
 
 void toml::TOMLParser::handleHeaders(Token& token)
 {
-	this->current_node = &this->document.getRoot();
+	this->currentNode = &this->document.getRoot();
 	bool table_array = token.getType() == Token::DOUBLE_LBRACKET;
 	token = this->tokenizer.next_token();
 	bool previously_created = false;
 	this->resolveNode(token, previously_created, false);
-	if (current_node->isHeader() && !table_array)
+	if (currentNode->isHeader() && !table_array)
 		return this->error("Key already defined, headers can't be redefined", token);
 	token = this->tokenizer.next_token();
 	if (table_array ? token.getType() != Token::DOUBLE_RBRACKET : token.getType() != Token::RBRACKET)
 		return this->error("Unclosed header", token);
 	if (!previously_created)
-		*this->current_node = table_array ? Value(Array()) : Value(Table());
-	this->current_node->setHeader();
+		*this->currentNode = table_array ? Value(Array()) : Value(Table());
+	this->currentNode->setHeader();
 	if (table_array)
 	{
-		Array& array = this->current_node->as<Array>();
+		Array& array = this->currentNode->as<Array>();
 		array.push_back(Variant(Table()));
-		this->current_node = &array.back();
+		this->currentNode = &array.back();
 	}
-	this->header_node = this->current_node;
+	this->headerNode = this->currentNode;
 	this->state = AFTER_VALUE;
 }
 
@@ -259,18 +264,25 @@ void toml::TOMLParser::handleErrors()
 {
 	if (this->nesting.size() != 0)
 	{
-		NestContext&	context = this->nesting.top();
-		Token::Type		type = context.type == NestContext::BRACE ? Token::RBRACE : Token::LBRACE;
-		Token	temp_token(type, context.line, context.col);
-		this->error(std::string("Unclosed scope ") + (type == Token::RBRACE ? '[' : '{'), temp_token, false);
+		NestContext&		context = this->nesting.top();
+		std::stringstream	ss;
+
+		Token::Type type = context.type == NestContext::BRACE ? Token::RBRACE : Token::RBRACKET;
+		ss << "Unclosed "
+			<< (type == Token::RBRACE ? "'{'" : "'['")
+			<< " opened at line "
+			<< context.line
+			<< ", col "
+			<< context.col;
+		this->error(ss.str(), Token(type, context.line, context.col), false);
 	}
-	if (this->error_manager.hasErrors())
-		throw this->error_manager.getError();
+	if (this->errorManager.hasErrors())
+		throw this->errorManager.getError();
 }
 
 void toml::TOMLParser::error(const std::string& str, const Token& token, bool snippet)
 {
-	this->error_manager.emitError(str, token.getLiteral().size(), token.getLine(), token.getColumn(), snippet);
+	this->errorManager.emitError(str, token.getLiteral().size(), token.getLine(), token.getColumn(), snippet);
 }
 
 void toml::TOMLParser::handleLiterals(Token& token)

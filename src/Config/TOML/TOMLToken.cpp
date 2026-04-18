@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:04 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 22:45:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:14:30 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOMLToken.hpp"
+#include "Config/TOML/TOMLToken.hpp"
 
 void toml::Token::swap(Token& other)
 {

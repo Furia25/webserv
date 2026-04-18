@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:43:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:14:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOMLVariant.hpp"
+#include "Config/TOML/TOMLVariant.hpp"
 
 toml::Variant::Variant() : type(NONE), context(IMPLICIT) {}
 

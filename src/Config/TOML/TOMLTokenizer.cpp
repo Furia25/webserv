@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 23:56:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:17:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOMLTokenizer.hpp"
+#include "Config/TOML/TOMLTokenizer.hpp"
 
 toml::Token toml::Tokenizer::next_token()
 {
@@ -262,7 +262,7 @@ void toml::Tokenizer::readUnicode(std::stringstream& ss, size_t n)
 {
 	uint32_t codepoint = 0;
 
-	for (int i = 0; i < n; i++)
+	for (size_t i = 0; i < n; i++)
 	{
 		if (this->eof())
 		{

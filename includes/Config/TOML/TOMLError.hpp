@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/18 20:22:02 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 23:41:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:34:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include <stddef.h>
 # include <vector>
 
-# include "toml.hpp"
+# include "Config/toml.hpp"
 
 namespace toml
 {
@@ -26,7 +26,8 @@ namespace toml
 	class TOMLErrorManager
 	{
 	public:
-		TOMLErrorManager() : silent_error(false) {};
+		TOMLErrorManager(const std::string& str) : fileName(str), silentError(false) {};
+		TOMLErrorManager() : silentError(false) {};
 		~TOMLErrorManager() {};
 
 		void	emitError(const std::string& message, size_t length, size_t line, size_t col, bool snippet = true);
@@ -38,48 +39,57 @@ namespace toml
 		const	ParseException&	getError() const { return this->error; };
 
 	private:
-		std::string		current_snippet;
+		std::string		fileName;
+		std::string		currentSnippet;
 		ParseException	error;
-		bool			silent_error;
+		bool			silentError;
 	};
 
 } // namespace toml
 
 inline void toml::TOMLErrorManager::emitError(const std::string& message, size_t length, size_t line, size_t col, bool snippet)
 {
-	if (this->silent_error)
+	if (this->silentError)
 	{
 		this->error.addError("", "", length, line, col);
 		return ;
 	}
-	this->error.addError(message, this->current_snippet, length, line, col);
-	this->silent_error = true;
+	this->error.addError(message, snippet ? this->currentSnippet : "", length, line, col, this->fileName);
+	this->silentError = true;
 }
 
 inline void toml::TOMLErrorManager::newSnippet()
 {
-	this->silent_error = false;
-	this->current_snippet.clear();
+	this->silentError = false;
+	this->currentSnippet.clear();
 }
 
 inline void toml::TOMLErrorManager::snippetAppend(char c)
 {
-	this->current_snippet += c;
+	this->currentSnippet += c;
 }
 
 inline void toml::TOMLErrorManager::snippetUnget()
 {
-	this->current_snippet.pop_back();
+	this->currentSnippet.pop_back();
 }
 
-inline void toml::ParseException::addError(const std::string& message, const std::string& snippet, size_t length, int line, int col)
+inline void toml::ParseException::addError(
+		const std::string& message,
+		const std::string& snippet, 
+		size_t length,
+		int line,
+		int col,
+		const std::string& name)
 {
 	this->error_count++;
 	if (message == "" && snippet == "")
 		return ;
 	std::ostringstream oss;
+	if (name != "")
+		oss << name << ':';
 	oss << line << ":" << col
-		<< ": error: " << message << "\n";
+		<< ": Error: " << message << "\n";
 
 	if (!snippet.empty())
 	{

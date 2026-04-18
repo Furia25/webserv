@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "toml.hpp"
-# include "TOMLParser.hpp"
+# include "Config/toml.hpp"
+# include "Config/TOML/TOMLParser.hpp"
 
 toml::Document::Document() {}
 
@@ -27,11 +27,12 @@ toml::Document& toml::Document::operator=(const Document& other)
 	return (*this);
 }
 
-void toml::Document::from_stream(std::istream &stream, bool append)
+void toml::Document::from_stream(std::istream &stream, bool append, const std::string& name)
 {
 	if (!append)
 		this->root = toml::Table();
-	toml::TOMLParser	parser(stream, *this);
+	toml::TOMLErrorManager	error_manager(name);
+	toml::TOMLParser		parser(stream, *this, error_manager);
 }
 
 void toml::Document::from_file(const std::string &path, bool append)
@@ -39,7 +40,7 @@ void toml::Document::from_file(const std::string &path, bool append)
 	std::ifstream	file(path);
 	if (!file)
 		throw std::runtime_error("TOML: could not open '" + path + "': " + std::strerror(errno));
-	from_stream(file, append);
+	from_stream(file, append, path);
 }
 
 const toml::Value& toml::Document::operator[](const std::string &key) const

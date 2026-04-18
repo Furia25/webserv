@@ -17,7 +17,7 @@
 # include <iostream>
 # include <fstream>
 
-# include "TOMLVariant.hpp"
+# include "TOML/TOMLVariant.hpp"
 
 namespace toml
 {
@@ -30,7 +30,7 @@ public:
 	~Document();
 	Document& operator=(const Document& other);
 
-	void	from_stream(std::istream& stream, bool append = false);
+	void	from_stream(std::istream& stream, bool append = false, const std::string& name = "");
 	void	from_file(const std::string& path, bool append = false);
 
 	const toml::Value&	operator[](const std::string& key) const;
@@ -49,7 +49,8 @@ public:
 	size_t				error_count;
 	mutable std::string	error_string;
 
-	void	addError(const std::string& message, const std::string& snippet, size_t length, int line, int col);
+	void	addError(const std::string& message, const std::string& snippet, size_t length,
+				int line, int col, const std::string& name = "");
 
 	const char	*what() const throw() { return this->error_string.c_str(); };
 };
