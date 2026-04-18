@@ -6,13 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 01:31:51 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:11:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "TOMLParser.hpp"
 
-toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : state(EXPECT_KEY), tokenizer(stream),
+toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : state(EXPECT_KEY), tokenizer(stream, this->error_manager),
 	document(document), header_node(&document.getRoot()), current_node(&document.getRoot())
 {
 	while (1)
@@ -55,36 +55,36 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 					goto unexpected_token;
 				else if (state == EXPECT_VALUE)
 				{
-					this->nest(NestContext::BRACKET);
-					this->nest(NestContext::BRACKET);
+					this->nest(token, NestContext::BRACKET);
+					this->nest(token, NestContext::BRACKET);
 				}
 				else
 					this->handleHeaders(token);
 				break;
 
 			case Token::DOUBLE_RBRACKET:
-					this->unest(NestContext::BRACKET);
-					this->unest(NestContext::BRACKET);
+					this->unest(token, NestContext::BRACKET);
+					this->unest(token, NestContext::BRACKET);
 				break;
 
 			case Token::RBRACKET:
 				if (state != EXPECT_KEY)
-					this->unest(NestContext::BRACKET);
+					this->unest(token, NestContext::BRACKET);
 				break;
 			case Token::LBRACKET:
 				if (state == AFTER_VALUE)
 					goto unexpected_token;
 				if (state == EXPECT_VALUE)
-					this->nest(NestContext::BRACKET);
+					this->nest(token, NestContext::BRACKET);
 				else
 					this->handleHeaders(token);
 				break;
 
-			case Token::RBRACE: this->unest(NestContext::BRACE); break;
+			case Token::RBRACE: this->unest(token, NestContext::BRACE); break;
 			case Token::LBRACE:
 				if (state != EXPECT_VALUE)
 					goto unexpected_token;
-				this->nest(NestContext::BRACE);
+				this->nest(token, NestContext::BRACE);
 				break;
 
 			case Token::COMMA:
@@ -101,16 +101,15 @@ toml::TOMLParser::TOMLParser(std::istream &stream, toml::Document &document) : s
 				break;
 
 			default: unexpected_token:
-				this->error("Unexpected Token", token.getType());
+				this->error("Unexpected token", token);
 				break;
 		}
 	}
 	exit:
-	if (this->nesting.size() != 0)
-		this->error("unclosed nested", Token::RBRACE);
+	handleErrors();
 }
 
-void toml::TOMLParser::nest(NestContext::Type type)
+void toml::TOMLParser::nest(const Token& token, NestContext::Type type)
 {
 	Variant node = (type == NestContext::BRACKET ? toml::Value(toml::Array()) : toml::Value(toml::Table()));
 	node.setExplicit();
@@ -122,16 +121,16 @@ void toml::TOMLParser::nest(NestContext::Type type)
 	}
 	else
 		*this->current_node = node;
-	this->nesting.push(NestContext(type, this->current_node));
+	this->nesting.push(NestContext(type, this->current_node, token.getLine(), token.getColumn()));
 	this->state = (type == NestContext::BRACE) ? EXPECT_KEY : EXPECT_VALUE;
 }
 
-void toml::TOMLParser::unest(NestContext::Type type)
+void toml::TOMLParser::unest(const Token& token, NestContext::Type type)
 {
 	if (this->nesting.size() == 0)
-		return this->error("unexpected token", Token::LBRACKET);
+		return this->error("unexpected token", token);
 	if (this->nesting.top().type != type)
-		return this->error("unexpected token", Token::LBRACKET);
+		return this->error("unexpected token", token);
 
 	this->nesting.pop();
 	if (this->nesting.size() > 0)
@@ -151,10 +150,12 @@ void toml::TOMLParser::handleKeys(Token& token)
 	this->resolveNode(token, previously_created, true);
 	if (previously_created)
 	{
-		this->error("Cant redefine key", Token::IDENT);
+		this->error("Key already defined, can't be redefined", token);
 		return ;
 	}
 }
+
+static bool validateKey(const std::string& str);
 
 void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool exclude_header)
 {
@@ -164,14 +165,14 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool 
 		#define ERROR(x, y) do {this->error(x, y); return ;} while (false)
 		Token::Type	token_type = token.getType();
 		if (token_type != Token::IDENT && token_type != Token::STRING && token_type != Token::LITERAL_STRING)
-			ERROR("unexpected token as key", token_type);
-		if (token_type == Token::IDENT && !this->validateKey(token.getLiteral()))
-			ERROR("invalid key", token_type);
+			ERROR("Invalid Token as key", token);
+		if (token_type == Token::IDENT && !validateKey(token.getLiteral()))
+			ERROR("Invalid character in key", token);
 		if (current_node->getType() == toml::Value::ARRAY)
 		{
 			Array& arr = current_node->as<Array>();
 			if (arr.empty())
-				ERROR("unexpected token", token.getType());
+				throw std::runtime_error("Fatal Error in toml parsing, array should not be empty");
 			current_node = &arr.back();
 		}
 		toml::Table& current_table = current_node->as<toml::Table>();
@@ -183,7 +184,7 @@ void toml::TOMLParser::resolveNode(Token& token, bool& previously_created, bool 
 		if (this->nesting.size() == 0 || this->current_node != this->nesting.top().node)
 		{
 			if (this->current_node->isExplicit() || (exclude_header && this->current_node->isHeader()))
-				ERROR("redefine table", token_type);
+				ERROR("Key already defined, tables can't be redefined", token);
 		}
 		if (!last)
 		{
@@ -201,10 +202,10 @@ void toml::TOMLParser::handleHeaders(Token& token)
 	bool previously_created = false;
 	this->resolveNode(token, previously_created, false);
 	if (current_node->isHeader() && !table_array)
-		return this->error("Redefine header", token.getType());
+		return this->error("Key already defined, headers can't be redefined", token);
 	token = this->tokenizer.next_token();
 	if (table_array ? token.getType() != Token::DOUBLE_RBRACKET : token.getType() != Token::RBRACKET)
-		return this->error("Unclosed header", token.getType());
+		return this->error("Unclosed header", token);
 	if (!previously_created)
 		*this->current_node = table_array ? Value(Array()) : Value(Table());
 	this->current_node->setHeader();
@@ -218,7 +219,7 @@ void toml::TOMLParser::handleHeaders(Token& token)
 	this->state = AFTER_VALUE;
 }
 
-bool toml::TOMLParser::validateKey(const std::string& str)
+static bool validateKey(const std::string& str)
 {
 	for (std::string::const_iterator it = str.begin(); it != str.end(); ++it)
 	{
@@ -231,7 +232,6 @@ bool toml::TOMLParser::validateKey(const std::string& str)
 		case '-':
 			break;
 		default:
-			this->error("unexpected char in key token", Token::IDENT);
 			return false;
 		}
 	}
@@ -243,11 +243,11 @@ void toml::TOMLParser::handleNewline(Token& token)
 	if (state == EXPECT_VALUE)
 	{
 		if (this->nesting.empty() || this->nesting.top().type != NestContext::BRACKET)
-			this->error("Value expected before newline", token.getType());
+			this->error("Value expected before newline", token);
 	}
 	else if (state == AFTER_KEY)
 	{
-		this->error("Key ended without value ", token.getType());
+		this->error("Key ended without value ", token);
 	}
 	if (!this->nesting.empty() && this->nesting.top().type == NestContext::BRACKET)
 		state = EXPECT_VALUE;
@@ -255,9 +255,22 @@ void toml::TOMLParser::handleNewline(Token& token)
 		state = EXPECT_KEY;
 }
 
-void toml::TOMLParser::error(const char *str, Token::Type type)
+void toml::TOMLParser::handleErrors()
 {
-	throw std::runtime_error(std::string("Error: ") + str + " " + Token::toString(type));
+	if (this->nesting.size() != 0)
+	{
+		NestContext&	context = this->nesting.top();
+		Token::Type		type = context.type == NestContext::BRACE ? Token::RBRACE : Token::LBRACE;
+		Token	temp_token(type, context.line, context.col);
+		this->error(std::string("Unclosed scope ") + (type == Token::RBRACE ? '[' : '{'), temp_token, false);
+	}
+	if (this->error_manager.hasErrors())
+		throw this->error_manager.getError();
+}
+
+void toml::TOMLParser::error(const std::string& str, const Token& token, bool snippet)
+{
+	this->error_manager.emitError(str, token.getLiteral().size(), token.getLine(), token.getColumn(), snippet);
 }
 
 void toml::TOMLParser::handleLiterals(Token& token)
@@ -276,7 +289,7 @@ void toml::TOMLParser::handleLiterals(Token& token)
 			token = this->tokenizer.next_token();
 			ss << token.getLiteral();
 		}
-		return handleNumbers(ss);
+		return handleNumbers(token, ss);
 	}
 }
 
@@ -297,14 +310,14 @@ bool toml::TOMLParser::handleKeywords(const std::string& literal)
 
 #include <ios>
 
-void toml::TOMLParser::handleNumbers(std::stringstream& literal)
+void toml::TOMLParser::handleNumbers(const Token& token, std::stringstream& literal)
 {
 	Value::Type			candidate = Value::INTEGER;
 	std::ostringstream	ss;
 	char				*end_ptr;
 	bool				first_char = true;
 	int					base = 10;
-	char                c, next;
+	char				c, next;
 
 	while (literal.get(c))
 	{
@@ -323,19 +336,19 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 			case 'b': base = 2; literal.get(); break;
 			default:
 				if (std::isdigit(next))
-					this->error("leading zeros", Token::IDENT);
+					this->error("Unexpected leading zeros", token);
 				goto write;
 				break;
 			}
 			break;
 		case '.':
 			if (first_char || !std::isdigit(next))
-				this->error("unexpected dot", Token::IDENT);
+				this->error("Unexpected dot", token);
 			candidate = Value::FLOATING;
 			goto write;
 		case '_':
 			if (first_char || !std::isalnum(next))
-				this->error("unexpected underscore", Token::IDENT);
+				this->error("Unexpected underscore", token);
 			break;
 		case 'e':
 		case 'E':
@@ -351,18 +364,19 @@ void toml::TOMLParser::handleNumbers(std::stringstream& literal)
 	}
 
 	if (first_char)
-		this->error("Empty", Token::IDENT);
+		this->error("Empty Number", token);
 	if (candidate == Value::FLOATING && base != 10)
-		this->error("base in float", Token::IDENT);
+		this->error("Base sequence in float", token);
 	errno = 0;
+	std::string temp_string = ss.str();
 	if (candidate == Value::INTEGER)
-		this->addValue(std::strtoll(ss.str().c_str(), &end_ptr, base));
+		this->addValue(std::strtoll(temp_string.c_str(), &end_ptr, base));
 	else
-		this->addValue(std::strtod(ss.str().c_str(), &end_ptr));
+		this->addValue(std::strtod(temp_string.c_str(), &end_ptr));
 	if (errno == ERANGE)
-		this->error("overflow", Token::IDENT);
-	if (*end_ptr != '\0')
-		this->error("unexpected char", Token::IDENT);
+		this->error("Numeric overflow", token);
+	if (errno == 0 && end_ptr && *end_ptr != '\0')
+		this->error("Unexpected char in number", token);
 }
 
 toml::TOMLParser::~TOMLParser() {}

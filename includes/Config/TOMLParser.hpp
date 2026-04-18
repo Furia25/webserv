@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:54:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/18 21:32:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <vector>
 # include <stack>
 
+# include "TOMLError.hpp"
 # include "TOMLTokenizer.hpp"
 # include "toml.hpp"
 
@@ -33,15 +34,19 @@ private:
 	struct NestContext
 	{
 		enum Type{BRACE, BRACKET};
-		NestContext(enum Type type, toml::Value *node) : type(type), node(node) {};
+		NestContext(enum Type type, toml::Value *node, size_t line, size_t col) : type(type), node(node), line(line), col(col) {};
 		Type			type;
 		toml::Value		*node;
+		size_t			line;
+		size_t			col;
 	};
 	std::stack<NestContext, std::vector<NestContext>>	nesting;
 
 	toml::Value			*current_node;
 	toml::Value			*header_node;
 	toml::Document&		document;
+
+	TOMLErrorManager	error_manager;
 	Tokenizer			tokenizer;
 
 	enum State	{EXPECT_KEY, AFTER_KEY, EXPECT_VALUE, AFTER_VALUE};
@@ -50,18 +55,19 @@ private:
 	template <typename T>
 	void	addValue(const T& value);
 
-	void	nest(enum NestContext::Type type);
-	void	unest(enum NestContext::Type type);
+	void	nest(const Token& token, enum NestContext::Type type);
+	void	unest(const Token& token, enum NestContext::Type type);
 	void	handleLiterals(Token& token);
 	bool	handleKeywords(const std::string& literal);
-	void	handleNumbers(std::stringstream& literal);
+	void	handleNumbers(const Token& token, std::stringstream& literal);
 	void	handleKeys(Token& token);
 	void	handleHeaders(Token& token);
-	bool	validateKey(const std::string& str);
 	void	handleNewline(Token& token);
 
+	void	handleErrors();
+
 	void	resolveNode(Token& token, bool& previously_created, bool exclude_header);
-	void	error(const char *str, Token::Type type);
+	void	error(const std::string& str, const Token& token, bool snippet = true);
 };
 
 template <typename T>

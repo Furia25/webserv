@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 22:46:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/18 23:56:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,7 +85,7 @@ void toml::Tokenizer::scanToken()
 			return ;
 
 		default:
-			this->buf->sungetc();
+			this->unget();
 			this->lexLiterals();
 			return ;
 		}
@@ -95,23 +95,26 @@ void toml::Tokenizer::scanToken()
 void toml::Tokenizer::lexLiterals()
 {
 	std::stringstream	literal;
-
+	size_t				size = 0;
+	size_t				start_col = this->col;
 	while (1)
 	{
 		char c = this->consume();
-		this->col--;
 		if (c == '\0')
 			break ;
 		if (c == '\r' || c == '\t' || c == ' ' || c == '.' || c == '\''
 			|| c == '=' || c == ',' || c == ']' || c == '}' || c == '"'
 			|| c == '\n')
-			{
-				this->buf->sungetc();
-				break;
-			}
+		{
+			this->unget();
+			break;
+		}
 		literal << c;
+		size++;
 	}
+	this->col = start_col;
 	this->addToken(Token::IDENT, literal.str());
+	this->col = start_col + size;
 }
 
 void toml::Tokenizer::string(bool literal)
@@ -158,7 +161,9 @@ bool toml::Tokenizer::parseStringContent(std::stringstream& ss, char quote, bool
 		this->flushQuotes(ss, quote, consecutive_quotes);
 		if (toml::is_control(c))
 		{
-			this->error('d'); // throw : forbidden control character U+0000-U+0008, U+000A-U+001F, U+007F in string
+			std::stringstream	ss;
+			ss << "code" << static_cast<int>(c);
+			this->error("Forbidden control character " + ss.str() + " in string");
 			continue ;
 		}
 		if (c == '\\' && !literal)
@@ -179,7 +184,7 @@ bool toml::Tokenizer::handleNewline(std::stringstream& ss, char quote, bool mult
 	if (multiline)
 		ss << '\n';
 	else
-		this->error('d'); // throw : newline inside a single-line string is not allowed;
+		this->error("Newline inside a single-line string is not allowed");
 	return true;
 }
 
@@ -212,7 +217,7 @@ bool toml::Tokenizer::validateClosing(size_t consecutive_quotes, bool multiline)
 {
 	bool valid = multiline ? consecutive_quotes == 3 : consecutive_quotes == 1;
 	if (!valid)
-		this->error('d'); // throw : unterminated string, EOF reached before closing quote
+		this->error("Unterminated string, EOF reached before closing quote");
 	return valid;
 }
 
@@ -237,7 +242,7 @@ void toml::Tokenizer::handleEscape(std::stringstream& ss, bool multiline)
 	default:
 		if (!multiline || (this->peek_newline() == 0 && toml::is_whitespace(escape)))
 		{
-			this->error('d'); /*TODO Reserved escape sequence*/
+			this->error("Unable to parse reserved escape sequence (Invalid sequence)");
 			break;
 		}
 		while (!this->eof())
@@ -261,7 +266,7 @@ void toml::Tokenizer::readUnicode(std::stringstream& ss, size_t n)
 	{
 		if (this->eof())
 		{
-			this->error('u'); // TODO unexpected EOF
+			this->error("Unexpected EOF (expected escape sequence)"); // TODO unexpected EOF
 			return;
 		}
 		char c = this->consume();
@@ -271,7 +276,7 @@ void toml::Tokenizer::readUnicode(std::stringstream& ss, size_t n)
 		else if (c >= 'A' && c <= 'F')	codepoint |= (c - 'A' + 10);
 		else
 		{
-			this->error('u'); //TODO invalid hex digit
+			this->error("Invalid hex digit in escape sequence");
 			return ;
 		}
 	}
@@ -297,7 +302,7 @@ void toml::Tokenizer::readUnicode(std::stringstream& ss, size_t n)
 		ss << static_cast<char>(0x80 | (codepoint & 0x3F));
 	}
 	else
-		this->error('u'); // TODO codepoint out of valid Unicode range
+		this->error("Codepoint out of valid unicode range");
 }
 
 int toml::Tokenizer::peek_newline()
@@ -310,18 +315,17 @@ int toml::Tokenizer::peek_newline()
 	return (0);
 }
 
-void toml::Tokenizer::error(char c)
+void toml::Tokenizer::error(const std::string& str)
 {
-	std::stringstream ss;
-	ss << "ERROR: Line: " << line << " Col: " << col << " char: " << c << " int: " << (int)c << "\n";
-	throw std::runtime_error(ss.str());
+	this->error_manager.emitError(str, 1, this->line, this->col);
 }
 
 void toml::Tokenizer::newLine()
 {
 	this->line++;
-	this->col = 0;
+	this->col = 1;
 	this->addToken(Token::NEW_LINE);
+	this->error_manager.newSnippet();
 }
 
 void toml::Tokenizer::addToken(Token::Type type)

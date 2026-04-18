@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 13:23:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/18 21:11:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ public:
 
 	Type				getType() const;
 	const std::string&	getLiteral() const;
+	size_t				getLine() const { return this->line; };
+	size_t				getColumn() const { return this->col; };
 private:
 	Type		type;
 	std::string	literal;

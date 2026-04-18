@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:28:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:34:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/18 20:05:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,22 +16,21 @@
 # include <string>
 # include <stdexcept>
 
-# include "ConfigStructs.hpp"
+# include "vector"
 # include "toml.hpp"
+# include "Config.hpp"
+# include "ConfigBuilder.hpp"
 
-struct Config
+class ConfigBuilder
 {
-	EngineConfig	engineConfig;
-	LoggingConfig	loggingConfig;
-	std::vector<ServerConfig>	servers;
+public:
+	ConfigBuilder();
 
-	void	from_file(const std::string& toml_file);
-
-	class Exception : public std::runtime_error
-	{
-	public:
-		Exception(const std::string& msg) : std::runtime_error(std::string("Config : ") + msg) {}
-	};
+	void	from_file(Config& to_build, const std::string& filepath);
+	~ConfigBuilder();
+protected:
+private:
+	std::vector<std::string>	exceptions;
 };
 
 #endif // _CONFIGLOADER_H

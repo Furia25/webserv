@@ -34,13 +34,24 @@ public:
 	void	from_file(const std::string& path, bool append = false);
 
 	const toml::Value&	operator[](const std::string& key) const;
-
-	bool			contain(const std::string& key) const;
-
-	toml::Value&	getRoot();
+	bool				contain(const std::string& key) const;
+	toml::Value&		getRoot();
 protected:
 private:
 	toml::Value	root;
+};
+
+class ParseException : public std::exception
+{
+public:
+	ParseException() : error_count(0) {};
+
+	size_t				error_count;
+	mutable std::string	error_string;
+
+	void	addError(const std::string& message, const std::string& snippet, size_t length, int line, int col);
+
+	const char	*what() const throw() { return this->error_string.c_str(); };
 };
 
 } // namespace toml
