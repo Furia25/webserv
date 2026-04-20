@@ -17,6 +17,7 @@
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
 
 # include <vector>
+# include <queue>
 # include <stddef.h>
 # include <cstring>
 
@@ -31,9 +32,14 @@
 	X(CLOSING)\
 	X(DELETABLE)
 
+class IJob;
+
 class Connection : public IEpollHandler
 {
 public:
+        void                    addJob(IJob* job);
+        void                    processJobs();
+
 	enum State
 	{
 		#define X(el, ...) el,
@@ -71,6 +77,8 @@ public:
 	friend std::ostream&	operator<<(std::ostream& os, const Connection& connection);
 protected:
 private:
+        std::queue<IJob*>       jobs;
+
 	TCPServer&				server;
 	Socket					client_socket;
 	size_t					id;

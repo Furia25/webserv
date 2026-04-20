@@ -68,6 +68,8 @@ SRC_FILES = \
 	HTTP/RequestHandler.cpp \
 	HTTP/Request.cpp \
 	HTTP/RequestBuilder.cpp \
+        HTTP/IJob.cpp \
+        HTTP/Handler.cpp \
 	FileSystem.cpp \
 	Logger.cpp \
 	main.cpp

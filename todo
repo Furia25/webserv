@@ -1,0 +1,19 @@
+📋 To Do List :
+Corriger le constructeur de RouteConfig (ConfigStructs.hpp) :
+
+Tu ne peux pas avoir un constructeur virtual en C++ : virtual RouteConfig() {}; doit devenir RouteConfig() {};.
+L'enum class de HandlerType n'a pas de constructeur par défaut défini, il faut donc rajouter une initialisation pour le type dans le constructeur de RouteConfig.
+Corriger la liste d'initialisation de RequestHandler (src/HTTP/RequestHandler.cpp:18) :
+
+RequestHandler::RequestHandler(const Config& config) : Config(config) est faux car RequestHandler n'hérite pas de Config. Tu as un attribut const Config& serverConfig. La bonne syntaxe est : serverConfig(config).
+Corriger l'accès aux variables et les problèmes de const (RequestHandler.cpp) :
+
+Ligne 65 : const ServerConfig host = serverConfig[0]; : la classe Config n'a probablement pas d'operator[] surchargé.
+Les lignes 66 et 74 tentent de passer des références const à RadixTree::search (qui attend une référence modifiable T&). Il faut revoir ces accesseurs/types modifiables.
+Déclarer et importer StaticHandler et CgiHandler (RequestHandler.cpp) :
+
+Oubli potentiel du #include "HTTP/Handler.hpp".
+Il faut s'assurer que c'est bien CgiHandler (avec un minuscule 'i' et 'g' par défaut) et non CGIHandler.
+Rendre la méthode Connection::setDeletable() accessible (src/HTTP/RequestHandler.cpp:113) :
+
+Le compilo râle parce que connection.setDeletable() est private. Soit tu la mets en public dans Connection.hpp, soit tu rajoutes une méthode proxy comme connection.close() qui appelle setDeletable(), ou tu déclares RequestHandler comme classe amie (friend class RequestHandler;).

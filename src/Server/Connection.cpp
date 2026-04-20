@@ -3,57 +3,92 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 14:06:04 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 23:19:37 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Server/Connection.hpp"
-# include "Server/TCPServer.hpp"
+#include "Server/Connection.hpp"
+#include "Server/TCPServer.hpp"
+#include "HTTP/IJob.hpp"
 
 size_t Connection::last_id = 0;
 
-Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0), bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback)
+Connection::Connection(TCPServer &server,
+	Socket &server_socket) : server(server), bytes_sended(0), bytes_received(0),
+	state(CONNECTED), alarmTimeout(this, timeoutCallback)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(READ_BUFFER_DEFAULT_SIZE);
 	this->write_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
 	this->id = Connection::last_id;
 	Connection::last_id++;
-	TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_ABSOLUTE_TIMEOUT);
+	TCPServer::AlarmManager.reschedule(this->alarmTimeout,
+		CONFIG_ABSOLUTE_TIMEOUT);
 }
 
-Connection::~Connection() {}
+Connection::~Connection()
+{
+	while (!jobs.empty())
+	{
+		delete jobs.front();
+		jobs.pop();
+	}
+}
+
+void Connection::addJob(IJob *job)
+{
+	jobs.push(job);
+}
+
+void Connection::processJobs()
+{
+	while (!jobs.empty())
+	{
+		if (jobs.front()->execute())
+		{
+			delete jobs.front();
+			jobs.pop();
+		}
+		else
+		{
+			break ;
+		}
+	}
+}
 
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
-	(void) server;
+	(void)server;
 	if (events & EPOLLHUP && events & EPOLLRDHUP)
 		this->setDeletable();
-	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
+	if (this->state == CLOSING && this->write_buffer.size() == 0
+		&& this->read_buffer.size() == 0)
 		this->setDeletable();
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_ABSOLUTE_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
+			CONFIG_ABSOLUTE_TIMEOUT);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
+			CONFIG_CLOSING_TIMEOUT);
 		this->handleWrite();
 	}
 }
 
-void Connection::timeout(Alarm<Connection *>& alarm)
+void Connection::timeout(Alarm<Connection *> &alarm)
 {
-	(void) alarm;
+	(void)alarm;
 	this->setDeletable();
 }
 
-void Connection::setDeletable(void) 
+void Connection::setDeletable(void)
 {
 	this->state = DELETABLE;
 	this->server.dropConnection(this);
@@ -61,20 +96,21 @@ void Connection::setDeletable(void)
 
 void Connection::handleRead(void)
 {
+	uint8_t	buffer[CONFIG_READ_SIZE];
+	ssize_t	n;
+
 	if (this->read_buffer.size() > CONFIG_READ_LIMIT)
 	{
 		this->setDeletable();
 		return ;
 	}
-
-	uint8_t	buffer[CONFIG_READ_SIZE];
-
-	ssize_t n = this->client_socket.receive(buffer, sizeof(buffer));
+	n = this->client_socket.receive(buffer, sizeof(buffer));
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
+			CONFIG_CLOSING_TIMEOUT);
 		this->state = CLOSING;
 	}
 	/*Logger::DEBUG() << this->read_buffer;*/
@@ -82,16 +118,16 @@ void Connection::handleRead(void)
 
 void Connection::handleWrite(void)
 {
+	const uint8_t	*buffer_ptr = &this->write_buffer[this->bytes_sended];
+	ssize_t			remaining;
+	ssize_t			sent;
+
 	if (this->bytes_sended >= this->write_buffer.size())
 		this->clearWriteBuffer();
-
-	const uint8_t *buffer_ptr = &this->write_buffer[this->bytes_sended];
-	ssize_t remaining = this->write_buffer.size() - this->bytes_sended;
-
-	ssize_t sent = this->client_socket.send(buffer_ptr, remaining);
+	remaining = this->write_buffer.size() - this->bytes_sended;
+	sent = this->client_socket.send(buffer_ptr, remaining);
 	if (sent > 0)
 		this->bytes_sended += sent;
-
 	if (this->bytes_sended >= this->write_buffer.size())
 		this->clearWriteBuffer();
 }
@@ -102,10 +138,11 @@ void Connection::sendData(const uint8_t *data, size_t len)
 	this->write_buffer.insert(this->write_buffer.end(), data, data + len);
 }
 
-void Connection::sendData(const std::string& data)
+void Connection::sendData(const std::string &data)
 {
 	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
-	this->write_buffer.insert(this->write_buffer.end(), data.begin(), data.end());
+	this->write_buffer.insert(this->write_buffer.end(), data.begin(),
+		data.end());
 }
 
 void Connection::consumeReadData(size_t n)
@@ -117,17 +154,17 @@ void Connection::consumeReadData(size_t n)
 
 const uint8_t *Connection::getReadBufferPtr() const
 {
-	return &this->read_buffer[this->bytes_received];
+	return (&this->read_buffer[this->bytes_received]);
 }
 
 const std::vector<uint8_t> &Connection::getReadVector() const
 {
-	return this->read_buffer;
+	return (this->read_buffer);
 }
 
 size_t Connection::getReadBufferSize() const
 {
-	return this->read_buffer.size() - this->bytes_received;
+	return (this->read_buffer.size() - this->bytes_received);
 }
 
 void Connection::clearReadBuffer()
@@ -157,48 +194,49 @@ void Connection::compactWriteBuffer()
 
 size_t Connection::getClientID(void) const
 {
-	return this->id;
+	return (this->id);
 }
 
 Socket &Connection::getSocket(void)
 {
-	return this->client_socket;
+	return (this->client_socket);
 }
 
 const Socket &Connection::getSocket(void) const
 {
-	return this->client_socket;
+	return (this->client_socket);
 }
 
 Connection::State Connection::getState(void) const
 {
-	return this->state;
+	return (this->state);
 }
 
 const Address &Connection::getAddress(void) const
 {
-	return this->client_socket.getAddress();
+	return (this->client_socket.getAddress());
 }
 
 const char *Connection::getStateString(State state)
 {
-	switch (state) {
-		#define X(el) \
-			case el: \
-				return #el;
-				_CONNECTION_STATES
-			default:
-				return "Unknown";
-		#undef X
+	switch (state)
+	{
+#define X(el) \
+	case el:  \
+		return (#el);
+		_CONNECTION_STATES
+	default:
+		return ("Unknown");
+#undef X
 	}
 }
 
-void timeoutCallback(Alarm<Connection *> &alarm, Connection* connection)
+void	timeoutCallback(Alarm<Connection *> &alarm, Connection *connection)
 {
 	connection->timeout(alarm);
 }
 
 bool operator==(const Connection &lhs, const Connection &rhs)
 {
-	return lhs.id == rhs.id;
+	return (lhs.id == rhs.id);
 }

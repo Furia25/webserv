@@ -15,10 +15,11 @@
 # define _IHANDLER_H
 # include "Request.hpp"
 # include "../Config/Config.hpp"
-# include "../Server/Connection"
+# include "../Server/Connection.hpp"
 # include "Response.hpp"
+# include "IJob.hpp"
 
-class IHandler
+class IHandler : public IJob
 {
 public:
     virtual void handle(const Request &req, const RouteConfig &config, Connection &connection) = 0;
