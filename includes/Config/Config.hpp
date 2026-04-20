@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/18 19:47:39 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 20:03:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 16:18:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,9 @@
 
 struct Config
 {
-	EngineConfig	engineConfig;
-	LoggingConfig	loggingConfig;
-	std::vector<ServerConfig>	servers;
+	EngineConfig			engineConfig;
+	LoggingConfig			loggingConfig;
+	RadixTree<ServerConfig>	serversConfig;
 
 	class Exception : public std::runtime_error
 	{
