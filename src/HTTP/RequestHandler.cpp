@@ -11,9 +11,11 @@
 /* ************************************************************************** */
 
 # include "HTTP/RequestHandler.hpp"
+# include "HTTP/Response.hpp"
 # include "Config/Config.hpp"
+# include "HTTP/HttpTypes.hpp"
 
-RequestHandler::RequestHandler(const Config& config) : config(config)
+RequestHandler::RequestHandler(const Config& config) : Config(config)
 {
 }
 
@@ -55,15 +57,63 @@ void RequestHandler::onDataReceived(Connection &connection)
 	{
 		req.print();
 		Request final_request = req.build();
-		
-		// TODO: 1. Trouver le ServerConfig grace a final_request.getHost()
-		ServerConfig host = find(final_request.get)
-		std::string
-		// TODO: 2. Trouver le RouteConfig grace au RadixTree (routes) et final_request.getPath()
-		// TODO: 3. Executer le bon handler selon la route
-		
+
+		std::string request_host = "";
+		HashMap<std::string, std::string>::const_iterator it = final_request.getHeaders().find("host");
+		if (it != final_request.getHeaders().end())
+		request_host = it->second;
+		const ServerConfig host = serverConfig[0];
+		if (serverConfig.serversConfig.search(request_host, host) != true)
+		{
+			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
+			ongoingRequests.erase(id);
+			return ;
+		}
+
+		const RouteConfig *route;
+		if (host.routes.search(final_request.getPath(), route) != true )
+		{
+			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
+			ongoingRequests.erase(id);
+			return ;
+		}
+
+		if (route->method_allowed[final_request.getMethod()] != true)
+		{
+			Response::buildErrorResponse(connection, HTTPCode::METHOD_NOT_ALLOWED);
+			ongoingRequests.erase(id);
+			return ;
+		}
+
+		if (host.limits.max_body_size < final_request.getContentLength())
+		{
+			Response::buildErrorResponse(connection, HTTPCode::PAYLOAD_TOO_LARGE);
+			ongoingRequests.erase(id);
+			return ;
+		}
+
+		if (final_request.getPath().find("..") != std::string::npos)
+		{
+			Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
+			ongoingRequests.erase(id);
+			return ;
+		}
+
+		std::string physical_path = host.root + final_request.getPath();
+
+		switch (route->handler)
+		{
+			case HandlerType::STATIC:
+				StaticHandler(final_request, connection, physical_path, route);
+			case HandlerType::CGI:
+				CGIHandler(final_request, connection, physical_path, route);
+			default:
+				Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		}
+		connection.setDeletable();
 		ongoingRequests.erase(id);
 	}
+	return ;
 }
 
 void RequestHandler::onConnection(Connection &connection)

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 16:12:47 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 16:27:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,11 @@
 #include "HTTP/HttpTypes.hpp"
 #include "HTTP/RequestHandler.hpp"
 
-int main()
+int main(int argc, char **argv)
 {
-	ServerConfig my_config;
+	Config my_config;
+	ConfigBuilder builder;
+	builder.from_file(my_config, argv[1]);
 	TCPServer			server;
 	RequestHandler		testHandler(my_config);
 

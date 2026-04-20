@@ -29,8 +29,8 @@ public:
 	void	onError(Connection& connection);
 protected:
 private:
-	std::map<int, RequestBuilder> ongoingRequests;
-	const ServerConfig& config;
+	std::map<size_t, RequestBuilder> ongoingRequests;
+	const Config& serverConfig;
 };
 
 #endif // _RequestHandler_H
