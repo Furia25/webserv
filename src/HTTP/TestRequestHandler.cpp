@@ -6,11 +6,12 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 18:47:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 13:32:46 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTP/TestRequestHandler.hpp"
+# include "HTTP/TestRequestHandler.hpp"
+# include "Config.hpp"
 
 TestRequestHandler::TestRequestHandler()
 {
@@ -55,6 +56,7 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 		
 		req.print();
 		Request final_request = req.build();
+		RouteConfig config = router.findRoute()
 		ongoingRequests.erase(id);
 	}
 }
