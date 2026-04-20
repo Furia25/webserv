@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/18 19:47:39 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 16:18:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 16:21:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 
 struct Config
 {
+	Config() {};
 	EngineConfig			engineConfig;
 	LoggingConfig			loggingConfig;
 	RadixTree<ServerConfig>	serversConfig;
