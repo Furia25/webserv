@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 18:43:38 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 19:23:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,15 @@
 # define _IHANDLER_H
 # include "Request.hpp"
 # include "../Config/Config.hpp"
+# include "../Server/Connection"
 # include "Response.hpp"
 
 class IHandler
 {
 public:
-    virtual Response handle(const Request &req, const RouteConfig &config) = 0;
+    virtual void handle(const Request &req, const RouteConfig &config, Connection &connection) = 0;
     
     virtual ~IHandler() {};
-
 };
 
 #endif // _IHANDLER_H
