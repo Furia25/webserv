@@ -3,27 +3,30 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:24:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 00:57:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 16:12:47 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <iostream>
 #include <vector>
+#include "Config/Config.hpp"
+#include "Config/ConfigBuilder.hpp"
 #include "Server/Address.hpp"
 #include "Server/AddressResolver.hpp"
 #include "Server/TCPServer.hpp"
 #include "HeaderParam.hpp"
 #include "Logger.hpp"
 #include "HTTP/HttpTypes.hpp"
-#include "HTTP/TestRequestHandler.hpp"
+#include "HTTP/RequestHandler.hpp"
 
 int main()
 {
+	ServerConfig my_config;
 	TCPServer			server;
-	TestRequestHandler	testHandler;
+	RequestHandler		testHandler(my_config);
 
 	Logger::setDefaultStream(std::cout);
 	Logger::setTickInterval(5);

@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/16 17:15:46 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/20 14:00:59 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,7 +65,7 @@ SRC_FILES = \
 	Server/Listener.cpp \
 	Server/Socket.cpp \
 	Server/TCPServer.cpp \
-	HTTP/TestRequestHandler.cpp \
+	HTTP/RequestHandler.cpp \
 	HTTP/Request.cpp \
 	HTTP/RequestBuilder.cpp \
 	FileSystem.cpp \

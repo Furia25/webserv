@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:45:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 14:05:55 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include <stddef.h>
 # include <cstring>
 
+# include "Config/ConfigDefault.hpp"
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
 # include "Utils/HashedTimingWheel.hpp"

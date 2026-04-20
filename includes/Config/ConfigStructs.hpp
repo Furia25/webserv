@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ConfigStructs.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:48:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 14:07:27 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,11 @@
 
 # include "ConfigDefault.hpp"
 
-# include "Optional.hpp"
-# include "RadixTree.hpp"
+# include "Utils/Optional.hpp"
+# include "Utils/RadixTree.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HashedTimingWheel.hpp"
-# include "HashMap.hpp"
+# include "Utils/HashedTimingWheel.hpp"
+# include "Utils/HashMap.hpp"
 # include "Logger.hpp"
 
 struct ServerLimits

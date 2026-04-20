@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:33:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 14:06:04 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server/Connection.hpp"
-#include "Server/TCPServer.hpp"
+# include "Server/Connection.hpp"
+# include "Server/TCPServer.hpp"
 
 size_t Connection::last_id = 0;
 
@@ -22,7 +22,7 @@ Connection::Connection(TCPServer& server, Socket& server_socket) : server(server
 	this->write_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
 	this->id = Connection::last_id;
 	Connection::last_id++;
-	TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
+	TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_ABSOLUTE_TIMEOUT);
 }
 
 Connection::~Connection() {}
@@ -36,13 +36,13 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		this->setDeletable();
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, ABSOLUTE_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_ABSOLUTE_TIMEOUT);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_CLOSING_TIMEOUT);
 		this->handleWrite();
 	}
 }
@@ -61,20 +61,20 @@ void Connection::setDeletable(void)
 
 void Connection::handleRead(void)
 {
-	if (this->read_buffer.size() > READ_LIMIT)
+	if (this->read_buffer.size() > CONFIG_READ_LIMIT)
 	{
 		this->setDeletable();
 		return ;
 	}
 
-	uint8_t	buffer[READ_SIZE];
+	uint8_t	buffer[CONFIG_READ_SIZE];
 
 	ssize_t n = this->client_socket.receive(buffer, sizeof(buffer));
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, CONFIG_CLOSING_TIMEOUT);
 		this->state = CLOSING;
 	}
 	/*Logger::DEBUG() << this->read_buffer;*/

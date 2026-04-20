@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 17:28:45 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 14:06:16 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ struct MethodMap
     Method val;
 };
 
-static const MethodMap map[] 
+static const MethodMap map[]= 
 {
     { _HTTP_GET_, Method::GET },
     { _HTTP_POST_, Method::POST },

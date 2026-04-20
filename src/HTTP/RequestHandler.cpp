@@ -1,27 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   TestRequestHandler.cpp                             :+:      :+:    :+:   */
+/*   RequestHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:09:33 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 13:32:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 13:59:49 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/TestRequestHandler.hpp"
-# include "Config.hpp"
+# include "HTTP/RequestHandler.hpp"
+# include "Config/Config.hpp"
 
-TestRequestHandler::TestRequestHandler()
+RequestHandler::RequestHandler(const Config& config) : config(config)
 {
 }
 
-TestRequestHandler::~TestRequestHandler()
+RequestHandler::~RequestHandler()
 {
 }
 
-void TestRequestHandler::onDataReceived(Connection &connection)
+void RequestHandler::onDataReceived(Connection &connection)
 {
 	int				id;
 	size_t			dataSize;
@@ -53,25 +53,30 @@ void TestRequestHandler::onDataReceived(Connection &connection)
 	}
 	if (req.getCompleteStatus() && req.isValidated())
 	{
-		
 		req.print();
 		Request final_request = req.build();
-		RouteConfig config = router.findRoute()
+		
+		// TODO: 1. Trouver le ServerConfig grace a final_request.getHost()
+		ServerConfig host = find(final_request.get)
+		std::string
+		// TODO: 2. Trouver le RouteConfig grace au RadixTree (routes) et final_request.getPath()
+		// TODO: 3. Executer le bon handler selon la route
+		
 		ongoingRequests.erase(id);
 	}
 }
 
-void TestRequestHandler::onConnection(Connection &connection)
+void RequestHandler::onConnection(Connection &connection)
 {
 	(void)connection;
 }
 
-void TestRequestHandler::onDisconnection(Connection &connection)
+void RequestHandler::onDisconnection(Connection &connection)
 {
 	(void)connection;
 }
 
-void TestRequestHandler::onError(Connection &connection)
+void RequestHandler::onError(Connection &connection)
 {
 	(void)connection;
 }

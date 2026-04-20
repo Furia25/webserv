@@ -1,27 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   TestRequestHandler.hpp                             :+:      :+:    :+:   */
+/*   RequestHandler.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:08:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 15:37:13 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/20 14:00:48 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _TESTREQUESTHANDLER_H
-# define _TESTREQUESTHANDLER_H
+# ifndef _RequestHandler_H
+# define _RequestHandler_H
 
-#include "../Server/IRequestHandler.hpp"
-#include "HTTP/RequestBuilder.hpp"
-#include "map"
+# include "../Server/IRequestHandler.hpp"
+# include "Config/Config.hpp"
+# include "HTTP/RequestBuilder.hpp"
+# include "map"
 
-class TestRequestHandler : public IRequestHandler
+class RequestHandler : public IRequestHandler
 {
 public:
-	TestRequestHandler();
-	~TestRequestHandler();
+	RequestHandler(const Config& config);
+	~RequestHandler();
 	void	onDataReceived(Connection& connection);
 	void	onConnection(Connection& connection);
 	void	onDisconnection(Connection& connection);
@@ -29,6 +30,7 @@ public:
 protected:
 private:
 	std::map<int, RequestBuilder> ongoingRequests;
+	const ServerConfig& config;
 };
 
-#endif // _TESTREQUESTHANDLER_H
+#endif // _RequestHandler_H
