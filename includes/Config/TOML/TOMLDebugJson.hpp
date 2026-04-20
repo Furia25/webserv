@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/14 01:39:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 22:29:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:15:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define _TOML_JSON_H
 # include <sstream>
 # include <string>
-# include "TOMLDocument.hpp"
+# include "Config/toml.hpp"
 
 namespace toml
 {

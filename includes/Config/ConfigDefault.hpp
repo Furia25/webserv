@@ -1,19 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   toml.hpp                                           :+:      :+:    :+:   */
+/*   ConfigDefault.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/14 21:23:34 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 01:01:55 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/16 19:47:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#ifndef _CONFIGDEFAULT_H
+# define _CONFIGDEFAULT_H
 
-#ifndef _TOML_H
-# define _TOML_H
+# define CONFIG_READ_SIZE	4096
+# define CONFIG_READ_LIMIT	16384
 
-# include "TOMLDocument.hpp"
+# define CONFIG_CLOSING_TIMEOUT	10
+# define CONFIG_ABSOLUTE_TIMEOUT	30
 
-#endif // _TOML_H
+#endif // _CONFIGDEFAULT_H

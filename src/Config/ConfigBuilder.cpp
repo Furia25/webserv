@@ -1,31 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Config.hpp                                         :+:      :+:    :+:   */
+/*   ConfigBuilder.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/18 19:47:39 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 20:03:47 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/16 18:34:43 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/18 20:08:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _CONFIG_H
-# define _CONFIG_H
+#include "ConfigBuilder.hpp"
 
-# include "ConfigStructs.hpp"
-
-struct Config
+ConfigBuilder::ConfigBuilder()
 {
-	EngineConfig	engineConfig;
-	LoggingConfig	loggingConfig;
-	std::vector<ServerConfig>	servers;
+}
 
-	class Exception : public std::runtime_error
-	{
-	public:
-		Exception(const std::string& msg) : std::runtime_error(std::string("Config : ") + msg) {}
-	};
-};
+void ConfigBuilder::from_file(Config& to_build, const std::string& filepath)
+{
+	toml::Document	document;
 
-#endif // _CONFIG_H
+	document.from_file(filepath);
+}
+
+ConfigBuilder::~ConfigBuilder()
+{
+}

@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Variant.cpp                                        :+:      :+:    :+:   */
+/*   TOMLVariant.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 08:53:50 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 00:49:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:14:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "TOMLVariant.hpp"
+#include "Config/TOML/TOMLVariant.hpp"
 
 toml::Variant::Variant() : type(NONE), context(IMPLICIT) {}
 
@@ -33,6 +33,15 @@ toml::Variant& toml::Variant::operator=(const Variant &other)
 	this->context = other.context;
 	this->construct(other);
 	return (*this);
+}
+
+const toml::Variant& toml::Variant::operator[](const std::string &key) const
+{
+	const toml::Table&	table = this->as<Table>();
+	toml::Table::const_iterator it = table.find(key);
+	if (it == table.end())
+		throw toml::Variant::ParsedException("Unspecified Key");
+	return it->second;
 }
 
 toml::Variant::Type toml::Variant::getType() const { return this->type; }
@@ -63,6 +72,11 @@ void	toml::Variant::destruct()
 		break;
 	};
 	# undef X
+}
+
+const char *toml::Variant::toString()
+{
+	return toml::Variant::toString(this->type);
 }
 
 const char *toml::Variant::toString(const Type type)

@@ -13,16 +13,17 @@
 #include <functional>
 #include <iomanip>
 
-#include "TOMLDocument.hpp"
-#include "TOMLTokenizer.hpp"
-#include "TOMLDebugJson.hpp"
+#include "Config/toml.hpp"
+#include "Config/TOML/TOMLTokenizer.hpp"
+#include "Config/TOML/TOMLDebugJson.hpp"
 
 // ============================================================
 //  Lexer helper
 // ============================================================
 static void printTokens(std::istream& ss)
 {
-    toml::Tokenizer tokenizer(ss);
+    toml::TOMLErrorManager  error_manager;
+    toml::Tokenizer tokenizer(ss, error_manager);
     bool first = true;
     while (1)
     {
@@ -95,7 +96,11 @@ static void runTest(
     }
     catch (const std::exception& e)
     {
-        if (expect == Expect::FAILURE) r.passed = true;
+        if (expect == Expect::FAILURE)
+        {
+            r.passed = true;
+            r.detail = std::string("\n Error got:") + e.what() + "\n";
+        }
         else
         {
             r.passed = false;

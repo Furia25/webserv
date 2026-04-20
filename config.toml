@@ -1,12 +1,14 @@
 
 [engine]
 max_events = 1024
-timeout_ms = 5000
+max_timeout = 50
+closing_timeout = 30
+read_size = 4096
+max_read_limit = 16384
 
 [logging]
 level = "debug"
-access_log = "./logs/access.log"
-error_log = "./logs/error.log"
+log_file = "log.txt"
 
 # --- Main Website (Port 8080) ---
 [[servers]]

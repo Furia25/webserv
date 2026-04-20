@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   TOMLDocument.hpp                                   :+:      :+:    :+:   */
+/*   toml.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 16:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 00:24:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 18:43:49 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include <iostream>
 # include <fstream>
 
-# include "TOMLVariant.hpp"
+# include "TOML/TOMLVariant.hpp"
 
 namespace toml
 {
@@ -30,13 +30,29 @@ public:
 	~Document();
 	Document& operator=(const Document& other);
 
-	void	from_stream(std::istream& stream, bool append = false);
+	void	from_stream(std::istream& stream, bool append = false, const std::string& name = "");
 	void	from_file(const std::string& path, bool append = false);
 
-	toml::Value&	getRoot();
+	const toml::Value&	operator[](const std::string& key) const;
+	bool				contain(const std::string& key) const;
+	toml::Value&		getRoot();
 protected:
 private:
 	toml::Value	root;
+};
+
+class ParseException : public std::exception
+{
+public:
+	ParseException() : error_count(0) {};
+
+	size_t				error_count;
+	mutable std::string	error_string;
+
+	void	addError(const std::string& message, const std::string& snippet, size_t length,
+				int line, int col, const std::string& name = "");
+
+	const char	*what() const throw() { return this->error_string.c_str(); };
 };
 
 } // namespace toml

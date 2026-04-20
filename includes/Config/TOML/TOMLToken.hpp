@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:14 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 13:23:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/19 00:17:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ public:
 
 	Token() : type(END_OF_FILE) {};
 	Token(Type type, size_t line, size_t col) : type(type), line(line), col(col) {};
-	Token(Type type, size_t line, size_t col, const std::string& str) : type(type), line(line), col(col), literal(str) {};
+	Token(Type type, size_t line, size_t col, const std::string& str) : type(type), literal(str), line(line), col(col) {};
 	Token(const Token& other) { *this = other; };
 
 	void	swap(Token& other);
@@ -69,6 +69,8 @@ public:
 
 	Type				getType() const;
 	const std::string&	getLiteral() const;
+	size_t				getLine() const { return this->line; };
+	size_t				getColumn() const { return this->col; };
 private:
 	Type		type;
 	std::string	literal;

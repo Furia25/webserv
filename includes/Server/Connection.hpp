@@ -6,12 +6,15 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 22:18:28 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 19:45:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONNECTION_H
 # define _CONNECTION_H
+
+# define READ_BUFFER_DEFAULT_SIZE	4096
+# define WRITE_BUFFER_DEFAULT_SIZE	2096
 
 # include <vector>
 # include <stddef.h>
@@ -20,15 +23,6 @@
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
 # include "Utils/HashedTimingWheel.hpp"
-
-# define READ_SIZE	4096
-# define READ_LIMIT	16384
-
-# define READ_BUFFER_DEFAULT_SIZE	4096
-# define WRITE_BUFFER_DEFAULT_SIZE	2096
-
-# define CLOSING_TIMEOUT	10
-# define ABSOLUTE_TIMEOUT	30
 
 # define _CONNECTION_STATES \
 	X(ERRORED)\

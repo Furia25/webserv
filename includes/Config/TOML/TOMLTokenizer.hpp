@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:01:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 01:08:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/18 23:54:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _TOMLTOKENIZER_H
-# define _TOMLTOKENIZER_
+# define _TOMLTOKENIZER_H
 
 # include <stdexcept>
 # include <stddef.h>
@@ -24,6 +24,7 @@
 # include <cstdio>
 
 # include "TOMLToken.hpp"
+# include "TOMLError.hpp"
 
 namespace toml
 {
@@ -31,7 +32,7 @@ namespace toml
 class Tokenizer
 {
 public:
-	Tokenizer(std::istream& stream) : buf(stream.rdbuf()), line(1), col(0) {};
+	Tokenizer(std::istream& stream, TOMLErrorManager& error_manager) : buf(stream.rdbuf()), line(1), col(1), error_manager(error_manager) {};
 	Token			next_token();
 	const Token&	peek_token();
 	bool	eof();
@@ -44,14 +45,17 @@ private:
 	size_t				line;
 	size_t				col;
 
+	TOMLErrorManager&	error_manager;
+
 	void	addToken(Token::Type type);
 	void	addToken(Token::Type type, const std::string& str);
 
 	void	scanToken();
 
-	void	error(char c);
+	void	error(const std::string& str);
 	char	consume();
 	char	consume(size_t n);
+	void	unget();
 	char	peek();
 	char	peekNext();
 	bool	match(char c);
@@ -85,11 +89,21 @@ inline char toml::Tokenizer::consume(size_t n)
 	return this->consume();
 }
 
+inline void Tokenizer::unget()
+{
+	this->col--;
+	this->buf->sungetc();
+	this->error_manager.snippetUnget();
+}
+
 inline char toml::Tokenizer::consume()
 {
 	int c = buf->sbumpc();
+	char result = c == EOF ? '\0' : static_cast<char>(c);
+	if (result)
+		this->error_manager.snippetAppend(result);
 	col++;
-	return c == EOF ? '\0' : static_cast<char>(c);
+	return result;
 }
 
 inline char toml::Tokenizer::peek()
@@ -101,9 +115,8 @@ inline char toml::Tokenizer::peek()
 inline char toml::Tokenizer::peekNext()
 {
 	this->consume();
-	col--;
 	char result = this->peek();
-	buf->sungetc();
+	this->unget();
 	return (result);
 }
 

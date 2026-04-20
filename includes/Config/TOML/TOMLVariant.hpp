@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 18:45:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/16 19:31:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ public:
 	template <typename T>
 	Variant&	operator= (const T);
 	Variant&	operator= (const Variant& other);
+	const Variant&	operator[](const std::string& key) const;
 
 	# define X(name, T, ...) Variant& operator= (const T& value);
 	_VARIANT_TYPES
@@ -78,8 +79,20 @@ public:
 	Variant&			setHeader() { this->context = HEADER; return *this; };
 	static Variant		null() { return Variant(); }
 
-	std::string			*toString();
+	const char			*toString();
 	static const char	*toString(const Type type);
+
+	class ParsedException : public std::runtime_error
+	{
+	public:
+		ParsedException(const std::string& msg)
+			: std::runtime_error(msg) {}
+		ParsedException(const std::string& type, const std::string& msg)
+			: std::runtime_error(type + ": " + msg) {}
+		ParsedException(const Type type, const Type expected)
+			: std::runtime_error(std::string("Invalid type: got ") + toString(type) + ", expected " + Variant::toString(expected)) {}
+	};
+
 protected:
 private:
 	enum Tag {IMPLICIT, EXPLICIT, HEADER};
@@ -93,27 +106,16 @@ private:
 		# undef X
 	}	data;
 
-	void	check_types_errors(Variant::Type expected) const;
-	void	destruct();
+	void		check_types_errors(Variant::Type expected) const;
+	void		destruct();
+
 	template <typename T> void	construct(const T& value);
-};
-
-
-class ParsedVariantException : public std::runtime_error
-{
-public:
-	ParsedVariantException(const std::string& msg)
-		: std::runtime_error(msg) {}
-	ParsedVariantException(const std::string& type, const std::string& msg)
-		: std::runtime_error(type + ": " + msg) {}
-	ParsedVariantException(const Variant::Type type, const Variant::Type expected)
-		: std::runtime_error(std::string("Invalid type access : got ") + Variant::toString(type) + ", expected " + Variant::toString(expected)) {}
 };
 
 inline void toml::Variant::check_types_errors(Variant::Type expected) const
 {
 	if (this->type != expected)
-		throw ParsedVariantException(this->type, expected);
+		throw Variant::ParsedException(this->type, expected);
 }
 
 # define X(name, T, ...) \
