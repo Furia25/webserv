@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:48:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 16:25:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ struct RouteConfig
 	std::string	root;
 	std::string	alias;
 
-	virtual ~RouteConfig() {}
+	virtual RouteConfig() {};
+	virtual ~RouteConfig() {};
 };
 
 struct StaticConfig : public RouteConfig

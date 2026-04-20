@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:27:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 21:20:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 16:25:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@
 # include "ansi_sequence.hpp"
 
 # define LOG_TYPE	(INFO, WARNING, ERROR, FATAL, DEBUG)
-ENUM_CLASS(LogLevel, LOG_TYPE, ENUM_BASIC, ENUM_LITERALS(LOG_TYPE, ENUM_BASIC, ENUM_BASIC););
+ENUM_CLASS(LogLevel, LOG_TYPE, ENUM_BASIC, ENUM_LITERALS(LOG_TYPE, ENUM_BASIC, ENUM_BASIC); public: LogLevel() : _t(INFO) {};);
 
 class LogMessage
 {
