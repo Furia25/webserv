@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/20 14:00:59 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/21 16:16:00 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -68,8 +68,9 @@ SRC_FILES = \
 	HTTP/RequestHandler.cpp \
 	HTTP/Request.cpp \
 	HTTP/RequestBuilder.cpp \
-        HTTP/IJob.cpp \
-        HTTP/Handler.cpp \
+    HTTP/IJob.cpp \
+    HTTP/Handler.cpp \
+	HTTP/Response.cpp \
 	FileSystem.cpp \
 	Logger.cpp \
 	main.cpp

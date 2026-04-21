@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/20 19:23:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/21 14:11:15 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,6 @@
 class IHandler : public IJob
 {
 public:
-    virtual void handle(const Request &req, const RouteConfig &config, Connection &connection) = 0;
-    
     virtual ~IHandler() {};
 };
 

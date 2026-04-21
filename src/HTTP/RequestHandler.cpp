@@ -14,6 +14,7 @@
 # include "HTTP/Response.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HttpTypes.hpp"
+# include "HTTP/Handler.hpp"
 
 RequestHandler::RequestHandler(const Config& config) : Config(config)
 {
@@ -104,13 +105,15 @@ void RequestHandler::onDataReceived(Connection &connection)
 		switch (route->handler)
 		{
 			case HandlerType::STATIC:
-				StaticHandler(final_request, connection, physical_path, route);
+				connection.addJob(new StaticHandler(final_request, route, connection, physical_path));
+				break;
 			case HandlerType::CGI:
-				CGIHandler(final_request, connection, physical_path, route);
+				connection.addJob(new CgiHandler(final_request, route, connection, physical_path));
+				break;
 			default:
 				Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+				break;
 		}
-		connection.setDeletable();
 		ongoingRequests.erase(id);
 	}
 	return ;

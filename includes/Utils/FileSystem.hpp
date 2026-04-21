@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/16 17:01:09 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/21 15:42:15 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,8 @@ public:
     static bool isFile(const std::string &path);
     static bool isReadable(const std::string &path);
     static bool isWritable(const std::string &path);
+    static size_t getFileSize(const std::string &path);
+    static std::string getExtension(const std::string& path);
 private:
     FileSystem();
     FileSystem(const FileSystem& other);

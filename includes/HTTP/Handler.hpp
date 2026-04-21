@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Handler.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/20 23:17:57 by antoine          ###   ########.fr       */
+/*   Updated: 2026/04/21 14:26:10 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,36 +19,45 @@
 # include "Config/Config.hpp"
 # include <string>
 
+enum State
+{
+    INIT,
+    SEND_HEADERS,
+    SEND_BODY,
+    FINISHED
+};
+
 class StaticHandler: public IHandler
 {
 public:
-    StaticHandler(const Request &request, const RouteConfig &route, Connection &connection);
+    StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path);
     virtual ~StaticHandler();
 
     bool execute();
-    void handle(const Request &req, const RouteConfig &config, Connection &connection);
 
 private:
-    const Request&     request;
-    const RouteConfig& route;
+    Request            request;
+    const RouteConfig* route;
     Connection&        connection;
-    std::string        filePath;
+    std::string        physical_path;
     bool               isFinished;
+    State              state;
+    std::ifstream      file_stream;
 };
 
 class CgiHandler: public IHandler
 {
 public:
-    CgiHandler(const Request &request, const RouteConfig &route, Connection &connection);
+    CgiHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path);
     virtual ~CgiHandler();
 
     bool execute();
-    void handle(const Request &req, const RouteConfig &config, Connection &connection);
     
 private:
-    const Request&     request;
-    const RouteConfig& route;
+    Request            request;
+    const RouteConfig* route;
     Connection&        connection;
+    std::string        physical_path;
 };
 
 #endif // _HANDLER_H
