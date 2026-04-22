@@ -14,7 +14,12 @@
 #define _DEFAULT_MAX_BODY_SIZE_ 10485760
 #define _DEFAULT_MAX_PATH_SIZE_ 2048
 
-ENUM_CLASS(HandlerType, (STATIC, UPLOAD, CGI, REDIRECT, STATUS), ENUM_BASIC);
+# define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
+ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
+	ENUM_LITERALS(_HANDLERTYPES_, ENUM_BASIC, ENUM_BASIC);
+	public: HandlerType() : _t(_M_TUPLE_ELEM_0 _HANDLERTYPES_) {};
+);
+# undef _HANDLERTYPES_
 
 # define _METHODS_ (GET, POST, DELETE, HEAD, PUT)
 ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC););
@@ -65,7 +70,11 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__
 # define X_STRING_CODE(tuple, ...)	_M_TUPLE_ELEM_0 tuple __VA_ARGS__
 # define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
-ENUM_CLASS(HTTPCode, _STATUS_CODES_, X, ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING); static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };);
+ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
+	ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING);
+	public: HTTPCode() : _t(NOT_FOUND) {};
+	static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };
+);
 # undef X
 # undef X_STRING_CODE
 # undef X_STRING

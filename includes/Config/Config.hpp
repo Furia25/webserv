@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   AppConfig.hpp                                      :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 18:58:46 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/23 01:13:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <string>
 
 # include "ConfigDefault.hpp"
+# include "ConfigLoader.hpp"
 # include "Config/toml.hpp"
 
 # include "Utils/RadixTree.hpp"
@@ -24,11 +25,14 @@
 # include "Utils/HashMap.hpp"
 # include "Logger.hpp"
 
+namespace Config
+{
+
 struct ServerLimits
 {
 	uint64_t	max_body_size;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct RouteConfig
@@ -42,7 +46,7 @@ struct RouteConfig
 
 	virtual ~RouteConfig() {};
 
-	void	load(toml::Variant& table);
+	virtual void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct StaticConfig : public RouteConfig
@@ -50,7 +54,7 @@ struct StaticConfig : public RouteConfig
 	std::string	index;
 	bool		autoindex;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct UploadConfig : public RouteConfig
@@ -60,7 +64,7 @@ struct UploadConfig : public RouteConfig
 	uint64_t			max_file_size;
 	bool				allow_overwrite;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct RedirectConfig : public RouteConfig
@@ -68,7 +72,7 @@ struct RedirectConfig : public RouteConfig
 	std::string	redirect_location;
 	HTTPCode	status;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct CGIConfig : public RouteConfig
@@ -78,7 +82,12 @@ struct CGIConfig : public RouteConfig
 	std::string							bin;
 	timestamp_ms						timeout;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
+};
+
+struct StatusConfig : public RouteConfig
+{
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct ServerConfig
@@ -92,8 +101,11 @@ struct ServerConfig
 	RadixTree<RouteConfig *>		routes;
 	HashMap<HTTPCode, std::string>	error_fallbacks;
 
-	void	load(toml::Variant& table);
-	void	load_errors(toml::Table& errors_table);
+	~ServerConfig();
+
+	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadErrors(toml::Table& errors_table, Config::Loader& loader);
+	void	loadRoutes(toml::Array&	routes_array, Config::Loader& loader);
 };
 
 struct EngineConfig
@@ -104,7 +116,7 @@ struct EngineConfig
 	size_t			read_size;
 	size_t			max_read_limit;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
 struct LoggingConfig
@@ -112,22 +124,24 @@ struct LoggingConfig
 	std::string	log_file;
 	LogLevel	log_level;
 
-	void	load(toml::Variant& table);
+	void	load(toml::Variant& table, Config::Loader& loader);
 };
 
-struct Config
+struct AppConfig
 {
+	AppConfig(const std::string& filename);
 	EngineConfig			engineConfig;
 	LoggingConfig			loggingConfig;
 	RadixTree<ServerConfig>	serversConfig;
 
-	class Exception : public std::runtime_error
-	{
-	public:
-		Exception(const std::string& msg) : std::runtime_error(std::string("Config : ") + msg) {}
-	};
-
-	void	load(toml::Document& document);
 };
+
+class Exception : public std::runtime_error
+{
+public:
+	Exception(const std::string& msg) : std::runtime_error(std::string("Config: ") + msg) {}
+};
+
+} // namespace Config
 
 #endif // _CONFIGSTRUCTS_H

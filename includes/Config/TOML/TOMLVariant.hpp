@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 18:15:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 00:21:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include <cstring>
 # include <vector>
 
-# include "Optional.hpp"
-# include "HashMap.hpp"
+# include "Utils/Optional.hpp"
+# include "Utils/HashMap.hpp"
 # include <iostream>
 
 namespace toml
@@ -202,6 +202,87 @@ template <> inline const Variant&	toml::Variant::as<Variant>() const { return *t
 typedef Variant::Array	Array;
 typedef Variant::Table	Table;
 typedef Variant			Value;
+
+inline toml::Variant::Variant() : type(NONE), context(IMPLICIT) {}
+
+inline toml::Variant::Variant(const Variant &other) : type(other.type), context(other.context)
+{
+	this->construct(other);
+}
+
+inline toml::Variant::~Variant()
+{
+	this->destruct();
+}
+
+inline toml::Variant& toml::Variant::operator=(const Variant &other)
+{
+	if (this == &other)
+		return (*this);
+	this->destruct();
+	this->type = other.type;
+	this->context = other.context;
+	this->construct(other);
+	return (*this);
+}
+
+const toml::Variant& toml::Variant::operator[](const std::string &key) const
+{
+	const toml::Table&	table = this->as<Table>();
+	toml::Table::const_iterator it = table.find(key);
+	if (it == table.end())
+		throw toml::Variant::ParsedException("Unspecified Key");
+	return it->second;
+}
+
+toml::Variant::Type toml::Variant::getType() const { return this->type; }
+
+# define X(name, T, ...) \
+toml::Variant::Variant(const T& value) : type(name), context(IMPLICIT) \
+{ \
+	this->construct(value); \
+}
+_VARIANT_TYPES
+
+# undef X
+
+toml::Variant::Variant(const char *value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const char value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const short value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const int value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const long value) : type(NONE) { *this = value; }
+toml::Variant::Variant(const float value) : type(NONE) { *this = value; }
+
+void	toml::Variant::destruct()
+{
+	#define X(name, T, ...) case name: this->data.name.destroy(); break;
+	switch (this->type)
+	{
+		_VARIANT_TYPES
+	default:
+		break;
+	};
+	# undef X
+}
+
+const char *toml::Variant::toString()
+{
+	return toml::Variant::toString(this->type);
+}
+
+const char *toml::Variant::toString(const Type type)
+{
+	#define X(name, T, ...) case name: return #name; break;
+	switch (type)
+	{
+		_VARIANT_TYPES
+		_VARIANT_NONE
+	default:
+		break;
+	};
+	return "Unknown";
+	# undef X
+}
 
 template <typename T>
 inline T Variant::take(const std::string& key)
