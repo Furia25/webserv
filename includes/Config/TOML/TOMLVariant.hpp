@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLVariant.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:31:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 13:03:30 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include <cstring>
 # include <vector>
 
-# include "Optional.hpp"
-# include "HashMap.hpp"
+# include "Utils/Optional.hpp"
+# include "Utils/HashMap.hpp"
 # include <iostream>
 
 namespace toml
@@ -122,7 +122,7 @@ inline void toml::Variant::check_types_errors(Variant::Type expected) const
 template <> \
 inline void	toml::Variant::construct(const T& value) \
 { \
-	this->check_types_errors(Type::name); \
+	this->check_types_errors(Variant::name); \
 	this->data.name.construct(value); \
 }
 _VARIANT_TYPES
@@ -156,7 +156,7 @@ template<>
 inline toml::Variant& toml::Variant::operator=(const char *value)
 {
 	this->destruct();
-	this->type = Variant::Type::STRING;
+	this->type = Variant::STRING;
 	this->construct(std::string(value));
 	return (*this);
 }
@@ -165,7 +165,7 @@ template<>
 inline toml::Variant& toml::Variant::operator=(const float value)
 {
 	this->destruct();
-	this->type = Variant::Type::FLOATING;
+	this->type = Variant::FLOATING;
 	this->construct(static_cast<double>(value));
 	return (*this);
 }
@@ -175,7 +175,7 @@ template<> \
 inline toml::Variant& toml::Variant::operator=(const int_type value) \
 { \
 	this->destruct(); \
-	this->type = Variant::Type::INTEGER; \
+	this->type = Variant::INTEGER; \
 	this->construct(static_cast<long long>(value)); \
 	return (*this); \
 }
@@ -186,8 +186,8 @@ INTEGER_PROMOTION(short);
 INTEGER_PROMOTION(long);
 
 #define X(name, T) \
-template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); } \
-template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); }
+template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
 #undef X
 

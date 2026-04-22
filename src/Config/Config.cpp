@@ -1,28 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigBuilder.cpp                                  :+:      :+:    :+:   */
+/*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/16 18:34:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 13:19:50 by antbonin         ###   ########.fr       */
+/*   Created: 2026/04/22 11:35:08 by antbonin          #+#    #+#             */
+/*   Updated: 2026/04/22 11:36:30 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config/ConfigBuilder.hpp"
+# include "Config/Config.hpp"
 
-ConfigBuilder::ConfigBuilder()
-{
+Config::Config(const Config& src) : engineConfig(src.engineConfig), 
+loggingConfig(src.loggingConfig), serversConfig(src.serversConfig) 
+{ 
 }
 
-void ConfigBuilder::from_file(Config& to_build, const std::string& filepath)
-{
-	toml::Document	document;
-	(void)to_build;
-	document.from_file(filepath);
-}
 
-ConfigBuilder::~ConfigBuilder()
+Config& Config::operator=(const Config& rhs)
 {
+	if (this != &rhs)
+	{
+		engineConfig = rhs.engineConfig;
+		loggingConfig = rhs.loggingConfig;
+		serversConfig = rhs.serversConfig;
+	}
+	return *this;
 }

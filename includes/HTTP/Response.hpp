@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/21 15:56:17 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/22 11:51:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 # define _RESPONSE_H
 
 # include "Server/Connection.hpp"
+# include "HTTP/HttpTypes.hpp"
 
 class Response
 {

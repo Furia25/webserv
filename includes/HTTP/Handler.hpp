@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/21 14:26:10 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/22 11:50:17 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,19 +45,19 @@ private:
     std::ifstream      file_stream;
 };
 
-class CgiHandler: public IHandler
-{
-public:
-    CgiHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path);
-    virtual ~CgiHandler();
+// class CgiHandler: public IHandler
+// {
+// public:
+//     CgiHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path);
+//     virtual ~CgiHandler();
 
-    bool execute();
+//     bool execute();
     
-private:
-    Request            request;
-    const RouteConfig* route;
-    Connection&        connection;
-    std::string        physical_path;
-};
+// private:
+//     Request            request;
+//     const RouteConfig* route;
+//     Connection&        connection;
+//     std::string        physical_path;
+// };
 
 #endif // _HANDLER_H

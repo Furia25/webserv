@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/21 15:56:17 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/22 14:03:55 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # include "HTTP/Response.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/FileSystem.hpp"
+# include <dirent.h>
 
 StaticHandler::StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path)
     : request(req), route(route), connection(connection), physical_path(physical_path), isFinished(false), state(INIT)
@@ -22,6 +23,8 @@ StaticHandler::StaticHandler(const Request &req, const RouteConfig *route, Conne
 
 StaticHandler::~StaticHandler()
 {
+    if (file_stream.is_open())
+        file_stream.close();
 }
 
 static std::string getMimeType(const std::string& ext)
@@ -62,12 +65,30 @@ bool StaticHandler::execute()
             if (request.getMethod() == Method::GET)
             {
                 const StaticConfig* static_config = static_cast<const StaticConfig*>(route);
-                std::string index_file = physical_path + "/" + static_config->index;
+                std::string index_file = physical_path + (physical_path.empty() || physical_path[physical_path.length() - 1] == '/' ? "" : "/") + static_config->index;
                 if (!static_config->index.empty() && FileSystem::exists(index_file))
                     physical_path = index_file;
                 else if (static_config->autoindex)
                 {
-                    
+                    std::string autoindexBody = "<html><head><title>Index of " + request.getPath() + "</title></head><body><h1>Index of " + request.getPath() + "</h1><hr><ul>";
+                    DIR* dir = opendir(physical_path.c_str());
+                    if (dir)
+                    {
+                        struct dirent* ent;
+                        while ((ent = readdir(dir)) != NULL)
+                        {
+                            std::string name = ent->d_name;
+                            std::string link = request.getPath() + (request.getPath().empty() || request.getPath()[request.getPath().length() - 1] == '/' ? "" : "/") + name;
+                            autoindexBody += "<li><a href=\"" + link + "\">" + name + "</a></li>";
+                        }
+                        closedir(dir);
+                        autoindexBody += "</ul><hr></body></html>";
+                        Response::buildRawResponse(connection, HTTPCode::OK, "text/html", autoindexBody);
+                    }
+                    else
+                        Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
+                    state = FINISHED;
+                    return false;
                 }
                 else
                 {
@@ -160,16 +181,3 @@ bool StaticHandler::execute()
     return true;
 }
 
-CgiHandler::CgiHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path)
-    : request(req), route(route), connection(connection), physical_path(physical_path)
-{
-}
-
-CgiHandler::~CgiHandler()
-{
-}
-
-bool CgiHandler::execute()
-{
-    return true;
-}

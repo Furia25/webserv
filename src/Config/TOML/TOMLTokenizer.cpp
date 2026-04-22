@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLTokenizer.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 18:39:21 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:17:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 13:25:09 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,8 +120,8 @@ void toml::Tokenizer::lexLiterals()
 void toml::Tokenizer::string(bool literal)
 {
 	static const Token::Type types[2][2] = {
-		{ Token::Type::STRING,			Token::Type::MULTI_STRING			},
-		{ Token::Type::LITERAL_STRING,	Token::Type::MULTI_LITERAL_STRING	},
+		{ Token::STRING,			Token::MULTI_STRING			},
+		{ Token::LITERAL_STRING,	Token::MULTI_LITERAL_STRING	},
 	};
 
 	const char			quote	 = literal ? '\'' : '"';

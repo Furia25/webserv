@@ -44,7 +44,8 @@ private:
 class ParseException : public std::exception
 {
 public:
-	ParseException() : error_count(0) {};
+	ParseException() throw() : error_count(0) {};
+	virtual ~ParseException() throw() {};
 
 	size_t				error_count;
 	mutable std::string	error_string;

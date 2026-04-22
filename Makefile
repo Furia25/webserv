@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/21 16:16:00 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/22 13:20:54 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,6 +65,13 @@ SRC_FILES = \
 	Server/Listener.cpp \
 	Server/Socket.cpp \
 	Server/TCPServer.cpp \
+	Config/Config.cpp \
+	Config/ConfigBuilder.cpp \
+	Config/TOML/TOMLDocument.cpp \
+	Config/TOML/TOMLParser.cpp \
+	Config/TOML/TOMLToken.cpp \
+	Config/TOML/TOMLTokenizer.cpp \
+	Config/TOML/TOMLVariant.cpp \
 	HTTP/RequestHandler.cpp \
 	HTTP/Request.cpp \
 	HTTP/RequestBuilder.cpp \

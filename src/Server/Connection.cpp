@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 23:19:37 by antoine          ###   ########.fr       */
+/*   Updated: 2026/04/22 15:33:37 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ Connection::Connection(TCPServer &server,
 
 Connection::~Connection()
 {
+	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 	while (!jobs.empty())
 	{
 		delete jobs.front();

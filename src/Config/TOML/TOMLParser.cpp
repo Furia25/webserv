@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:39:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 13:24:29 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/TOML/TOMLParser.hpp"
+#include <cstdlib>
 
 toml::TOMLParser::TOMLParser(std::istream& stream, toml::Document& document, toml::TOMLErrorManager& errorManager) :
 	currentNode(&document.getRoot()),
@@ -382,9 +383,9 @@ void toml::TOMLParser::handleNumbers(const Token& token, std::stringstream& lite
 	errno = 0;
 	std::string temp_string = ss.str();
 	if (candidate == Value::INTEGER)
-		this->addValue(std::strtoll(temp_string.c_str(), &end_ptr, base));
+		this->addValue(::strtoll(temp_string.c_str(), &end_ptr, base));
 	else
-		this->addValue(std::strtod(temp_string.c_str(), &end_ptr));
+		this->addValue(::strtod(temp_string.c_str(), &end_ptr));
 	if (errno == ERANGE)
 		this->error("Numeric overflow", token);
 	if (errno == 0 && end_ptr && *end_ptr != '\0')

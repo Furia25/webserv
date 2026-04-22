@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLError.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/18 20:22:02 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:34:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 13:22:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,8 @@ inline void toml::TOMLErrorManager::snippetAppend(char c)
 
 inline void toml::TOMLErrorManager::snippetUnget()
 {
-	this->currentSnippet.pop_back();
+	if (!this->currentSnippet.empty())
+		this->currentSnippet.erase(this->currentSnippet.size() - 1);
 }
 
 inline void toml::ParseException::addError(

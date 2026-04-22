@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 16:26:20 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/22 11:38:15 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ struct RouteConfig
 	std::string	root;
 	std::string	alias;
 
-	virtual RouteConfig() {};
+	RouteConfig() : handler(HandlerType::STATIC) {};
 	virtual ~RouteConfig() {};
 };
 

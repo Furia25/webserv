@@ -16,7 +16,7 @@
 # include "HTTP/HttpTypes.hpp"
 # include "HTTP/Handler.hpp"
 
-RequestHandler::RequestHandler(const Config& config) : Config(config)
+RequestHandler::RequestHandler(const Config& config) : serverConfig(config)
 {
 }
 
@@ -46,11 +46,15 @@ void RequestHandler::onDataReceived(Connection &connection)
 		catch(const HTTPException& e)
 		{
 			req.setValidateStatus(0);
-			std::cerr << e.what() << '\n';
+			std::cerr << "HTTPException: " << e.what() << '\n';
+			Response::buildErrorResponse(connection, HTTPCode::BAD_REQUEST);
+			ongoingRequests.erase(id);
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << e.what() << '\n';
+			std::cerr << "Exception: " << e.what() << '\n';
+			Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+			ongoingRequests.erase(id);
 		}
 		connection.consumeReadData(dataSize);
 	}
@@ -63,7 +67,7 @@ void RequestHandler::onDataReceived(Connection &connection)
 		HashMap<std::string, std::string>::const_iterator it = final_request.getHeaders().find("host");
 		if (it != final_request.getHeaders().end())
 		request_host = it->second;
-		const ServerConfig host = serverConfig[0];
+		ServerConfig host;
 		if (serverConfig.serversConfig.search(request_host, host) != true)
 		{
 			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
@@ -71,14 +75,14 @@ void RequestHandler::onDataReceived(Connection &connection)
 			return ;
 		}
 
-		const RouteConfig *route;
+		RouteConfig *route;
 		if (host.routes.search(final_request.getPath(), route) != true )
 		{
 			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
 			ongoingRequests.erase(id);
 			return ;
 		}
-
+		
 		if (route->method_allowed[final_request.getMethod()] != true)
 		{
 			Response::buildErrorResponse(connection, HTTPCode::METHOD_NOT_ALLOWED);
@@ -107,9 +111,6 @@ void RequestHandler::onDataReceived(Connection &connection)
 			case HandlerType::STATIC:
 				connection.addJob(new StaticHandler(final_request, route, connection, physical_path));
 				break;
-			case HandlerType::CGI:
-				connection.addJob(new CgiHandler(final_request, route, connection, physical_path));
-				break;
 			default:
 				Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 				break;
@@ -126,10 +127,10 @@ void RequestHandler::onConnection(Connection &connection)
 
 void RequestHandler::onDisconnection(Connection &connection)
 {
-	(void)connection;
+	ongoingRequests.erase(connection.getClientID());
 }
 
 void RequestHandler::onError(Connection &connection)
 {
-	(void)connection;
+	ongoingRequests.erase(connection.getClientID());
 }
