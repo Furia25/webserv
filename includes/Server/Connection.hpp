@@ -6,20 +6,20 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:45:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 18:25:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONNECTION_H
 # define _CONNECTION_H
 
-# define READ_BUFFER_DEFAULT_SIZE	4096
 # define WRITE_BUFFER_DEFAULT_SIZE	2096
 
 # include <vector>
 # include <stddef.h>
 # include <cstring>
 
+# include "Config/Config.hpp"
 # include "Socket.hpp"
 # include "IEpollHandler.hpp"
 # include "Utils/HashedTimingWheel.hpp"
@@ -47,6 +47,7 @@ public:
 
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
+	void			setDeletable(void);
 
 	void			clearReadBuffer();
 	void			clearWriteBuffer();
@@ -76,18 +77,16 @@ private:
 
 	std::vector<uint8_t>	write_buffer;
 	size_t					bytes_sended;
-
 	std::vector<uint8_t>	read_buffer;
 	size_t					bytes_received;
 
 	static size_t			last_id;
 	State					state;
-
 	Alarm<Connection *>		alarmTimeout;
+	const EngineConfig&		engineConfig;
 
 	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 	void			timeout(Alarm<Connection *>& alarm);
-	void			setDeletable(void);
 	void			handleRead(void);
 	void			handleWrite(void);
 	Connection(const Connection& other);

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigStructs.hpp                                  :+:      :+:    :+:   */
+/*   AppConfig.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 17:53:32 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 16:25:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 18:58:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,19 +16,19 @@
 # include <string>
 
 # include "ConfigDefault.hpp"
+# include "Config/toml.hpp"
 
-# include "Optional.hpp"
-# include "RadixTree.hpp"
+# include "Utils/RadixTree.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HashedTimingWheel.hpp"
-# include "HashMap.hpp"
+# include "Utils/HashedTimingWheel.hpp"
+# include "Utils/HashMap.hpp"
 # include "Logger.hpp"
 
 struct ServerLimits
 {
-	uint64_t	max_connections;
 	uint64_t	max_body_size;
-	uint8_t		request_timeout;
+
+	void	load(toml::Variant& table);
 };
 
 struct RouteConfig
@@ -40,14 +40,17 @@ struct RouteConfig
 	std::string	root;
 	std::string	alias;
 
-	virtual RouteConfig() {};
 	virtual ~RouteConfig() {};
+
+	void	load(toml::Variant& table);
 };
 
 struct StaticConfig : public RouteConfig
 {
 	std::string	index;
-	bool		autoindex;	
+	bool		autoindex;
+
+	void	load(toml::Variant& table);
 };
 
 struct UploadConfig : public RouteConfig
@@ -56,12 +59,16 @@ struct UploadConfig : public RouteConfig
 	std::string			upload_store;
 	uint64_t			max_file_size;
 	bool				allow_overwrite;
+
+	void	load(toml::Variant& table);
 };
 
 struct RedirectConfig : public RouteConfig
 {
 	std::string	redirect_location;
 	HTTPCode	status;
+
+	void	load(toml::Variant& table);
 };
 
 struct CGIConfig : public RouteConfig
@@ -70,6 +77,8 @@ struct CGIConfig : public RouteConfig
 	std::string							interpreter;
 	std::string							bin;
 	timestamp_ms						timeout;
+
+	void	load(toml::Variant& table);
 };
 
 struct ServerConfig
@@ -82,6 +91,9 @@ struct ServerConfig
 
 	RadixTree<RouteConfig *>		routes;
 	HashMap<HTTPCode, std::string>	error_fallbacks;
+
+	void	load(toml::Variant& table);
+	void	load_errors(toml::Table& errors_table);
 };
 
 struct EngineConfig
@@ -91,12 +103,31 @@ struct EngineConfig
 	timestamp_ms	closing_timeout;
 	size_t			read_size;
 	size_t			max_read_limit;
+
+	void	load(toml::Variant& table);
 };
 
 struct LoggingConfig
 {
 	std::string	log_file;
 	LogLevel	log_level;
+
+	void	load(toml::Variant& table);
+};
+
+struct Config
+{
+	EngineConfig			engineConfig;
+	LoggingConfig			loggingConfig;
+	RadixTree<ServerConfig>	serversConfig;
+
+	class Exception : public std::runtime_error
+	{
+	public:
+		Exception(const std::string& msg) : std::runtime_error(std::string("Config : ") + msg) {}
+	};
+
+	void	load(toml::Document& document);
 };
 
 #endif // _CONFIGSTRUCTS_H

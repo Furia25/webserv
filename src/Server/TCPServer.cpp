@@ -6,13 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 11:36:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 18:30:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/TCPServer.hpp"
 
-HashedTimingWheel<1000> TCPServer::AlarmManager;
+HashedTimingWheel<EPOLL_TIMEOUT> TCPServer::AlarmManager;
 
 volatile sig_atomic_t	g_running = true;
 
@@ -22,7 +22,7 @@ static void signal_handler(int signum)
 	g_running = false;
 }
 
-TCPServer::TCPServer()
+TCPServer::TCPServer(const EngineConfig& engine_config) : engineConfig(engine_config)
 {
 	this->actual_connections = 0;
 	this->epoll_fd = ::epoll_create(100);
@@ -42,12 +42,16 @@ void TCPServer::run(void)
 {
 	std::signal(SIGINT, signal_handler);
 	std::signal(SIGPIPE, SIG_IGN);
-	epoll_event	events[MAX_EVENTS];
+
+	std::vector<epoll_event>	events_vec;
+	events_vec.reserve(this->engineConfig.max_events);
+	epoll_event	*events = events_vec.data();
 
 	while (g_running)
 	{
 		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
-		int n = epoll_wait(this->epoll_fd, events, MAX_EVENTS, next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout);
+		int timeout = next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout;
+		int n = epoll_wait(this->epoll_fd, events, this->engineConfig.max_events, timeout);
 		for (int i = 0; i < n; ++i)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
@@ -174,7 +178,7 @@ void TCPServer::bindHandler(IRequestHandler &handler)
 	this->handler = &handler;
 }
 
-IRequestHandler &TCPServer::getHandler(void)
+IRequestHandler& TCPServer::getHandler(void)
 {
 	return *this->handler;
 }

@@ -12,9 +12,12 @@
 
 #ifndef _RADIXTREE_H
 # define _RADIXTREE_H
+
 # include <string>
 # include <vector>
 # include <map>
+
+# include "Utils/Optional.hpp"
 
 template<typename T>
 class RadixTree
@@ -33,11 +36,10 @@ private:
 	struct Node
 	{
 		std::string			label;
-		bool				has_value;
-		T					value;
+		Optional<T>			value;
 		std::vector<Node*>	children;
 
-		Node(const std::string& l) : label(l), has_value(false), value() {}
+		Node(const std::string& l) : label(l), value() {}
 		~Node()
 		{
 			for (size_t i = 0; i < children.size(); ++i)
@@ -59,7 +61,6 @@ inline void RadixTree<T>::_ins(Node *n, const std::string &key, size_t i, const 
 {
 	if (i == key.size())
 	{
-		n->has_value = true;
 		n->value = val;
 		return;
 	}
@@ -100,7 +101,7 @@ inline void RadixTree<T>::_ins(Node *n, const std::string &key, size_t i, const 
 }
 
 template <typename T>
-inline bool RadixTree<T>::_srch(const Node *n, const std::string &key, size_t i, T &val) const
+inline bool RadixTree<T>::_srch(const Node *n, const std::string& key, size_t i, T& val) const
 {
 	if (i == key.size())
 	{

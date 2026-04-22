@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:31:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 18:15:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,11 @@ public:
 
 	template <typename T> T&		as();
 	template <typename T> const T&	as() const;
+	template <typename T> T			take(const std::string& key);
+	template <typename T> T			take_or(const std::string& key, const T& def);
+
+	Variant				take_section(const std::string& key, bool optional);
+	Variant				take_section_array(const std::string& key, bool optional);
 
 	Type				getType() const;
 	bool				isNone() const { return this->type == NONE; }
@@ -191,9 +196,68 @@ template <> inline const T&	toml::Variant::as<T>() const { this->check_types_err
 _VARIANT_TYPES
 #undef X
 
+template <> inline Variant&			toml::Variant::as<Variant>()	{ return *this; };
+template <> inline const Variant&	toml::Variant::as<Variant>() const { return *this; };
+
 typedef Variant::Array	Array;
 typedef Variant::Table	Table;
 typedef Variant			Value;
+
+template <typename T>
+inline T Variant::take(const std::string& key)
+{
+	Table&	table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+		throw Variant::ParsedException("Missing key in table, \"" + key + '\"');
+	RawStorage<T>	storage = it->second.as<T>();
+	table.erase(key);
+	return *storage;
+}
+
+template <typename T>
+inline T Variant::take_or(const std::string& key, const T& def)
+{
+	Table&	table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+		return def;
+	RawStorage<T>	storage = it->second.as<T>();
+	table.erase(key);
+	return *storage;
+}
+
+inline Variant toml::Variant::take_section(const std::string& key, bool optional)
+{
+	Table&			table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+	{
+		if (!optional)
+			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
+		return Variant(Table());
+	}
+	const Variant& section = it->second;
+	if (!section.isHeader() || section.type != TABLE)
+		throw Variant::ParsedException("Expected header table from \"" + key + "\"");
+	return section;
+}
+
+inline Variant Variant::take_section_array(const std::string &key, bool optional)
+{
+	Table&			table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+	{
+		if (!optional)
+			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
+		return Variant(Array());
+	}
+	const Variant& section = it->second;
+	if (!section.isHeader() || section.type != ARRAY)
+		throw Variant::ParsedException("Expected header array of table from \"" + key + "\"");
+	return section;
+}
 
 };
 

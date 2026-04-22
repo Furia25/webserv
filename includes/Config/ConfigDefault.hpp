@@ -6,12 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 19:47:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 18:18:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONFIGDEFAULT_H
 # define _CONFIGDEFAULT_H
+
+# define CONFIG_MAX_EVENTS	1024
 
 # define CONFIG_READ_SIZE	4096
 # define CONFIG_READ_LIMIT	16384

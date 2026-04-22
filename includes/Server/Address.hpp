@@ -6,10 +6,9 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:30:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/08 15:59:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 17:52:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #ifndef _ADDRESS_H
 # define _ADDRESS_H

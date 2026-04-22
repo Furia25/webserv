@@ -15,11 +15,10 @@ log_file = "log.txt"
 host = "0.0.0.0"
 service = "8080"
 server_name = "website.com"
+root = "./www/site"
 
 	[servers.limits]
-	max_connections = 1000
 	max_body_size = 10485760
-	request_timeout = 10
 
 	[servers.errors]
 	404 = "./www/errors/404.html"

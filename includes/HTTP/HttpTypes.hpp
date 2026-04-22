@@ -2,6 +2,7 @@
 #ifndef _HTTPTYPES_H
 # define _HTTPTYPES_H
 
+# include <sstream>
 # include <string>
 # include <stdexcept>
 # include <iostream>
@@ -75,14 +76,16 @@ class HTTPException : public std::exception
 public:
 	HTTPException(HTTPCode code, const std::string& summary) : code(code), summary(summary)
 	{
-		message = std::to_string(static_cast<int>(code)) + " " + HTTPCode::toString(code);
-        if (!summary.empty())
-            message += " (" + summary + ")";
+		std::stringstream	ss;
+		ss << static_cast<int>(code) << " " << HTTPCode::toString(code);
+		message = ss.str();
+		if (!summary.empty())
+			message += " (" + summary + ")";
 	}
 	HTTPException(HTTPCode code) : code(code) {}
-	virtual ~HTTPException() noexcept {}
+	virtual ~HTTPException() throw() {};
 
-	virtual const char* what() const noexcept override { return message.c_str(); };
+	virtual const char* what() const throw() { return message.c_str(); };
 	HTTPCode			getStatusCode() const { return this->code; };
 	const std::string&	getSummary() const { return this->summary; };
 private:

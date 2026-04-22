@@ -1,36 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ConfigBuilder.hpp                                  :+:      :+:    :+:   */
+/*   IJob.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/15 17:28:59 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/18 20:05:00 by vdurand          ###   ########.fr       */
+/*   Created: 2026/04/20 17:50:56 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/20 17:55:43 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _CONFIGLOADER_H
-# define _CONFIGLOADER_H
+#ifndef _IJOB_H
+# define _IJOB_H
 
-# include <string>
-# include <stdexcept>
+# include "Connection.hpp"
 
-# include "vector"
-# include "toml.hpp"
-# include "Config.hpp"
-# include "ConfigBuilder.hpp"
-
-class ConfigBuilder
+class IJob
 {
 public:
-	ConfigBuilder();
-
-	void	from_file(Config& to_build, const std::string& filepath);
-	~ConfigBuilder();
-protected:
-private:
-	std::vector<std::string>	exceptions;
+	virtual void	jobContinue(Connection& connection) = 0;
 };
 
-#endif // _CONFIGLOADER_H
+#endif // _IJOB_H
