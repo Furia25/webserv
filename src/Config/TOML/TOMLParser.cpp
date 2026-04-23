@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 13:24:29 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 13:57:37 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -322,6 +322,7 @@ bool toml::TOMLParser::handleKeywords(const std::string& literal)
 }
 
 #include <ios>
+#include "stdlib.h"
 
 void toml::TOMLParser::handleNumbers(const Token& token, std::stringstream& literal)
 {

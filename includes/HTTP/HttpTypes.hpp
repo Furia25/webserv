@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/23 11:20:05 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 13:55:22 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #ifndef _HTTPTYPES_H
 # define _HTTPTYPES_H
 
+# include <sstream>
 # include <string>
 # include <stdexcept>
 # include <iostream>
@@ -21,6 +22,7 @@
 
 # include "EnumClass.hpp"
 # include "MIME.hpp"
+# include "Utils/Hash.hpp"
 
 #define _DEFAULT_MAX_BODY_SIZE_ 10485760
 #define _DEFAULT_MAX_PATH_SIZE_ 2048
@@ -32,7 +34,12 @@
 #define _HEADER_CONTENT_LENGTH_ "content-length"
 #define _HEADER_HOST_ "host"
 
-ENUM_CLASS(HandlerType, (STATIC, UPLOAD, CGI, REDIRECT, STATUS), ENUM_BASIC);
+# define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
+ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
+	ENUM_LITERALS(_HANDLERTYPES_, ENUM_BASIC, ENUM_BASIC);
+	public: HandlerType() : _t(_M_TUPLE_ELEM_0 _HANDLERTYPES_) {};
+);
+# undef _HANDLERTYPES_
 
 # define _METHODS_ (GET, POST, DELETE, HEAD, PUT, UNKNOWN)
 ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC););
@@ -83,7 +90,11 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__
 # define X_STRING_CODE(tuple, ...)	_M_TUPLE_ELEM_0 tuple __VA_ARGS__
 # define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
-ENUM_CLASS(HTTPCode, _STATUS_CODES_, X, ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING); static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };);
+ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
+	ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING);
+	public: HTTPCode() : _t(NOT_FOUND) {};
+	static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };
+);
 # undef X
 # undef X_STRING_CODE
 # undef X_STRING
@@ -104,14 +115,14 @@ class HTTPException : public std::exception
 public:
 	HTTPException(HTTPCode code, const std::string& summary) : code(code), summary(summary)
 	{
-		std::stringstream ss;
-        ss << static_cast<int>(code);
-		message = ss.str() + " " + HTTPCode::toString(code);
-        if (!summary.empty())
-            message += " (" + summary + ")";
+		std::stringstream	ss;
+		ss << static_cast<int>(code) << " " << HTTPCode::toString(code);
+		message = ss.str();
+		if (!summary.empty())
+			message += " (" + summary + ")";
 	}
 	HTTPException(HTTPCode code) : code(code) {}
-	virtual ~HTTPException()  throw() {}
+	virtual ~HTTPException() throw() {};
 
 	virtual const char* what() const throw() { return message.c_str(); };
 	HTTPCode			getStatusCode() const { return this->code; };
@@ -120,6 +131,12 @@ private:
 	const HTTPCode		code;
 	const std::string	summary;
 	std::string			message;
+};
+
+template <>
+struct Hash<HTTPCode>
+{
+	size_t operator()(HTTPCode key) const { return hash_int(key); }
 };
 
 #endif // _HTTPTYPES_H

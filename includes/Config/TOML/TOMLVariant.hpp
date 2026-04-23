@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 13:03:30 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 13:54:39 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,13 @@ public:
 
 	template <typename T> T&		as();
 	template <typename T> const T&	as() const;
+	template <typename T> T			get();
+	template <typename T> const T	get() const;
+	template <typename T> T			take(const std::string& key);
+	template <typename T> T			take_or(const std::string& key, const T& def);
+
+	Variant				take_section(const std::string& key, bool optional);
+	Variant				take_section_array(const std::string& key, bool optional);
 
 	Type				getType() const;
 	bool				isNone() const { return this->type == NONE; }
@@ -171,6 +178,8 @@ inline toml::Variant& toml::Variant::operator=(const float value)
 }
 
 # define INTEGER_PROMOTION(int_type) \
+template <> inline int_type		toml::Variant::get<int_type>() { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
+template <> inline const int_type	toml::Variant::get<int_type>() const { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
 template<> \
 inline toml::Variant& toml::Variant::operator=(const int_type value) \
 { \
@@ -184,16 +193,159 @@ INTEGER_PROMOTION(char);
 INTEGER_PROMOTION(int);
 INTEGER_PROMOTION(short);
 INTEGER_PROMOTION(long);
+INTEGER_PROMOTION(uint64_t);
 
 #define X(name, T) \
+template <> inline T		toml::Variant::get<T>() { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline const T	toml::Variant::get<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
 template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
 template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
 #undef X
 
+template <> inline Variant&			toml::Variant::as<Variant>()	{ return *this; };
+template <> inline const Variant&	toml::Variant::as<Variant>() const { return *this; };
+
 typedef Variant::Array	Array;
 typedef Variant::Table	Table;
 typedef Variant			Value;
+
+inline toml::Variant::Variant() : type(NONE), context(IMPLICIT) {}
+
+inline toml::Variant::Variant(const Variant &other) : type(other.type), context(other.context)
+{
+	this->construct(other);
+}
+
+inline toml::Variant::~Variant()
+{
+	this->destruct();
+}
+
+inline toml::Variant& toml::Variant::operator=(const Variant &other)
+{
+	if (this == &other)
+		return (*this);
+	this->destruct();
+	this->type = other.type;
+	this->context = other.context;
+	this->construct(other);
+	return (*this);
+}
+
+inline const toml::Variant& toml::Variant::operator[](const std::string &key) const
+{
+	const toml::Table&	table = this->as<Table>();
+	toml::Table::const_iterator it = table.find(key);
+	if (it == table.end())
+		throw toml::Variant::ParsedException("Unspecified Key");
+	return it->second;
+}
+
+inline toml::Variant::Type toml::Variant::getType() const { return this->type; }
+
+# define X(name, T, ...) \
+inline toml::Variant::Variant(const T& value) : type(name), context(IMPLICIT) \
+{ \
+	this->construct(value); \
+}
+_VARIANT_TYPES
+
+# undef X
+
+inline toml::Variant::Variant(const char *value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const char value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const short value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const int value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const long value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const float value) : type(NONE) { *this = value; }
+
+inline void	toml::Variant::destruct()
+{
+	#define X(name, T, ...) case name: this->data.name.destroy(); break;
+	switch (this->type)
+	{
+		_VARIANT_TYPES
+	default:
+		break;
+	};
+	# undef X
+}
+
+inline const char *toml::Variant::toString()
+{
+	return toml::Variant::toString(this->type);
+}
+
+inline const char *toml::Variant::toString(const Type type)
+{
+	#define X(name, T, ...) case name: return #name; break;
+	switch (type)
+	{
+		_VARIANT_TYPES
+		_VARIANT_NONE
+	default:
+		break;
+	};
+	return "Unknown";
+	# undef X
+}
+
+template <typename T>
+inline T Variant::take(const std::string& key)
+{
+	Table&	table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+		throw Variant::ParsedException("Missing key in table, \"" + key + '\"');
+	T result = it->second.get<T>();
+	table.erase(key);
+	return result;
+}
+
+template <typename T>
+inline T Variant::take_or(const std::string& key, const T& def)
+{
+	Table&	table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+		return def;
+	T result = it->second.get<T>();
+	table.erase(key);
+	return result;
+}
+
+inline Variant toml::Variant::take_section(const std::string& key, bool optional)
+{
+	Table&			table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+	{
+		if (!optional)
+			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
+		return Variant(Table());
+	}
+	const Variant& section = it->second;
+	if (!section.isHeader() || section.type != TABLE)
+		throw Variant::ParsedException("Expected header table from \"" + key + "\"");
+	return section;
+}
+
+inline Variant Variant::take_section_array(const std::string &key, bool optional)
+{
+	Table&			table = this->as<Table>();
+	Table::iterator	it = table.find(key);
+	if (it == table.end())
+	{
+		if (!optional)
+			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
+		return Variant(Array());
+	}
+	const Variant& section = it->second;
+	if (!section.isHeader() || section.type != ARRAY)
+		throw Variant::ParsedException("Expected header array of table from \"" + key + "\"");
+	return section;
+}
 
 };
 

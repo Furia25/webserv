@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/14 01:43:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/22 17:21:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ public: /*Iterator*/
 		value_type&> \
 	{ \
 	private: \
+		friend class HashMap; \
 		HashMap*	map; \
 		size_t		index; \
 		void	skip_empty() \
@@ -102,8 +103,7 @@ public: /*Iterator*/
 			return temp; \
 		} \
 	}; \
-	friend class iterator_type
-
+	friend class iterator_type;
 	_HASHMAP_ITERATOR_(iterator);
 	_HASHMAP_ITERATOR_(const_iterator);
 public:
@@ -132,6 +132,7 @@ public:
 
 	void				swap(HashMap& rhs);
 	bool				erase(const key_type& key);
+	bool				erase(const iterator it);
 	void				clear(void);
 	void				rehash(size_t new_capacity);
 
@@ -374,6 +375,18 @@ inline bool _HashMapDef_::erase(const key_type &key)
 		return false;
 	this->table[index].destroy();
 	this->meta[index] = _HashMap_::Meta::DELETED;
+	this->slot_used--;
+	this->tombstone_count++;
+	return true;
+}
+
+_HashMapTemplate_
+inline bool _HashMapDef_::erase(const iterator it)
+{
+	if (it == this->end())
+		return false;
+	this->table[it.index].destroy();
+	this->meta[it.index] = _HashMap_::Meta::DELETED;
 	this->slot_used--;
 	this->tombstone_count++;
 	return true;

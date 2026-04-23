@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/18 20:22:02 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 13:22:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 13:53:47 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,8 @@ inline void toml::TOMLErrorManager::snippetAppend(char c)
 
 inline void toml::TOMLErrorManager::snippetUnget()
 {
+	if (!this->currentSnippet.empty())
+		this->currentSnippet.erase(this->currentSnippet.size() - 1);
 	if (!this->currentSnippet.empty())
 		this->currentSnippet.erase(this->currentSnippet.size() - 1);
 }

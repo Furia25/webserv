@@ -13,9 +13,19 @@
 # include "Config/toml.hpp"
 # include "Config/TOML/TOMLParser.hpp"
 
-toml::Document::Document() {}
+toml::Document::Document() : root(toml::Table()) {}
 
-toml::Document::Document(const Document& other) {*this = other;}
+toml::Document::Document(const std::string& path)
+{
+	this->from_file(path);
+}
+
+toml::Document::Document(std::istream& stream, const std::string& name)
+{
+	this->from_stream(stream, false, name);
+}
+
+toml::Document::Document(const Document& other) { *this = other; }
 
 toml::Document::~Document() {}
 
@@ -37,7 +47,8 @@ void toml::Document::from_stream(std::istream &stream, bool append, const std::s
 
 void toml::Document::from_file(const std::string &path, bool append)
 {
-	std::ifstream	file(path.c_str());
+	std::ifstream	file;
+	file.open(path.c_str());
 	if (!file)
 		throw std::runtime_error("TOML: could not open '" + path + "': " + std::strerror(errno));
 	from_stream(file, append, path);

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 15:33:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 13:57:23 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,15 @@
 
 size_t Connection::last_id = 0;
 
-Connection::Connection(TCPServer &server,
-	Socket &server_socket) : server(server), bytes_sended(0), bytes_received(0),
-	state(CONNECTED), alarmTimeout(this, timeoutCallback)
+Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0),
+	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), engineConfig(server.engineConfig)
 {
 	this->client_socket.accept(server_socket);
-	this->read_buffer.reserve(READ_BUFFER_DEFAULT_SIZE);
+	this->read_buffer.reserve(4096);
 	this->write_buffer.reserve(WRITE_BUFFER_DEFAULT_SIZE);
 	this->id = Connection::last_id;
 	Connection::last_id++;
-	TCPServer::AlarmManager.reschedule(this->alarmTimeout,
-		CONFIG_ABSOLUTE_TIMEOUT);
+	TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.max_timeout);
 }
 
 Connection::~Connection()
@@ -70,15 +68,13 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		this->setDeletable();
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
-			CONFIG_ABSOLUTE_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.max_timeout);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
-			CONFIG_CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
 		this->handleWrite();
 	}
 }
@@ -97,24 +93,21 @@ void Connection::setDeletable(void)
 
 void Connection::handleRead(void)
 {
-	uint8_t	buffer[CONFIG_READ_SIZE];
-	ssize_t	n;
-
-	if (this->read_buffer.size() > CONFIG_READ_LIMIT)
+	if (this->read_buffer.size() > this->engineConfig.max_read_limit)
 	{
 		this->setDeletable();
 		return ;
 	}
-	n = this->client_socket.receive(buffer, sizeof(buffer));
+
+	uint8_t	buffer[4096];
+	ssize_t n = this->client_socket.receive(buffer, sizeof(buffer));
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout,
-			CONFIG_CLOSING_TIMEOUT);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
 		this->state = CLOSING;
 	}
-	/*Logger::DEBUG() << this->read_buffer;*/
 }
 
 void Connection::handleWrite(void)
@@ -158,7 +151,7 @@ const uint8_t *Connection::getReadBufferPtr() const
 	return (&this->read_buffer[this->bytes_received]);
 }
 
-const std::vector<uint8_t> &Connection::getReadVector() const
+const std::vector<uint8_t>& Connection::getReadVector() const
 {
 	return (this->read_buffer);
 }
@@ -184,7 +177,7 @@ void Connection::clearWriteBuffer()
 void Connection::compactReadBuffer()
 {
 	this->clearReadBuffer();
-	this->read_buffer.resize(READ_BUFFER_DEFAULT_SIZE);
+	this->read_buffer.resize(4096);
 }
 
 void Connection::compactWriteBuffer()

@@ -7,19 +7,17 @@ read_size = 4096
 max_read_limit = 16384
 
 [logging]
-level = "debug"
+level = "DEBUG"
 log_file = "log.txt"
+tick_interval = 5
 
 # --- Main Website (Port 8080) ---
 [[servers]]
 host = "0.0.0.0"
 service = "8080"
 server_name = "website.com"
-
-	[servers.limits]
-	max_connections = 1000
-	max_body_size = 10485760
-	request_timeout = 10
+root = "./www/site"
+max_body_size = 10485760
 
 	[servers.errors]
 	404 = "./www/errors/404.html"
@@ -29,7 +27,7 @@ server_name = "website.com"
 	[[servers.routes]]
 	path = "/"
 	methods = ["GET"]
-	handler = "static"
+	handler = "STATIC"
 	root = "./www/site1"
 	index = "index.html"
 	autoindex = true
@@ -38,9 +36,11 @@ server_name = "website.com"
 	[[servers.routes]]
 	path = "/upload"
 	methods = ["POST"]
-	handler = "upload"
+	handler = "UPLOAD"
+	max_body_size = 256
+	allowed_extensions = [""]
+	allow_overwrite = false
 	upload_store = "./www/site1/uploads"
-	max_file_size = 5242880
 
 	# CGI script route
 	[[servers.routes]]
@@ -48,7 +48,9 @@ server_name = "website.com"
 	methods = ["GET", "POST", "DELETE"]
 	handler = "cgi"
 	cgi_bin = "./cgi-bin/api_handler.py"
+	interpreter = "python3"
 	cgi_timeout = 5
+	env = {TEST = "", TEST2 = 4}
 
 	[[servers.routes]]
 	path = "/old-api"

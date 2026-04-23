@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 22:18:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/20 18:22:43 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 # include <csignal>
 # include <sys/epoll.h>
 
+# include "Config/Config.hpp"
 # include "EnumClass.hpp"
 # include "Address.hpp"
 # include "AddressResolver.hpp"
@@ -48,8 +49,7 @@
 class TCPServer
 {
 public:
-
-	TCPServer();
+	TCPServer(const EngineConfig& config);
 	~TCPServer();
 
 	void				run(void);
@@ -65,7 +65,8 @@ public:
 
 	static void			tickCallback(void *instance);
 
-	static	HashedTimingWheel<1000> AlarmManager;
+	static	HashedTimingWheel<EPOLL_TIMEOUT> AlarmManager;
+
 	friend class Connection;
 	friend class Listener;
 protected:
@@ -78,6 +79,8 @@ private:
 	std::vector<Listener*>		listeners;
 	HashMap<int, Connection*>	connections;
 	std::vector<Connection *>	deletable_connections;
+
+	const EngineConfig&			engineConfig;
 
 	void	recoverListener(Listener& listener);
 
