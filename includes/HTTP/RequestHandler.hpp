@@ -29,6 +29,7 @@ public:
 	void	onError(Connection& connection);
 protected:
 private:
+	void dispatchError(int id, Connection& connection, HTTPCode code, const ServerConfig* host, const Request* req = NULL);
 	std::map<size_t, RequestBuilder> ongoingRequests;
 	const Config& serverConfig;
 };

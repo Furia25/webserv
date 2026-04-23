@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/22 14:03:55 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 11:12:39 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include "Utils/FileSystem.hpp"
 # include <dirent.h>
 
-StaticHandler::StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path)
-    : request(req), route(route), connection(connection), physical_path(physical_path), isFinished(false), state(INIT)
+StaticHandler::StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path, const ServerConfig* host_ptr, HTTPCode statusCode)
+    : request(req), route(route), connection(connection), physical_path(physical_path), host(host_ptr ? *host_ptr : ServerConfig()), isFinished(false), state(INIT), statusCode(statusCode)
 {
 }
 
@@ -49,19 +49,46 @@ static std::string getMimeType(const std::string& ext)
     return "application/octet-stream"; 
 }
 
+void StaticHandler::handleError(HTTPCode code)
+{
+    HashMap<HTTPCode, std::string>::const_iterator it = host.error_fallbacks.find(code);
+    if (it != host.error_fallbacks.end())
+    {
+        std::string error_path = it->second;
+        if (error_path.length() > 0 && error_path[0] != '/')
+            error_path = host.root + "/" + error_path;
+        else
+            error_path = host.root + error_path;
+
+        if (FileSystem::exists(error_path) && FileSystem::isFile(error_path) && FileSystem::isReadable(error_path))
+        {
+            this->physical_path = error_path;
+            this->statusCode = code;
+            this->state = SEND_HEADERS;
+            return;
+        }
+    }
+    Response::buildErrorResponse(connection, code);
+    this->state = FINISHED;
+}
+
 bool StaticHandler::execute()
 {
     if (state == INIT)
     {
         if (!FileSystem::exists(physical_path))
         {
-            Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
-            state = FINISHED;
+            handleError(HTTPCode::NOT_FOUND);
             return false;
         }
 
         if (FileSystem::isDirectory(physical_path))
         {
+            if (!route)
+            {
+                handleError(HTTPCode::FORBIDDEN);
+                return false;
+            }
             if (request.getMethod() == Method::GET)
             {
                 const StaticConfig* static_config = static_cast<const StaticConfig*>(route);
@@ -86,21 +113,18 @@ bool StaticHandler::execute()
                         Response::buildRawResponse(connection, HTTPCode::OK, "text/html", autoindexBody);
                     }
                     else
-                        Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-                    state = FINISHED;
+                        handleError(HTTPCode::FORBIDDEN);
                     return false;
                 }
                 else
                 {
-                    Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-                    state = FINISHED;
+                    handleError(HTTPCode::FORBIDDEN);
                     return false;
                 }
             }
             else if (request.getMethod() == Method::DELETE)
             {
-                Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-                state = FINISHED;
+                handleError(HTTPCode::FORBIDDEN);
                 return false;
             }
         }
@@ -109,8 +133,7 @@ bool StaticHandler::execute()
         {
             if (!FileSystem::isReadable(physical_path))
             {
-                Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-                state = FINISHED;
+                handleError(HTTPCode::FORBIDDEN);
                 return false;
             }
             state = SEND_HEADERS;
@@ -119,21 +142,23 @@ bool StaticHandler::execute()
         {
             if (!FileSystem::isWritable(physical_path))
             {
-                Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-                state = FINISHED;
+                handleError(HTTPCode::FORBIDDEN);
                 return false;
             }
 
             if (std::remove(physical_path.c_str()) == 0)
+            {
                 Response::buildEmptyResponse(connection, HTTPCode::NO_CONTENT);
+                state = FINISHED;
+            }
             else
-                Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-            state = FINISHED;
+            {
+                handleError(HTTPCode::INTERNAL_SERVER_ERROR);
+            }
         }
         else
         {
-            Response::buildErrorResponse(connection, HTTPCode::METHOD_NOT_ALLOWED);
-            state = FINISHED;
+            handleError(HTTPCode::METHOD_NOT_ALLOWED);
         }
         return false;
     }
@@ -143,15 +168,14 @@ bool StaticHandler::execute()
         file_stream.open(physical_path.c_str(), std::ios::binary);
         if (!file_stream.is_open()) 
         {
-            Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-            state = FINISHED;
+            handleError(HTTPCode::INTERNAL_SERVER_ERROR);
             return false;
         }
 
         size_t fileSize = FileSystem::getFileSize(physical_path);
         std::string ext = FileSystem::getExtension(physical_path);
         ext = getMimeType(ext);
-        Response::buildFileHeaderResponse(connection, HTTPCode::OK, ext, fileSize);
+        Response::buildFileHeaderResponse(connection, statusCode, ext, fileSize);
         state = SEND_BODY;
         return false; 
     }

@@ -15,6 +15,7 @@
 # include "Config/Config.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "HTTP/Handler.hpp"
+# include "Utils/FileSystem.hpp"
 
 RequestHandler::RequestHandler(const Config& config) : serverConfig(config)
 {
@@ -22,6 +23,39 @@ RequestHandler::RequestHandler(const Config& config) : serverConfig(config)
 
 RequestHandler::~RequestHandler()
 {
+}
+
+void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code, const ServerConfig* host, const Request* req)
+{
+	if (host)
+	{
+		HashMap<HTTPCode, std::string>::const_iterator it = host->error_fallbacks.find(code);
+		if (it != host->error_fallbacks.end())
+		{
+			std::string error_path = it->second;
+			if (error_path.length() > 0 && error_path[0] != '/')
+				error_path = host->root + "/" + error_path;
+			else
+				error_path = host->root + error_path;
+
+			if (FileSystem::exists(error_path) && FileSystem::isFile(error_path) && FileSystem::isReadable(error_path))
+			{
+				if (req)
+				{
+					connection.addJob(new StaticHandler(*req, NULL, connection, error_path, host, code));
+				}
+				else
+				{
+					Request dummy_req(Method::GET, error_path, "", "HTTP/1.1", 0, HashMap<std::string, std::string>(), std::vector<uint8_t>());
+					connection.addJob(new StaticHandler(dummy_req, NULL, connection, error_path, host, code));
+				}
+				ongoingRequests.erase(id);
+				return ;
+			}
+		}
+	}
+	Response::buildErrorResponse(connection, code);
+	ongoingRequests.erase(id);
 }
 
 void RequestHandler::onDataReceived(Connection &connection)
@@ -47,14 +81,12 @@ void RequestHandler::onDataReceived(Connection &connection)
 		{
 			req.setValidateStatus(0);
 			std::cerr << "HTTPException: " << e.what() << '\n';
-			Response::buildErrorResponse(connection, HTTPCode::BAD_REQUEST);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::BAD_REQUEST, NULL, NULL);
 		}
 		catch(const std::exception& e)
 		{
 			std::cerr << "Exception: " << e.what() << '\n';
-			Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, NULL, NULL);
 		}
 		connection.consumeReadData(dataSize);
 	}
@@ -70,37 +102,32 @@ void RequestHandler::onDataReceived(Connection &connection)
 		ServerConfig host;
 		if (serverConfig.serversConfig.search(request_host, host) != true)
 		{
-			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::NOT_FOUND, NULL, &final_request);
 			return ;
 		}
 
 		RouteConfig *route;
 		if (host.routes.search(final_request.getPath(), route) != true )
 		{
-			Response::buildErrorResponse(connection, HTTPCode::NOT_FOUND);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::NOT_FOUND, &host, &final_request);
 			return ;
 		}
 		
 		if (route->method_allowed[final_request.getMethod()] != true)
 		{
-			Response::buildErrorResponse(connection, HTTPCode::METHOD_NOT_ALLOWED);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::METHOD_NOT_ALLOWED, &host, &final_request);
 			return ;
 		}
 
 		if (host.limits.max_body_size < final_request.getContentLength())
 		{
-			Response::buildErrorResponse(connection, HTTPCode::PAYLOAD_TOO_LARGE);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::PAYLOAD_TOO_LARGE, &host, &final_request);
 			return ;
 		}
 
 		if (final_request.getPath().find("..") != std::string::npos)
 		{
-			Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-			ongoingRequests.erase(id);
+			dispatchError(id, connection, HTTPCode::FORBIDDEN, &host, &final_request);
 			return ;
 		}
 
@@ -109,10 +136,10 @@ void RequestHandler::onDataReceived(Connection &connection)
 		switch (route->handler)
 		{
 			case HandlerType::STATIC:
-				connection.addJob(new StaticHandler(final_request, route, connection, physical_path));
+				connection.addJob(new StaticHandler(final_request, route, connection, physical_path, &host));
 				break;
 			default:
-				Response::buildErrorResponse(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+				dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, &host, &final_request);
 				break;
 		}
 		ongoingRequests.erase(id);
