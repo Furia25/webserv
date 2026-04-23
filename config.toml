@@ -16,9 +16,7 @@ host = "0.0.0.0"
 service = "8080"
 server_name = "website.com"
 root = "./www/site"
-
-	[servers.limits]
-	max_body_size = 10485760
+max_body_size = 10485760
 
 	[servers.errors]
 	404 = "./www/errors/404.html"
@@ -38,8 +36,10 @@ root = "./www/site"
 	path = "/upload"
 	methods = ["POST"]
 	handler = "upload"
+	max_body_size = 256
+	allowed_extensions = [""]
+	allow_overwrite = false
 	upload_store = "./www/site1/uploads"
-	max_file_size = 5242880
 
 	# CGI script route
 	[[servers.routes]]
@@ -47,7 +47,9 @@ root = "./www/site"
 	methods = ["GET", "POST", "DELETE"]
 	handler = "cgi"
 	cgi_bin = "./cgi-bin/api_handler.py"
+	interpreter = "python3"
 	cgi_timeout = 5
+	env = {TEST = "", TEST2 = 4}
 
 	[[servers.routes]]
 	path = "/old-api"

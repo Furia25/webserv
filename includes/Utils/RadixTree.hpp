@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 01:39:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 01:44:29 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,8 +48,7 @@ class RadixTree
 		std::string	prefix;
 		size_t		child_idx;
 
-		Frame(Node* n, const std::string& p)
-			: node(n), prefix(p), child_idx(0) {}
+		Frame(Node *n, const std::string& p) : node(n), prefix(p), child_idx(0) {}
 	};
 
 	typedef std::vector<Frame> Stack;
@@ -131,7 +130,7 @@ public:
 
 				while (top.child_idx < n->children.size())
 				{
-					Node* child = n->children[top.child_idx++];
+					Node	*child = n->children[top.child_idx++];
 					stack.push_back(Frame(child, full_key));
 					stack.pop_back();
 					break;
@@ -405,13 +404,15 @@ private:
 
 		for (size_t c = 0; c < n->children.size(); ++c)
 		{
-			Node*  ch = n->children[c];
-			size_t k  = common_prefix(ch->label, key, i);
-			if (!k) continue;
+			Node	*ch = n->children[c];
+			size_t	k = this->common_prefix(ch->label, key, i);
+			if (!k)
+				continue;
 			if (k == ch->label.size())
 			{
-				Node* res = find_prefix_node(ch, key, i + k, found_key);
-				if (res) return res;
+				Node* res = this->find_prefix_node(ch, key, i + k, found_key);
+				if (res)
+					return res;
 			}
 		}
 		return NULL;
@@ -429,13 +430,15 @@ private:
 
 		for (size_t c = 0; c < n->children.size(); ++c)
 		{
-			const Node* ch = n->children[c];
-			size_t k = common_prefix(ch->label, key, i);
-			if (!k) continue;
+			const Node*	ch = n->children[c];
+			size_t		k = this->common_prefix(ch->label, key, i);
+			if (!k)
+				continue;
 			if (k == ch->label.size())
 			{
-				const Node* res = find_prefix_node_c(ch, key, i + k, found_key);
-				if (res) return res;
+				const Node* res = this->find_prefix_node_c(ch, key, i + k, found_key);
+				if (res)
+					return res;
 			}
 		}
 		return NULL;

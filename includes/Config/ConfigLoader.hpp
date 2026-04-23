@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:45:49 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 01:06:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 02:43:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,10 +80,34 @@ public:
 	}
 
 	template <typename T, typename TDef, typename TMin, typename TMax>
-	void value_limited(toml::Variant& table, const std::string& key, T& target,
-					const TDef& def, const TMin& min, const TMax& max)
+	void value_limited_or(toml::Variant& table, const std::string& key, T& target,
+			const TDef& def, const TMin& min, const TMax& max)
 	{
-		try { target = take_or_limited<T>(table, key, static_cast<T>(def), static_cast<T>(min), static_cast<T>(max)); }
+		catch (const std::exception& e) { this->push_error(key, e.what()); }
+		try {
+			target = table.take_or<T>(key, def);
+			if (target < static_cast<T>(min) || target > static_cast<T>(max))
+			{
+				std::stringstream	ss;
+				ss << "Out of range must be between" << min << " and, " << max;
+				throw std::out_of_range(ss.str());
+			}
+		}
+		catch (const std::exception& e) { this->push_error(key, e.what()); }
+	}
+
+	template <typename T, typename TMin, typename TMax>
+	void value_limited(toml::Variant& table, const std::string& key, T& target, const TMin& min, const TMax& max)
+	{
+		try {
+			target = table.take<T>(key);
+			if (target < static_cast<T>(min) || target > static_cast<T>(max))
+			{
+				std::stringstream	ss;
+				ss << "Out of range must be between" << min << " and, " << max;
+				throw std::out_of_range(ss.str());
+			}
+		}
 		catch (const std::exception& e) { this->push_error(key, e.what()); }
 	}
 

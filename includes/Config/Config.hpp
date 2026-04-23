@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 01:13:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 02:26:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,25 +28,23 @@
 namespace Config
 {
 
-struct ServerLimits
-{
-	uint64_t	max_body_size;
-
-	void	load(toml::Variant& table, Config::Loader& loader);
-};
+struct ServerConfig;
 
 struct RouteConfig
 {
-	std::string	path;
 	HandlerType	handler;
+	std::string	path;
 	bool		method_allowed[Method::length];
+	uint64_t	max_body_size;
 
 	std::string	root;
 	std::string	alias;
 
 	virtual ~RouteConfig() {};
 
-	virtual void	load(toml::Variant& table, Config::Loader& loader);
+	virtual void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config) = 0;
+	void			loadBase(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config);
+	void			loadAllowedMethod(toml::Variant& table, Config::Loader& loader);
 };
 
 struct StaticConfig : public RouteConfig
@@ -54,17 +52,17 @@ struct StaticConfig : public RouteConfig
 	std::string	index;
 	bool		autoindex;
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config);
 };
 
 struct UploadConfig : public RouteConfig
 {
 	std::vector<MIME>	allowed_extensions;
 	std::string			upload_store;
-	uint64_t			max_file_size;
 	bool				allow_overwrite;
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config);
+	void	loadAllowedExtensions(toml::Variant& table, Config::Loader& loader);
 };
 
 struct RedirectConfig : public RouteConfig
@@ -72,7 +70,7 @@ struct RedirectConfig : public RouteConfig
 	std::string	redirect_location;
 	HTTPCode	status;
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config);
 };
 
 struct CGIConfig : public RouteConfig
@@ -82,12 +80,12 @@ struct CGIConfig : public RouteConfig
 	std::string							bin;
 	timestamp_ms						timeout;
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config);
 };
 
 struct StatusConfig : public RouteConfig
 {
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config) {};
 };
 
 struct ServerConfig
@@ -96,7 +94,7 @@ struct ServerConfig
 	std::string		host;
 	std::string		service;
 	std::string		root;
-	ServerLimits	limits;
+	uint64_t		max_body_size;
 
 	RadixTree<RouteConfig *>		routes;
 	HashMap<HTTPCode, std::string>	error_fallbacks;

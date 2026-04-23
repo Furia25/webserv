@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 18:18:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 01:47:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,5 +20,7 @@
 
 # define CONFIG_CLOSING_TIMEOUT	10
 # define CONFIG_ABSOLUTE_TIMEOUT	30
+
+# define CONFIG_BODY_SIZE	10485760
 
 #endif // _CONFIGDEFAULT_H
