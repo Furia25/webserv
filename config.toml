@@ -9,6 +9,7 @@ max_read_limit = 16384
 [logging]
 level = "debug"
 log_file = "log.txt"
+tick_interval = 5
 
 # --- Main Website (Port 8080) ---
 [[servers]]

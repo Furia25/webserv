@@ -6,14 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 17:08:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/16 00:24:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 03:00:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _TESTREQUESTHANDLER_H
 # define _TESTREQUESTHANDLER_H
 
-#include "IRequestHandler.hpp"
+#include "Server/IRequestHandler.hpp"
 #include "HTTP/Request.hpp"
 #include "map"
 

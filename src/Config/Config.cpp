@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 02:57:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 03:01:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ Config::AppConfig::AppConfig(const std::string& path)
 void Config::LoggingConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value_or(table, "log_file", this->log_file, std::string(""));
+	loader.value_limited_or(table, "tick_interval", this->tick_interval, CONFIG_TICK_INTERVAL, 0, 10000000);
 	std::string level_str;
 	loader.value_or(table, "level", level_str, std::string(LogLevel::toString(LogLevel::INFO)));
 	this->log_level = LogLevel::from(level_str);

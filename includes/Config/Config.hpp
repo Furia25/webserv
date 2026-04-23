@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 02:26:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 03:00:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,6 +121,7 @@ struct LoggingConfig
 {
 	std::string	log_file;
 	LogLevel	log_level;
+	uint64_t	tick_interval;
 
 	void	load(toml::Variant& table, Config::Loader& loader);
 };
