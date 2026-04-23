@@ -47,7 +47,8 @@ void toml::Document::from_stream(std::istream &stream, bool append, const std::s
 
 void toml::Document::from_file(const std::string &path, bool append)
 {
-	std::ifstream	file(path);
+	std::ifstream	file;
+	file.open(path.c_str());
 	if (!file)
 		throw std::runtime_error("TOML: could not open '" + path + "': " + std::strerror(errno));
 	from_stream(file, append, path);

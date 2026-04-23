@@ -9,6 +9,7 @@
 
 # include "EnumClass.hpp"
 # include "MIME.hpp"
+# include "Utils/Hash.hpp"
 
 #define PROTOCOL "HTTP"
 #define _DEFAULT_MAX_BODY_SIZE_ 10485760
@@ -101,6 +102,12 @@ private:
 	const HTTPCode		code;
 	const std::string	summary;
 	std::string			message;
+};
+
+template <>
+struct Hash<HTTPCode>
+{
+	size_t operator()(HTTPCode key) const { return hash_int(key); }
 };
 
 #endif // _HTTPTYPES_H

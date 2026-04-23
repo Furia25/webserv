@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 03:01:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 04:53:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config.hpp"
+#include "Config/Config.hpp"
 #include <sstream>
 
 Config::AppConfig::AppConfig(const std::string& path)
@@ -25,10 +25,12 @@ Config::AppConfig::AppConfig(const std::string& path)
 	loader.section(root, "logging", true, this->loggingConfig);
 	loader.array_section(root, "servers", false, server_array);
 
-	for (size_t i = 0; i < server_array.size(); ++i)
+	for (size_t index = 0; index < server_array.size(); ++index)
 	{
-		ServerConfig server_config;
-		loader.section(server_array[i], "servers[" + std::to_string(i) + "]", false, server_config);
+		ServerConfig		server_config;
+		std::stringstream	ss;
+		ss << "servers[" << index << ']';
+		loader.direct_section(server_array[index], ss.str(), server_config);
 		this->serversConfig.insert(server_config.name, server_config);
 	}
 
@@ -103,45 +105,67 @@ void Config::ServerConfig::loadErrors(toml::Table& errors_table, Config::Loader&
 
 void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader& loader)
 {
-	for (size_t i = 0; i < routes_array.size(); ++i)
+	for (size_t index = 0; index < routes_array.size(); ++index)
 	{
-		const std::string	route_name = "routes[" + std::to_string(i) + "]";
+		std::stringstream	ss;
+		ss << "routes[" << index << ']';
+		const std::string	route_name = ss.str();
 
 		std::string handler_str;
-		loader.value(routes_array[i], "handler", handler_str);
+		loader.value(routes_array[index], "handler", handler_str);
 		HandlerType handler = HandlerType::from(handler_str);
 
 		RouteConfig* final_route = NULL;
 		switch (handler)
 		{
-			case HandlerType::STATIC:	final_route = new StaticConfig(); break;
-			case HandlerType::CGI:		final_route = new CGIConfig(); break;
-			case HandlerType::STATUS:	final_route = new StatusConfig(); break;
-			case HandlerType::UPLOAD:	final_route = new UploadConfig();break;
-			case HandlerType::REDIRECT:	final_route = new RedirectConfig(); break;
+			case HandlerType::STATIC:	final_route = new StaticConfig(this); break;
+			case HandlerType::CGI:		final_route = new CGIConfig(this); break;
+			case HandlerType::STATUS:	final_route = new StatusConfig(this); break;
+			case HandlerType::UPLOAD:	final_route = new UploadConfig(this);break;
+			case HandlerType::REDIRECT:	final_route = new RedirectConfig(this); break;
 			default:
 				loader.push_error(route_name, "unknown handler type -> " + handler_str);
 				continue;
 		}
-		loader.section(routes_array[i], route_name, false, *final_route);
+		final_route->addRef();
+		loader.direct_section(routes_array[index], route_name, *final_route);
 		this->routes.insert(final_route->path, final_route);
 	}
+}
+
+Config::ServerConfig::ServerConfig(const ServerConfig& other) : routes(other.routes)
+{
+	for (RadixTree<RouteConfig *>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
+		it->second->addRef();
+}
+
+Config::ServerConfig& Config::ServerConfig::operator=(const ServerConfig& other)
+{
+	if (this != &other)
+		return *this;
+	for (RadixTree<RouteConfig*>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
+		it->second->release();
+	this->routes = other.routes;
+	for (RadixTree<RouteConfig*>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
+		it->second->addRef();
+
+	return *this;
 }
 
 Config::ServerConfig::~ServerConfig()
 {
 	for (RadixTree<RouteConfig *>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		delete it->second;
+		it->second->release();
 }
 
-void Config::RouteConfig::loadBase(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config)
+void Config::RouteConfig::loadBase(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "path", this->path);
 	loader.value_or(table, "alias", this->alias, std::string(""));
-	loader.value_or(table, "root", this->root, server_config.root);
-	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config.max_body_size, 0, UINT64_MAX);
+	loader.value_or(table, "root", this->root, server_config->root);
+	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config->max_body_size, 0, UINT64_MAX);
 	this->loadAllowedMethod(table, loader);
-	this->load(table, loader, server_config);
+	this->load(table, loader);
 }
 
 void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader& loader)
@@ -166,13 +190,13 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 	}
 }
 
-void Config::StaticConfig::load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config)
+void Config::StaticConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "index", this->index);
 	loader.value(table, "autoindex", this->autoindex);
 }
 
-void Config::UploadConfig::load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config)
+void Config::UploadConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value_or(table, "upload_store", this->upload_store, this->root);
 	loader.value_or(table, "allow_overwrite", this->allow_overwrite, false);
@@ -198,16 +222,16 @@ void Config::UploadConfig::loadAllowedExtensions(toml::Variant& table, Config::L
 	}
 }
 
-void Config::RedirectConfig::load(toml::Variant& table, Config::Loader& loader, Config::ServerConfig& server_config)
+void Config::RedirectConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "location", this->redirect_location);
 
-	const std::string code_str;
+	std::string code_str;
 	loader.value(table, "status", code_str);
 	this->status = HTTPCode::from(code_str);
 }
 
-void Config::CGIConfig::load(toml::Variant &table, Config::Loader &loader, Config::ServerConfig &server_config)
+void Config::CGIConfig::load(toml::Variant &table, Config::Loader &loader)
 {
 	loader.value(table, "cgi_bin", this->bin);
 	loader.value_or(table, "interpreter", this->interpreter, std::string(""));

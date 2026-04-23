@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 00:12:40 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:23:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 03:13:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ private:
 		size_t			col;
 	};
 
-	std::stack<NestContext, std::vector<NestContext>>	nesting;
+	std::stack<NestContext, std::vector<NestContext> >	nesting;
 
 	toml::Value			*currentNode;
 	toml::Value			*headerNode;

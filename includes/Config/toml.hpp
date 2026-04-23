@@ -54,6 +54,7 @@ public:
 				int line, int col, const std::string& name = "");
 
 	const char	*what() const throw() { return this->error_string.c_str(); };
+	virtual	~ParseException() throw() {}
 };
 
 } // namespace toml

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 01:44:29 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 03:32:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,12 +200,41 @@ public:
 		explicit	const_iterator(RadixTree* t) : it(t) {}
 	};
 
-	RadixTree() : root(""), size(0) {}
+	RadixTree() : root(""), _size(0) {}
+
+	static Node* clone_node(const Node* src)
+	{
+		if (!src)
+			return NULL;
+		Node *dst = new Node(src->label);
+		dst->value = src->value;
+		for (size_t index = 0; index < src->children.size(); ++index)
+			dst->children.push_back(clone_node(src->children[index]));
+		return dst;
+	}
+
+	RadixTree(const RadixTree& other) : root(""), _size(other._size)
+	{
+		this->root.value = other.root.value;
+		for (size_t index = 0; index < other.root.children.size(); ++index)
+			this->root.children.push_back(clone_node(other.root.children[index]));
+	}
+
+	RadixTree& operator=(const RadixTree& other)
+	{
+		if (this == &other)
+			return *this;
+		this->clear();
+		this->_size = other._size;
+		this->root.value = other.root.value;
+		for (size_t index = 0; index < other.root.children.size(); ++index)
+			this->root.children.push_back(clone_node(other.root.children[index]));
+		return *this;
+	}
+
 	~RadixTree() {}
 
 private:
-	RadixTree(const RadixTree&);
-	RadixTree&	operator=(const RadixTree&);
 
 public:
 	iterator		begin()			{ return iterator(this, &root); }
@@ -215,8 +244,8 @@ public:
 	const_iterator	cbegin() const	{ return begin(); }
 	const_iterator	cend() const		{ return end(); }
 
-	bool	  empty() const { return size == 0; }
-	size_type size()  const { return size; }
+	bool	  empty() const { return this->_size == 0; }
+	size_type size()  const { return this->_size; }
 
 	std::pair<iterator, bool>	insert(const value_type& kv)
 	{
@@ -245,14 +274,14 @@ public:
 			delete root.children[i];
 		this->root.children.clear();
 		this->root.value = Optional<T>();
-		this->size = 0;
+		this->_size = 0;
 	}
 
 	void	swap(RadixTree& other)
 	{
 		this->root.children.swap(other.root.children);
 		std::swap(this->root.value, other.root.value);
-		std::swap(this->size, other.size);
+		std::swap(this->_size, other.size);
 	}
 
 	iterator	find(const std::string& key)
@@ -312,7 +341,7 @@ public:
 private:
 
 	Node	  root;
-	size_type size;
+	size_type _size;
 
 	Node	*ins(Node *n, const std::string& key, size_t i, const T& val, bool only_if_absent)
 	{
@@ -321,7 +350,7 @@ private:
 			if (only_if_absent && n->value.has_value())
 				return NULL;
 			if (!n->value.has_value())
-				this->size++;
+				this->_size++;
 			n->value = Optional<T>(val);
 			return n;
 		}
@@ -451,7 +480,7 @@ private:
 			if (!n->value.has_value())
 				return false;
 			n->value = Optional<T>();
-			this->size--;
+			this->_size--;
 			return true;
 		}
 
@@ -524,7 +553,7 @@ private:
 		return it;
 	}
 
-	static size_t	common_prefix(const std::string& label const std::string& key, size_t i)
+	static size_t	common_prefix(const std::string& label, const std::string& key, size_t i)
 	{
 		size_t k = 0;
 		while (k < label.size() && i + k < key.size() && label[k] == key[i + k])

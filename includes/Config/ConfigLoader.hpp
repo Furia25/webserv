@@ -6,12 +6,15 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:45:49 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 02:43:07 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 04:24:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONFIGLOADER_H
 # define _CONFIGLOADER_H
+
+# include <sstream>
+# include <string>
 
 # include "toml.hpp"
 
@@ -49,13 +52,31 @@ public:
 			Loader child;
 			config.load(table, child);
 			for (std::vector<std::string>::const_iterator it = child.errors.begin(); it != child.errors.end(); ++it)
-				push_error(name, *it);
+				this->push_error(name, *it);
 			if (!table.as<toml::Table>().empty())
-				this->_errors.push_back(name + " -> unexpected properties: " + format_remaining(table));
+				this->errors.push_back(name + " -> unexpected properties: " + format_remaining(table));
 		}
 		catch (const std::exception& e)
 		{
-			this->push_error(name, e.what();)
+			this->push_error(name, e.what());
+		}
+	}
+
+	template <typename TConfig>
+	inline void	direct_section(toml::Variant& section, const std::string& name, TConfig& config)
+	{
+		try
+		{
+			Loader child;
+			config.load(section, child);
+			for (std::vector<std::string>::const_iterator it = child.errors.begin(); it != child.errors.end(); ++it)
+				this->push_error(name, *it);
+			if (!section.as<toml::Table>().empty())
+				this->errors.push_back(name + " -> unexpected properties: " + format_remaining(section));
+		}
+		catch (const std::exception& e)
+		{
+			this->push_error(name, e.what());
 		}
 	}
 
@@ -83,7 +104,6 @@ public:
 	void value_limited_or(toml::Variant& table, const std::string& key, T& target,
 			const TDef& def, const TMin& min, const TMax& max)
 	{
-		catch (const std::exception& e) { this->push_error(key, e.what()); }
 		try {
 			target = table.take_or<T>(key, def);
 			if (target < static_cast<T>(min) || target > static_cast<T>(max))

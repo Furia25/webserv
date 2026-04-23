@@ -7,7 +7,7 @@ read_size = 4096
 max_read_limit = 16384
 
 [logging]
-level = "debug"
+level = "DEBUG"
 log_file = "log.txt"
 tick_interval = 5
 
@@ -27,7 +27,7 @@ max_body_size = 10485760
 	[[servers.routes]]
 	path = "/"
 	methods = ["GET"]
-	handler = "static"
+	handler = "STATIC"
 	root = "./www/site1"
 	index = "index.html"
 	autoindex = true
@@ -36,7 +36,7 @@ max_body_size = 10485760
 	[[servers.routes]]
 	path = "/upload"
 	methods = ["POST"]
-	handler = "upload"
+	handler = "UPLOAD"
 	max_body_size = 256
 	allowed_extensions = [""]
 	allow_overwrite = false

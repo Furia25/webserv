@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 00:21:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 04:46:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ public:
 
 	template <typename T> T&		as();
 	template <typename T> const T&	as() const;
+	template <typename T> T			get();
+	template <typename T> const T	get() const;
 	template <typename T> T			take(const std::string& key);
 	template <typename T> T			take_or(const std::string& key, const T& def);
 
@@ -127,7 +129,7 @@ inline void toml::Variant::check_types_errors(Variant::Type expected) const
 template <> \
 inline void	toml::Variant::construct(const T& value) \
 { \
-	this->check_types_errors(Type::name); \
+	this->check_types_errors(Variant::name); \
 	this->data.name.construct(value); \
 }
 _VARIANT_TYPES
@@ -161,7 +163,7 @@ template<>
 inline toml::Variant& toml::Variant::operator=(const char *value)
 {
 	this->destruct();
-	this->type = Variant::Type::STRING;
+	this->type = Variant::STRING;
 	this->construct(std::string(value));
 	return (*this);
 }
@@ -170,17 +172,19 @@ template<>
 inline toml::Variant& toml::Variant::operator=(const float value)
 {
 	this->destruct();
-	this->type = Variant::Type::FLOATING;
+	this->type = Variant::FLOATING;
 	this->construct(static_cast<double>(value));
 	return (*this);
 }
 
 # define INTEGER_PROMOTION(int_type) \
+template <> inline int_type		toml::Variant::get<int_type>() { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
+template <> inline const int_type	toml::Variant::get<int_type>() const { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
 template<> \
 inline toml::Variant& toml::Variant::operator=(const int_type value) \
 { \
 	this->destruct(); \
-	this->type = Variant::Type::INTEGER; \
+	this->type = Variant::INTEGER; \
 	this->construct(static_cast<long long>(value)); \
 	return (*this); \
 }
@@ -189,10 +193,13 @@ INTEGER_PROMOTION(char);
 INTEGER_PROMOTION(int);
 INTEGER_PROMOTION(short);
 INTEGER_PROMOTION(long);
+INTEGER_PROMOTION(uint64_t);
 
 #define X(name, T) \
-template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); } \
-template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::Type::name); return (*this->data.name.ptr()); }
+template <> inline T		toml::Variant::get<T>() { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline const T	toml::Variant::get<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
 #undef X
 
@@ -226,7 +233,7 @@ inline toml::Variant& toml::Variant::operator=(const Variant &other)
 	return (*this);
 }
 
-const toml::Variant& toml::Variant::operator[](const std::string &key) const
+inline const toml::Variant& toml::Variant::operator[](const std::string &key) const
 {
 	const toml::Table&	table = this->as<Table>();
 	toml::Table::const_iterator it = table.find(key);
@@ -235,10 +242,10 @@ const toml::Variant& toml::Variant::operator[](const std::string &key) const
 	return it->second;
 }
 
-toml::Variant::Type toml::Variant::getType() const { return this->type; }
+inline toml::Variant::Type toml::Variant::getType() const { return this->type; }
 
 # define X(name, T, ...) \
-toml::Variant::Variant(const T& value) : type(name), context(IMPLICIT) \
+inline toml::Variant::Variant(const T& value) : type(name), context(IMPLICIT) \
 { \
 	this->construct(value); \
 }
@@ -246,14 +253,14 @@ _VARIANT_TYPES
 
 # undef X
 
-toml::Variant::Variant(const char *value) : type(NONE) { *this = value; }
-toml::Variant::Variant(const char value) : type(NONE) { *this = value; }
-toml::Variant::Variant(const short value) : type(NONE) { *this = value; }
-toml::Variant::Variant(const int value) : type(NONE) { *this = value; }
-toml::Variant::Variant(const long value) : type(NONE) { *this = value; }
-toml::Variant::Variant(const float value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const char *value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const char value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const short value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const int value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const long value) : type(NONE) { *this = value; }
+inline toml::Variant::Variant(const float value) : type(NONE) { *this = value; }
 
-void	toml::Variant::destruct()
+inline void	toml::Variant::destruct()
 {
 	#define X(name, T, ...) case name: this->data.name.destroy(); break;
 	switch (this->type)
@@ -265,12 +272,12 @@ void	toml::Variant::destruct()
 	# undef X
 }
 
-const char *toml::Variant::toString()
+inline const char *toml::Variant::toString()
 {
 	return toml::Variant::toString(this->type);
 }
 
-const char *toml::Variant::toString(const Type type)
+inline const char *toml::Variant::toString(const Type type)
 {
 	#define X(name, T, ...) case name: return #name; break;
 	switch (type)
@@ -291,9 +298,9 @@ inline T Variant::take(const std::string& key)
 	Table::iterator	it = table.find(key);
 	if (it == table.end())
 		throw Variant::ParsedException("Missing key in table, \"" + key + '\"');
-	RawStorage<T>	storage = it->second.as<T>();
+	T result = it->second.get<T>();
 	table.erase(key);
-	return *storage;
+	return result;
 }
 
 template <typename T>
@@ -303,9 +310,9 @@ inline T Variant::take_or(const std::string& key, const T& def)
 	Table::iterator	it = table.find(key);
 	if (it == table.end())
 		return def;
-	RawStorage<T>	storage = it->second.as<T>();
+	T result = it->second.get<T>();
 	table.erase(key);
-	return *storage;
+	return result;
 }
 
 inline Variant toml::Variant::take_section(const std::string& key, bool optional)
