@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/20 18:22:43 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@
 class TCPServer
 {
 public:
-	TCPServer(const EngineConfig& config);
+	TCPServer(const Config::EngineConfig& config);
 	~TCPServer();
 
 	void				run(void);
@@ -80,7 +80,7 @@ private:
 	HashMap<int, Connection*>	connections;
 	std::vector<Connection *>	deletable_connections;
 
-	const EngineConfig&			engineConfig;
+	const Config::EngineConfig&			engineConfig;
 
 	void	recoverListener(Listener& listener);
 

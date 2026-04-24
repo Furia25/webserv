@@ -21,7 +21,7 @@
 class RequestHandler : public IRequestHandler
 {
 public:
-	RequestHandler(const Config& config);
+	RequestHandler(const Config::AppConfig& config);
 	~RequestHandler();
 	void	onDataReceived(Connection& connection);
 	void	onConnection(Connection& connection);
@@ -29,9 +29,9 @@ public:
 	void	onError(Connection& connection);
 protected:
 private:
-	void dispatchError(int id, Connection& connection, HTTPCode code, const ServerConfig* host, const Request* req = NULL);
+	void dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req = NULL);
 	std::map<size_t, RequestBuilder> ongoingRequests;
-	const Config& serverConfig;
+	const Config::AppConfig& serverConfig;
 };
 
 #endif // _RequestHandler_H

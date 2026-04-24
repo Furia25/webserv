@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:54:39 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 14:45:54 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ public:
 	template <typename T> T&		as();
 	template <typename T> const T&	as() const;
 	template <typename T> T			get();
-	template <typename T> const T	get() const;
+	template <typename T> T			get() const;
 	template <typename T> T			take(const std::string& key);
 	template <typename T> T			take_or(const std::string& key, const T& def);
 
@@ -179,7 +179,7 @@ inline toml::Variant& toml::Variant::operator=(const float value)
 
 # define INTEGER_PROMOTION(int_type) \
 template <> inline int_type		toml::Variant::get<int_type>() { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
-template <> inline const int_type	toml::Variant::get<int_type>() const { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
+template <> inline int_type	toml::Variant::get<int_type>() const { this->check_types_errors(Variant::INTEGER); return (*this->data.INTEGER.ptr()); } \
 template<> \
 inline toml::Variant& toml::Variant::operator=(const int_type value) \
 { \
@@ -197,7 +197,7 @@ INTEGER_PROMOTION(uint64_t);
 
 #define X(name, T) \
 template <> inline T		toml::Variant::get<T>() { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
-template <> inline const T	toml::Variant::get<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
+template <> inline T	toml::Variant::get<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
 template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant::name); return (*this->data.name.ptr()); } \
 template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES

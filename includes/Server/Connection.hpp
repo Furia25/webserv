@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:55:49 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ private:
 	static size_t			last_id;
 	State					state;
 	Alarm<Connection *>		alarmTimeout;
-	const EngineConfig&		engineConfig;
+	const Config::EngineConfig&		engineConfig;
 
 	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 	void			timeout(Alarm<Connection *>& alarm);

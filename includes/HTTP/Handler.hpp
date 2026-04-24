@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/23 11:07:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 15:18:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ enum State
 class StaticHandler: public IHandler
 {
 public:
-    StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path, const ServerConfig* host, HTTPCode statusCode = HTTPCode::OK);
+    StaticHandler(const Request &req, const Config::RouteConfig *route, Connection &connection, const std::string& physical_path, const Config::ServerConfig* host, HTTPCode statusCode = HTTPCode::OK);
     virtual ~StaticHandler();
 
     bool execute();
@@ -39,10 +39,10 @@ private:
     void handleError(HTTPCode code);
 
     Request            request;
-    const RouteConfig* route;
+    const Config::RouteConfig* route;
     Connection&        connection;
     std::string        physical_path;
-    const ServerConfig host;
+    const Config::ServerConfig host;
     bool               isFinished;
     State              state;
     std::ifstream      file_stream;

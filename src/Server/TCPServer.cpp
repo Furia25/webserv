@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:56:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ static void signal_handler(int signum)
 	g_running = false;
 }
 
-TCPServer::TCPServer(const EngineConfig& engine_config) : engineConfig(engine_config)
+TCPServer::TCPServer(const Config::EngineConfig& engine_config) : engineConfig(engine_config)
 {
 	this->actual_connections = 0;
 	this->epoll_fd = ::epoll_create(100);

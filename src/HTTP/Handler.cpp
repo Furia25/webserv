@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/23 11:12:39 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 15:20:58 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # include "Utils/FileSystem.hpp"
 # include <dirent.h>
 
-StaticHandler::StaticHandler(const Request &req, const RouteConfig *route, Connection &connection, const std::string& physical_path, const ServerConfig* host_ptr, HTTPCode statusCode)
-    : request(req), route(route), connection(connection), physical_path(physical_path), host(host_ptr ? *host_ptr : ServerConfig()), isFinished(false), state(INIT), statusCode(statusCode)
+StaticHandler::StaticHandler(const Request &req, const Config::RouteConfig *route, Connection &connection, const std::string& physical_path, const Config::ServerConfig* host_ptr, HTTPCode statusCode)
+    : request(req), route(route), connection(connection), physical_path(physical_path), host(host_ptr ? *host_ptr : Config::ServerConfig()), isFinished(false), state(INIT), statusCode(statusCode)
 {
 }
 
@@ -91,7 +91,7 @@ bool StaticHandler::execute()
             }
             if (request.getMethod() == Method::GET)
             {
-                const StaticConfig* static_config = static_cast<const StaticConfig*>(route);
+                const Config::StaticConfig* static_config = static_cast<const Config::StaticConfig*>(route);
                 std::string index_file = physical_path + (physical_path.empty() || physical_path[physical_path.length() - 1] == '/' ? "" : "/") + static_config->index;
                 if (!static_config->index.empty() && FileSystem::exists(index_file))
                     physical_path = index_file;

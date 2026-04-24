@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/23 13:55:22 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,16 +99,6 @@ ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
 # undef X_STRING_CODE
 # undef X_STRING
 # undef _STATUS_CODES_
-
-# include "Utils/Hash.hpp"
-template <>
-struct Hash<HTTPCode>
-{
-	size_t operator()(HTTPCode code) const
-	{
-		return hash_int(static_cast<unsigned long long>(code));
-	}
-};
 
 class HTTPException : public std::exception
 {

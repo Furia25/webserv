@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:58:00 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 15:35:52 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,7 +115,7 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 		loader.value(routes_array[index], "handler", handler_str);
 		HandlerType handler = HandlerType::from(handler_str);
 
-		RouteConfig* final_route = NULL;
+		RouteConfig	*final_route = NULL;
 		switch (handler)
 		{
 			case HandlerType::STATIC:	final_route = new StaticConfig(this); break;
@@ -158,14 +158,14 @@ Config::ServerConfig::~ServerConfig()
 		it->second->release();
 }
 
-void Config::RouteConfig::loadBase(toml::Variant& table, Config::Loader& loader)
+void Config::RouteConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "path", this->path);
 	loader.value_or(table, "alias", this->alias, std::string(""));
 	loader.value_or(table, "root", this->root, server_config->root);
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config->max_body_size, 0, UINT64_MAX);
 	this->loadAllowedMethod(table, loader);
-	this->load(table, loader);
+	this->loadBase(table, loader);
 }
 
 void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader& loader)
@@ -190,13 +190,13 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 	}
 }
 
-void Config::StaticConfig::load(toml::Variant& table, Config::Loader& loader)
+void Config::StaticConfig::loadBase(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "index", this->index);
 	loader.value(table, "autoindex", this->autoindex);
 }
 
-void Config::UploadConfig::load(toml::Variant& table, Config::Loader& loader)
+void Config::UploadConfig::loadBase(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value_or(table, "upload_store", this->upload_store, this->root);
 	loader.value_or(table, "allow_overwrite", this->allow_overwrite, false);
@@ -222,7 +222,7 @@ void Config::UploadConfig::loadAllowedExtensions(toml::Variant& table, Config::L
 	}
 }
 
-void Config::RedirectConfig::load(toml::Variant& table, Config::Loader& loader)
+void Config::RedirectConfig::loadBase(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "location", this->redirect_location);
 
@@ -231,7 +231,7 @@ void Config::RedirectConfig::load(toml::Variant& table, Config::Loader& loader)
 	this->status = HTTPCode::from(code_str);
 }
 
-void Config::CGIConfig::load(toml::Variant &table, Config::Loader &loader)
+void Config::CGIConfig::loadBase(toml::Variant &table, Config::Loader &loader)
 {
 	loader.value(table, "cgi_bin", this->bin);
 	loader.value_or(table, "interpreter", this->interpreter, std::string(""));

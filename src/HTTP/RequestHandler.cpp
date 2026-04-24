@@ -17,7 +17,7 @@
 # include "HTTP/Handler.hpp"
 # include "Utils/FileSystem.hpp"
 
-RequestHandler::RequestHandler(const Config& config) : serverConfig(config)
+RequestHandler::RequestHandler(const Config::AppConfig& config) : serverConfig(config)
 {
 }
 
@@ -25,7 +25,7 @@ RequestHandler::~RequestHandler()
 {
 }
 
-void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code, const ServerConfig* host, const Request* req)
+void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req)
 {
 	if (host)
 	{
@@ -99,14 +99,14 @@ void RequestHandler::onDataReceived(Connection &connection)
 		HashMap<std::string, std::string>::const_iterator it = final_request.getHeaders().find("host");
 		if (it != final_request.getHeaders().end())
 		request_host = it->second;
-		ServerConfig host;
+		Config::ServerConfig host;
 		if (serverConfig.serversConfig.search(request_host, host) != true)
 		{
 			dispatchError(id, connection, HTTPCode::NOT_FOUND, NULL, &final_request);
 			return ;
 		}
 
-		RouteConfig *route;
+		Config::RouteConfig *route;
 		if (host.routes.search(final_request.getPath(), route) != true )
 		{
 			dispatchError(id, connection, HTTPCode::NOT_FOUND, &host, &final_request);
@@ -119,7 +119,7 @@ void RequestHandler::onDataReceived(Connection &connection)
 			return ;
 		}
 
-		if (host.limits.max_body_size < final_request.getContentLength())
+		if (host.max_body_size < final_request.getContentLength())
 		{
 			dispatchError(id, connection, HTTPCode::PAYLOAD_TOO_LARGE, &host, &final_request);
 			return ;
