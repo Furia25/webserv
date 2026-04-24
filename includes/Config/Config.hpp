@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 05:01:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/24 15:48:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,8 @@ struct RouteConfig
 	RouteConfig(const ServerConfig *server_config) : server_config(server_config) {};
 	virtual ~RouteConfig() {};
 
-	virtual void		load(toml::Variant& table, Config::Loader& loader) = 0;
-	void				loadBase(toml::Variant& table, Config::Loader& loader);
+	virtual void		loadChild(toml::Variant& table, Config::Loader& loader) = 0;
+	void				load(toml::Variant& table, Config::Loader& loader);
 	void				loadAllowedMethod(toml::Variant& table, Config::Loader& loader);
 };
 
@@ -59,7 +59,7 @@ struct StaticConfig : public RouteConfig
 
 	StaticConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct UploadConfig : public RouteConfig
@@ -70,7 +70,7 @@ struct UploadConfig : public RouteConfig
 
 	UploadConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 	void	loadAllowedExtensions(toml::Variant& table, Config::Loader& loader);
 };
 
@@ -81,7 +81,7 @@ struct RedirectConfig : public RouteConfig
 
 	RedirectConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct CGIConfig : public RouteConfig
@@ -93,14 +93,14 @@ struct CGIConfig : public RouteConfig
 
 	CGIConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct StatusConfig : public RouteConfig
 {
 	StatusConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	load(toml::Variant& table, Config::Loader& loader) {};
+	void	loadChild(toml::Variant& table, Config::Loader& loader) {};
 };
 
 struct ServerConfig
@@ -114,9 +114,6 @@ struct ServerConfig
 	RadixTree<RouteConfig *>		routes;
 	HashMap<HTTPCode, std::string>	error_fallbacks;
 
-	ServerConfig() {};
-	ServerConfig&	operator= (const ServerConfig& other);
-	ServerConfig(const ServerConfig& other);
 	~ServerConfig();
 
 	void	load(toml::Variant& table, Config::Loader& loader);
@@ -147,9 +144,11 @@ struct LoggingConfig
 struct AppConfig
 {
 	AppConfig(const std::string& filename);
-	EngineConfig			engineConfig;
-	LoggingConfig			loggingConfig;
-	RadixTree<ServerConfig>	serversConfig;
+	EngineConfig				engineConfig;
+	LoggingConfig				loggingConfig;
+	RadixTree<ServerConfig *>	servers;
+
+	~AppConfig();
 };
 
 class Exception : public std::runtime_error
