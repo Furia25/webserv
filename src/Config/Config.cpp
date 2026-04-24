@@ -6,13 +6,12 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 15:54:02 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:03:37 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/Config.hpp"
 #include <sstream>
-#include "Config.hpp"
 
 Config::AppConfig::AppConfig(const std::string& path)
 {
@@ -83,9 +82,7 @@ void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 	toml::Table	errors_table;
 	toml::Array	routes_array;
 
-	loader.value_limited_or(table, "max_body_size", this->max_body_size, CONFIG_BODY_SIZE, 0, UINT64_MAX);
 	loader.array_section(table, "routes", false, routes_array);
-
 	try { errors_table = table.take_section("errors", true).as<toml::Table>(); }
 	catch (const std::exception& e) { loader.push_error("errors", e.what()); }
 
@@ -93,6 +90,7 @@ void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 	loader.value(table, "service", this->service);
 	loader.value_or(table, "server_name", this->name, std::string("default"));
 	loader.value_or(table, "root", this->root, std::string("./"));
+	loader.value_limited_or(table, "max_body_size", this->max_body_size, CONFIG_BODY_SIZE, 0, UINT64_MAX);
 
 	this->loadErrors(errors_table, loader);
 	this->loadRoutes(routes_array, loader);
@@ -162,14 +160,14 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 	}
 }
 
-void Config::RouteConfig::loadChild(toml::Variant& table, Config::Loader& loader)
+void Config::RouteConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "path", this->path);
 	loader.value_or(table, "alias", this->alias, std::string(""));
 	loader.value_or(table, "root", this->root, server_config->root);
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config->max_body_size, 0, UINT64_MAX);
 	this->loadAllowedMethod(table, loader);
-	this->loadBase(table, loader);
+	this->loadChild(table, loader);
 }
 
 void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader& loader)
@@ -197,7 +195,7 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 void Config::StaticConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "index", this->index);
-	loader.value(table, "autoindex", this->autoindex);
+	loader.value_or(table, "autoindex", this->autoindex, false);
 }
 
 void Config::UploadConfig::loadChild(toml::Variant& table, Config::Loader& loader)

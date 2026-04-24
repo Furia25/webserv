@@ -38,7 +38,7 @@ max_body_size = 10485760
 	methods = ["POST"]
 	handler = "UPLOAD"
 	max_body_size = 256
-	allowed_extensions = [""]
+	allowed_extensions = []
 	allow_overwrite = false
 	upload_store = "./www/site1/uploads"
 
@@ -46,17 +46,11 @@ max_body_size = 10485760
 	[[servers.routes]]
 	path = "/api"
 	methods = ["GET", "POST", "DELETE"]
-	handler = "cgi"
+	handler = "CGI"
 	cgi_bin = "./cgi-bin/api_handler.py"
 	interpreter = "python3"
 	cgi_timeout = 5
 	env = {TEST = "", TEST2 = 4}
-
-	[[servers.routes]]
-	path = "/old-api"
-	handler = "redirect"
-	location = "/api"
-	status = 301
 
 # --- Admin Panel (Virtual Host on same port) ---
 [[servers]]
@@ -67,7 +61,7 @@ server_name = "admin.local"
 	[[servers.routes]]
 	path = "/"
 	methods = ["GET"]
-	handler = "static"
+	handler = "STATIC"
 	root = "./www/admin"
 	index = "admin.html"
 
@@ -80,5 +74,6 @@ server_name = "localhost"
 	[[servers.routes]]
 	path = "/"
 	methods = ["GET"]
-	handler = "cgi"
+	handler = "CGI"
+    cgi_timeout = 5
 	cgi_bin = "./cgi-bin/legacy_api"

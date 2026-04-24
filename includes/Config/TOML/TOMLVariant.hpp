@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 14:45:54 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:06:58 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -325,9 +325,10 @@ inline Variant toml::Variant::take_section(const std::string& key, bool optional
 			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
 		return Variant(Table());
 	}
-	const Variant& section = it->second;
+	const Variant section = it->second;
 	if (!section.isHeader() || section.type != TABLE)
 		throw Variant::ParsedException("Expected header table from \"" + key + "\"");
+	table.erase(it);
 	return section;
 }
 
@@ -341,9 +342,10 @@ inline Variant Variant::take_section_array(const std::string &key, bool optional
 			throw Variant::ParsedException("Missing header section in table, \"" + key + '\"');
 		return Variant(Array());
 	}
-	const Variant& section = it->second;
+	const Variant section = it->second;
 	if (!section.isHeader() || section.type != ARRAY)
 		throw Variant::ParsedException("Expected header array of table from \"" + key + "\"");
+	table.erase(it);
 	return section;
 }
 

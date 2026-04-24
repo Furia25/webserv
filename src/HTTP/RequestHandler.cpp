@@ -99,47 +99,47 @@ void RequestHandler::onDataReceived(Connection &connection)
 		HashMap<std::string, std::string>::const_iterator it = final_request.getHeaders().find("host");
 		if (it != final_request.getHeaders().end())
 		request_host = it->second;
-		Config::ServerConfig host;
-		if (serverConfig.serversConfig.search(request_host, host) != true)
+		Config::ServerConfig *host;
+		if (serverConfig.servers.search(request_host, host) != true)
 		{
 			dispatchError(id, connection, HTTPCode::NOT_FOUND, NULL, &final_request);
 			return ;
 		}
 
 		Config::RouteConfig *route;
-		if (host.routes.search(final_request.getPath(), route) != true )
+		if (host->routes.search(final_request.getPath(), route) != true )
 		{
-			dispatchError(id, connection, HTTPCode::NOT_FOUND, &host, &final_request);
+			dispatchError(id, connection, HTTPCode::NOT_FOUND, host, &final_request);
 			return ;
 		}
 		
 		if (route->method_allowed[final_request.getMethod()] != true)
 		{
-			dispatchError(id, connection, HTTPCode::METHOD_NOT_ALLOWED, &host, &final_request);
+			dispatchError(id, connection, HTTPCode::METHOD_NOT_ALLOWED, host, &final_request);
 			return ;
 		}
 
-		if (host.max_body_size < final_request.getContentLength())
+		if (host->max_body_size < final_request.getContentLength())
 		{
-			dispatchError(id, connection, HTTPCode::PAYLOAD_TOO_LARGE, &host, &final_request);
+			dispatchError(id, connection, HTTPCode::PAYLOAD_TOO_LARGE, host, &final_request);
 			return ;
 		}
 
 		if (final_request.getPath().find("..") != std::string::npos)
 		{
-			dispatchError(id, connection, HTTPCode::FORBIDDEN, &host, &final_request);
+			dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
 			return ;
 		}
 
-		std::string physical_path = host.root + final_request.getPath();
+		std::string physical_path = host->root + final_request.getPath();
 
 		switch (route->handler)
 		{
 			case HandlerType::STATIC:
-				connection.addJob(new StaticHandler(final_request, route, connection, physical_path, &host));
+				connection.addJob(new StaticHandler(final_request, route, connection, physical_path, host));
 				break;
 			default:
-				dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, &host, &final_request);
+				dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, host, &final_request);
 				break;
 		}
 		ongoingRequests.erase(id);

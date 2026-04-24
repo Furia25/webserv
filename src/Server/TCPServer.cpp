@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:29:22 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,11 +56,6 @@ void TCPServer::run(void)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
-		}
-		for (HashMap<int, Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
-		{
-			if (it->second->getState() != Connection::DELETABLE)
-				it->second->processJobs();
 		}
 		Logger::tick();
 		AlarmManager.tick();

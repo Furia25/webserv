@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 15:53:57 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:11:23 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ struct StaticConfig : public RouteConfig
 	std::string	index;
 	bool		autoindex;
 
+	~StaticConfig() {};
 	StaticConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
@@ -101,7 +102,7 @@ struct StatusConfig : public RouteConfig
 {
 	StatusConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadChild(toml::Variant& table, Config::Loader& loader) {};
+	void	loadChild(toml::Variant& table, Config::Loader& loader) {(void) table; (void) loader;};
 };
 
 struct ServerConfig

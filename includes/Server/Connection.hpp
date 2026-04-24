@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:32:29 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,9 +36,6 @@ class IJob;
 class Connection : public IEpollHandler
 {
 public:
-        void                    addJob(IJob* job);
-        void                    processJobs();
-
 	enum State
 	{
 		#define X(el, ...) el,
@@ -49,8 +46,6 @@ public:
 	Connection(TCPServer& server, Socket& server_socket);
 	virtual ~Connection();
 
-	void			handleEvent(TCPServer &server, uint32_t events);
-
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
 	void			setDeletable(void);
@@ -60,6 +55,7 @@ public:
 	void			compactReadBuffer();
 	void			compactWriteBuffer();
 
+	void			addJob(IJob* job);
 	size_t			getClientID(void)	const;
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;
@@ -73,12 +69,11 @@ public:
 
 	static const char		*getStateString(State state);
 
+	friend class			TCPServer;
 	friend bool				operator==(const Connection& lhs, const Connection& rhs);
 	friend std::ostream&	operator<<(std::ostream& os, const Connection& connection);
 protected:
 private:
-        std::queue<IJob*>       jobs;
-
 	TCPServer&				server;
 	Socket					client_socket;
 	size_t					id;
@@ -91,12 +86,18 @@ private:
 	static size_t			last_id;
 	State					state;
 	Alarm<Connection *>		alarmTimeout;
-	const Config::EngineConfig&		engineConfig;
+
+	const Config::EngineConfig&	engineConfig;
+	IJob	*actual_job;
 
 	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
+
+	void			setWritable(bool writable);
 	void			timeout(Alarm<Connection *>& alarm);
 	void			handleRead(void);
 	void			handleWrite(void);
+	void			handleEvent(TCPServer &server, uint32_t events);
+
 	Connection(const Connection& other);
 	Connection&		operator=(const Connection& other);
 };

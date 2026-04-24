@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:57:23 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 16:29:37 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 size_t Connection::last_id = 0;
 
 Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0),
-	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), engineConfig(server.engineConfig)
+	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), engineConfig(server.engineConfig), actual_job(NULL)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(4096);
@@ -30,32 +30,6 @@ Connection::Connection(TCPServer& server, Socket& server_socket) : server(server
 Connection::~Connection()
 {
 	TCPServer::AlarmManager.cancel(this->alarmTimeout);
-	while (!jobs.empty())
-	{
-		delete jobs.front();
-		jobs.pop();
-	}
-}
-
-void Connection::addJob(IJob *job)
-{
-	jobs.push(job);
-}
-
-void Connection::processJobs()
-{
-	while (!jobs.empty())
-	{
-		if (jobs.front()->execute())
-		{
-			delete jobs.front();
-			jobs.pop();
-		}
-		else
-		{
-			break ;
-		}
-	}
 }
 
 void Connection::handleEvent(TCPServer &server, uint32_t events)
@@ -75,8 +49,29 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
 		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
+		if (this->actual_job != NULL)
+			this->actual_job->execute();
 		this->handleWrite();
 	}
+}
+
+void Connection::addJob(IJob *job)
+{
+	if (this->actual_job == NULL)
+	{
+		this->setDeletable();
+		return ;
+	}
+	this->actual_job = job;
+	this->setWritable(true);
+}
+
+void Connection::setWritable(bool writable)
+{
+	if (writable)
+		this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
+	else
+		this->server.setPollEvent(*this, CONNECTION_EVENTS);
 }
 
 void Connection::timeout(Alarm<Connection *> &alarm)
@@ -88,6 +83,7 @@ void Connection::timeout(Alarm<Connection *> &alarm)
 void Connection::setDeletable(void)
 {
 	this->state = DELETABLE;
+	this->setWritable(false);
 	this->server.dropConnection(this);
 }
 
@@ -128,13 +124,13 @@ void Connection::handleWrite(void)
 
 void Connection::sendData(const uint8_t *data, size_t len)
 {
-	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
+	this->setWritable(true);
 	this->write_buffer.insert(this->write_buffer.end(), data, data + len);
 }
 
 void Connection::sendData(const std::string &data)
 {
-	this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
+	this->setWritable(true);
 	this->write_buffer.insert(this->write_buffer.end(), data.begin(),
 		data.end());
 }
@@ -169,7 +165,7 @@ void Connection::clearReadBuffer()
 
 void Connection::clearWriteBuffer()
 {
-	this->server.setPollEvent(*this, CONNECTION_EVENTS);
+	this->setWritable(false);
 	this->write_buffer.clear();
 	this->bytes_sended = 0;
 }
