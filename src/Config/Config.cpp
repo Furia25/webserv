@@ -6,12 +6,13 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 15:35:52 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/24 15:54:02 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/Config.hpp"
 #include <sstream>
+#include "Config.hpp"
 
 Config::AppConfig::AppConfig(const std::string& path)
 {
@@ -27,18 +28,33 @@ Config::AppConfig::AppConfig(const std::string& path)
 
 	for (size_t index = 0; index < server_array.size(); ++index)
 	{
-		ServerConfig		server_config;
-		std::stringstream	ss;
-		ss << "servers[" << index << ']';
-		loader.direct_section(server_array[index], ss.str(), server_config);
-		this->serversConfig.insert(server_config.name, server_config);
+		ServerConfig	*server_config = new ServerConfig();
+
+		try
+		{
+			std::stringstream	ss;
+			ss << "servers[" << index << ']';
+			loader.direct_section(server_array[index], ss.str(), *server_config);
+			this->servers.insert(server_config->name, server_config);
+		}
+		catch (const std::exception& e)
+		{
+			delete server_config;
+			throw e;
+		}
 	}
 
 	if (loader.hasErrors())
 		throw Config::Exception(loader.format());
 }
 
-void Config::LoggingConfig::load(toml::Variant& table, Config::Loader& loader)
+Config::AppConfig::~AppConfig()
+{
+	for (RadixTree<ServerConfig *>::iterator it = this->servers.begin(); it != this->servers.end(); ++it)
+		delete it->second;
+}
+
+void Config::LoggingConfig::load(toml::Variant &table, Config::Loader &loader)
 {
 	loader.value_or(table, "log_file", this->log_file, std::string(""));
 	loader.value_limited_or(table, "tick_interval", this->tick_interval, CONFIG_TICK_INTERVAL, 0, 10000000);
@@ -54,6 +70,12 @@ void Config::EngineConfig::load(toml::Variant& table, Config::Loader& loader)
 	loader.value_limited_or(table, "closing_timeout", this->closing_timeout, CONFIG_CLOSING_TIMEOUT, 1, 360);
 	loader.value_limited_or(table, "read_size", this->read_size, CONFIG_READ_SIZE, 8, 4096);
 	loader.value_limited_or(table, "max_read_limit", this->max_read_limit, CONFIG_READ_LIMIT, 8196, 32768);
+}
+
+Config::ServerConfig::~ServerConfig()
+{
+	for (RadixTree<RouteConfig *>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
+		delete it->second;
 }
 
 void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
@@ -127,38 +149,20 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 				loader.push_error(route_name, "unknown handler type -> " + handler_str);
 				continue;
 		}
-		final_route->addRef();
-		loader.direct_section(routes_array[index], route_name, *final_route);
-		this->routes.insert(final_route->path, final_route);
+		try
+		{
+			loader.direct_section(routes_array[index], route_name, *final_route);
+			this->routes.insert(final_route->path, final_route);
+		}
+		catch(const std::exception& e)
+		{
+			delete final_route;
+			throw e;
+		}
 	}
 }
 
-Config::ServerConfig::ServerConfig(const ServerConfig& other) : routes(other.routes)
-{
-	for (RadixTree<RouteConfig *>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		it->second->addRef();
-}
-
-Config::ServerConfig& Config::ServerConfig::operator=(const ServerConfig& other)
-{
-	if (this != &other)
-		return *this;
-	for (RadixTree<RouteConfig*>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		it->second->release();
-	this->routes = other.routes;
-	for (RadixTree<RouteConfig*>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		it->second->addRef();
-
-	return *this;
-}
-
-Config::ServerConfig::~ServerConfig()
-{
-	for (RadixTree<RouteConfig *>::iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		it->second->release();
-}
-
-void Config::RouteConfig::load(toml::Variant& table, Config::Loader& loader)
+void Config::RouteConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "path", this->path);
 	loader.value_or(table, "alias", this->alias, std::string(""));
@@ -190,13 +194,13 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 	}
 }
 
-void Config::StaticConfig::loadBase(toml::Variant& table, Config::Loader& loader)
+void Config::StaticConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "index", this->index);
 	loader.value(table, "autoindex", this->autoindex);
 }
 
-void Config::UploadConfig::loadBase(toml::Variant& table, Config::Loader& loader)
+void Config::UploadConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value_or(table, "upload_store", this->upload_store, this->root);
 	loader.value_or(table, "allow_overwrite", this->allow_overwrite, false);
@@ -222,7 +226,7 @@ void Config::UploadConfig::loadAllowedExtensions(toml::Variant& table, Config::L
 	}
 }
 
-void Config::RedirectConfig::loadBase(toml::Variant& table, Config::Loader& loader)
+void Config::RedirectConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "location", this->redirect_location);
 
@@ -231,7 +235,7 @@ void Config::RedirectConfig::loadBase(toml::Variant& table, Config::Loader& load
 	this->status = HTTPCode::from(code_str);
 }
 
-void Config::CGIConfig::loadBase(toml::Variant &table, Config::Loader &loader)
+void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
 	loader.value(table, "cgi_bin", this->bin);
 	loader.value_or(table, "interpreter", this->interpreter, std::string(""));

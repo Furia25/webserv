@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/18 19:47:39 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 15:35:28 by antbonin         ###   ########.fr       */
+/*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
+/*   Updated: 2026/04/24 15:53:57 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,10 +48,7 @@ struct RouteConfig
 	RouteConfig(const ServerConfig *server_config) : server_config(server_config), ref_count(0) {};
 	virtual ~RouteConfig() {};
 
-	void	addRef() { ++ref_count; }
-	void	release() { if (--ref_count <= 0) delete this; }
-
-	virtual void		loadBase(toml::Variant& table, Config::Loader& loader) = 0;
+	virtual void		loadChild(toml::Variant& table, Config::Loader& loader) = 0;
 	void				load(toml::Variant& table, Config::Loader& loader);
 	void				loadAllowedMethod(toml::Variant& table, Config::Loader& loader);
 };
@@ -63,7 +60,7 @@ struct StaticConfig : public RouteConfig
 
 	StaticConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadBase(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct UploadConfig : public RouteConfig
@@ -74,7 +71,7 @@ struct UploadConfig : public RouteConfig
 
 	UploadConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadBase(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 	void	loadAllowedExtensions(toml::Variant& table, Config::Loader& loader);
 };
 
@@ -85,7 +82,7 @@ struct RedirectConfig : public RouteConfig
 
 	RedirectConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadBase(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct CGIConfig : public RouteConfig
@@ -97,14 +94,14 @@ struct CGIConfig : public RouteConfig
 
 	CGIConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadBase(toml::Variant& table, Config::Loader& loader);
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 };
 
 struct StatusConfig : public RouteConfig
 {
 	StatusConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadBase(toml::Variant& table, Config::Loader& loader) { (void)table; (void)loader; };
+	void	loadChild(toml::Variant& table, Config::Loader& loader) {};
 };
 
 struct ServerConfig
@@ -118,9 +115,6 @@ struct ServerConfig
 	RadixTree<RouteConfig *>		routes;
 	HashMap<HTTPCode, std::string>	error_fallbacks;
 
-	ServerConfig() {};
-	ServerConfig&	operator= (const ServerConfig& other);
-	ServerConfig(const ServerConfig& other);
 	~ServerConfig();
 
 	void	load(toml::Variant& table, Config::Loader& loader);
@@ -151,9 +145,11 @@ struct LoggingConfig
 struct AppConfig
 {
 	AppConfig(const std::string& filename);
-	EngineConfig			engineConfig;
-	LoggingConfig			loggingConfig;
-	RadixTree<ServerConfig>	serversConfig;
+	EngineConfig				engineConfig;
+	LoggingConfig				loggingConfig;
+	RadixTree<ServerConfig *>	servers;
+
+	~AppConfig();
 };
 
 class Exception : public std::runtime_error
