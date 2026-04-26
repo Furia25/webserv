@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/21 13:51:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/30 19:53:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/26 19:55:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,8 @@ inline void _HTWDef_::cancel(AAlarm& alarm)
 		return ;
 
 	std::vector<AAlarm *>&	bucket = this->buckets[alarm.wheel_slot];
-	AAlarm	*last = bucket.back();
+	AAlarm					*last = bucket.back();
+
 	bucket[alarm.bucket_index] = last;
 	last->bucket_index = alarm.bucket_index;
 	bucket.pop_back();

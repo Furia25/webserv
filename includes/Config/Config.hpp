@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:11:23 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/26 19:23:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,10 +58,11 @@ struct StaticConfig : public RouteConfig
 	std::string	index;
 	bool		autoindex;
 
-	~StaticConfig() {};
 	StaticConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
+
+	~StaticConfig() {};
 };
 
 struct UploadConfig : public RouteConfig
@@ -74,6 +75,8 @@ struct UploadConfig : public RouteConfig
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
 	void	loadAllowedExtensions(toml::Variant& table, Config::Loader& loader);
+
+	~UploadConfig() {};
 };
 
 struct RedirectConfig : public RouteConfig
@@ -84,6 +87,8 @@ struct RedirectConfig : public RouteConfig
 	RedirectConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
+
+	~RedirectConfig() {};
 };
 
 struct CGIConfig : public RouteConfig
@@ -103,6 +108,8 @@ struct StatusConfig : public RouteConfig
 	StatusConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader) {(void) table; (void) loader;};
+
+	~StatusConfig() {};
 };
 
 struct ServerConfig
@@ -132,6 +139,8 @@ struct EngineConfig
 	size_t			max_read_limit;
 
 	void	load(toml::Variant& table, Config::Loader& loader);
+
+	~EngineConfig() {};
 };
 
 struct LoggingConfig
@@ -141,6 +150,8 @@ struct LoggingConfig
 	uint64_t	tick_interval;
 
 	void	load(toml::Variant& table, Config::Loader& loader);
+
+	~LoggingConfig() {};
 };
 
 struct AppConfig

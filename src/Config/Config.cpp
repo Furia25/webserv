@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:03:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/26 20:13:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,12 +34,15 @@ Config::AppConfig::AppConfig(const std::string& path)
 			std::stringstream	ss;
 			ss << "servers[" << index << ']';
 			loader.direct_section(server_array[index], ss.str(), *server_config);
+			if (this->servers.count(server_config->name) != 0)
+				throw std::runtime_error("Can't redefine server " + std::string(server_config->name));
 			this->servers.insert(server_config->name, server_config);
 		}
 		catch (const std::exception& e)
 		{
 			delete server_config;
-			throw e;
+			loader.push_error(server_config->name, e.what());
+			break ;
 		}
 	}
 
@@ -150,12 +153,16 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 		try
 		{
 			loader.direct_section(routes_array[index], route_name, *final_route);
+			if (this->routes.count(final_route->path) != 0)
+				throw std::runtime_error("Can't redefine \""
+					+ final_route->path + "\" already exist");
 			this->routes.insert(final_route->path, final_route);
 		}
 		catch(const std::exception& e)
 		{
 			delete final_route;
-			throw e;
+			loader.push_error(route_name, e.what());
+			break ;
 		}
 	}
 }

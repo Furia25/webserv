@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 03:32:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/26 20:35:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ class RadixTree
 		std::string	prefix;
 		size_t		child_idx;
 
-		Frame(Node *n, const std::string& p) : node(n), prefix(p), child_idx(0) {}
+		Frame(Node *node, const std::string& p) : node(node), prefix(p), child_idx(0) {}
 	};
 
 	typedef std::vector<Frame> Stack;
@@ -105,11 +105,11 @@ public:
 		bool	operator!=(const iterator& o) const { return !(*this == o); }
 
 	private:
-		RadixTree*				tree;
+		RadixTree				*tree;
 		Stack					stack;
 		Optional<value_type>	current;
 
-		iterator(RadixTree* t, Node* root) : tree(t)
+		iterator(RadixTree *tree, Node *root) : tree(tree)
 		{
 			if (root && (!root->children.empty() || root->value.has_value()))
 			{
@@ -118,56 +118,46 @@ public:
 			}
 		}
 
-		explicit	iterator(RadixTree* t) : tree(t) {}
+		explicit	iterator(RadixTree *tree) : tree(tree) {}
 
-		void	settle()
+		void settle()
 		{
 			while (!stack.empty())
 			{
-				Frame&		top = stack.back();
-				Node		*n = top.node;
-				std::string	full_key = top.prefix + n->label;
-
-				while (top.child_idx < n->children.size())
+				Frame& top = stack.back();
+				if (top.node->value.has_value())
 				{
-					Node	*child = n->children[top.child_idx++];
-					stack.push_back(Frame(child, full_key));
-					stack.pop_back();
-					break;
+					current = Optional<value_type>(value_type(
+						top.prefix + top.node->label,
+						top.node->value.value()));
+					return;
 				}
-
-				if (n->value.has_value())
-				{
-					current = Optional<value_type>(value_type(full_key, n->value.value()));
-					return ;
-				}
-
 				this->advance_frame();
 			}
 			current = Optional<value_type>();
 		}
 
-		void	advance()
+		void advance()
 		{
-			if (stack.empty()) return;
+			if (stack.empty())
+				return;
 			this->advance_frame();
 			this->settle();
 		}
 
-		void	advance_frame()
+		void advance_frame()
 		{
-			while (!stack.empty())
-			{
-				Frame& top = stack.back();
-				if (top.child_idx < top.node->children.size())
-				{
-					Node*  child	 = top.node->children[top.child_idx++];
-					std::string pref = top.prefix + top.node->label;
-					stack.push_back(Frame(child, pref));
-					return;
-				}
-				stack.pop_back();
-			}
+			if (stack.empty())
+				return;
+			
+			Frame top = stack.back();
+			stack.pop_back();
+			
+			std::string full_key = top.prefix + top.node->label;
+			for (size_t i = top.node->children.size(); i > 0; --i)
+				stack.push_back(Frame(top.node->children[i-1], full_key));
+			
+			this->settle();
 		}
 	};
 
@@ -189,20 +179,20 @@ public:
 		pointer		operator->() const { return  it.operator->(); }
 
 		const_iterator&	operator++()	{ ++it; return *this; }
-		const_iterator	operator++(int) { const_iterator t(*this); ++it; return t; }
+		const_iterator	operator++(int) { const_iterator tree(*this); ++it; return tree; }
 
 		bool	operator==(const const_iterator& o) const { return it == o.it; }
 		bool	operator!=(const const_iterator& o) const { return it != o.it; }
 
 	private:
 		iterator	it;
-		explicit	const_iterator(RadixTree* t, Node* root) : it(t, root) {}
-		explicit	const_iterator(RadixTree* t) : it(t) {}
+		explicit	const_iterator(RadixTree *tree, Node *root) : it(tree, root) {}
+		explicit	const_iterator(RadixTree *tree) : it(tree) {}
 	};
 
 	RadixTree() : root(""), _size(0) {}
 
-	static Node* clone_node(const Node* src)
+	static Node	*clone_node(const Node *src)
 	{
 		if (!src)
 			return NULL;
@@ -244,14 +234,14 @@ public:
 	const_iterator	cbegin() const	{ return begin(); }
 	const_iterator	cend() const		{ return end(); }
 
-	bool	  empty() const { return this->_size == 0; }
-	size_type size()  const { return this->_size; }
+	bool		empty() const { return this->_size == 0; }
+	size_type	size()  const { return this->_size; }
 
 	std::pair<iterator, bool>	insert(const value_type& kv)
 	{
 		const std::string& key = kv.first;
-		Node* target = this->ins(&root, key, 0, kv.second, true);
-		bool  inserted = target != NULL;
+		Node	*target = this->ins(&root, key, 0, kv.second, true);
+		bool	inserted = target != NULL;
 		iterator it = this->find_iter(key);
 		return std::make_pair(it, inserted);
 	}
@@ -259,8 +249,8 @@ public:
 	T&	operator[](const std::string& key)
 	{
 		this->ins(&root, key, 0, T(), true);
-		Node* n = this->find_node(&root, key, 0);
-		return n->value.value();
+		Node *node = this->find_node(&root, key, 0);
+		return node->value.value();
 	}
 
 	bool	erase(const std::string& key)
@@ -281,21 +271,21 @@ public:
 	{
 		this->root.children.swap(other.root.children);
 		std::swap(this->root.value, other.root.value);
-		std::swap(this->_size, other.size);
+		std::swap(this->_size, other._size);
 	}
 
 	iterator	find(const std::string& key)
 	{
-		Node *n = find_node(&this->root, key, 0);
-		if (n == NULL)
+		Node *node = find_node(&this->root, key, 0);
+		if (node == NULL)
 			return end();
 		return find_iter(key);
 	}
 
 	const_iterator	find(const std::string& key) const
 	{
-		const Node *n = find_node_count(&this->root, key, 0);
-		if (n == NULL)
+		const Node *node = find_node_count(&this->root, key, 0);
+		if (node == NULL)
 			return end();
 		return const_cast<RadixTree*>(this)->find_iter(key);
 	}
@@ -303,8 +293,8 @@ public:
 	iterator	find_prefix(const std::string& key)
 	{
 		std::string	found_key;
-		Node		*n = find_prefix_node(&this->root, key, 0, found_key);
-		if (n == NULL)
+		Node		*node = find_prefix_node(&this->root, key, 0, found_key);
+		if (node == NULL)
 			return end();
 		return find_iter(found_key);
 	}
@@ -316,20 +306,20 @@ public:
 
 	bool	search(const std::string& key, T& val) const
 	{
-		const Node *n = this->find_node_count(&this->root, key, 0);
-		if (n == NULL)
+		const Node *node = this->find_node_count(&this->root, key, 0);
+		if (node == NULL)
 			return false;
-		val = n->value.value();
+		val = node->value.value();
 		return true;
 	}
 
 	bool	search_prefix(const std::string& key, T& val) const
 	{
 		std::string	dummy;
-		const Node	*n = this->find_prefix_node_c(&this->root, key, 0, dummy);
-		if (n == NULL)
+		const Node	*node = this->find_prefix_node(&this->root, key, 0, dummy);
+		if (node == NULL)
 			return false;
-		val = n->value.value();
+		val = node->value.value();
 		return true;
 	}
 
@@ -343,21 +333,21 @@ private:
 	Node	  root;
 	size_type _size;
 
-	Node	*ins(Node *n, const std::string& key, size_t i, const T& val, bool only_if_absent)
+	Node	*ins(Node *node, const std::string& key, size_t i, const T& val, bool only_if_absent)
 	{
 		if (i == key.size())
 		{
-			if (only_if_absent && n->value.has_value())
+			if (only_if_absent && node->value.has_value())
 				return NULL;
-			if (!n->value.has_value())
+			if (!node->value.has_value())
 				this->_size++;
-			n->value = Optional<T>(val);
-			return n;
+			node->value = Optional<T>(val);
+			return node;
 		}
 
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			Node	*ch = n->children[c];
+			Node	*ch = node->children[c];
 			size_t	k = this->common_prefix(ch->label, key, i);
 
 			if (!k)
@@ -369,33 +359,32 @@ private:
 			Node *mid = new Node(ch->label.substr(0, k));
 			ch->label = ch->label.substr(k);
 			mid->children.push_back(ch);
-			n->children[c] = mid;
+			node->children[c] = mid;
 
 			if (i + k < key.size())
 			{
-				Node* leaf = new Node(key.substr(i + k));
+				Node *leaf = new Node(key.substr(i + k));
 				mid->children.push_back(leaf);
 				return this->ins(leaf, key, key.size(), val, only_if_absent);
 			}
 			else
-			{
 				return this->ins(mid, key, key.size(), val, only_if_absent);
-			}
 		}
+
 		Node *leaf = new Node(key.substr(i));
-		n->children.push_back(leaf);
+		node->children.push_back(leaf);
 		return this->ins(leaf, key, key.size(), val, only_if_absent);
 	}
 
-	Node	*find_node(Node *n, const std::string& key, size_t i)
+	Node	*find_node(Node *node, const std::string& key, size_t i)
 	{
 		if (i == key.size())
-			return n->value.has_value() ? n : NULL;
+			return node->value.has_value() ? node : NULL;
 
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			Node	*ch = n->children[c];
-			size_t	k  = this->common_prefix(ch->label, key, i);
+			Node	*ch = node->children[c];
+			size_t	k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
 			if (k == ch->label.size())
@@ -404,14 +393,14 @@ private:
 		return NULL;
 	}
 
-	const Node	*find_node_count(const Node* n, const std::string& key, size_t i) const
+	const Node	*find_node_count(const Node *node, const std::string& key, size_t i) const
 	{
 		if (i == key.size())
-			return n->value.has_value() ? n : NULL;
+			return node->value.has_value() ? node : NULL;
 
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			const Node	*ch = n->children[c];
+			const Node	*ch = node->children[c];
 			size_t		k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
@@ -421,25 +410,25 @@ private:
 		return NULL;
 	}
 
-	Node	*find_prefix_node(Node* n, const std::string& key, size_t i, std::string& found_key)
+	Node	*find_prefix_node(Node *node, const std::string& key, size_t i, std::string& found_key)
 	{
-		if (n->value.has_value())
+		if (node->value.has_value())
 		{
 			found_key = key.substr(0, i);
-			return n;
+			return node;
 		}
 		if (i == key.size())
 			return NULL;
 
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			Node	*ch = n->children[c];
+			Node	*ch = node->children[c];
 			size_t	k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
 			if (k == ch->label.size())
 			{
-				Node* res = this->find_prefix_node(ch, key, i + k, found_key);
+				Node *res = this->find_prefix_node(ch, key, i + k, found_key);
 				if (res)
 					return res;
 			}
@@ -447,25 +436,24 @@ private:
 		return NULL;
 	}
 
-	const Node	*find_prefix_node_c(const Node* n, const std::string& key, size_t i, std::string& found_key) const
+	const Node	*find_prefix_node(const Node *node, const std::string& key, size_t i, std::string& found_key) const
 	{
-		if (n->value.has_value())
+		if (node->value.has_value())
 		{
 			found_key = key.substr(0, i);
-			return n;
+			return node;
 		}
 		if (i == key.size())
 			return NULL;
-
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			const Node*	ch = n->children[c];
-			size_t		k = this->common_prefix(ch->label, key, i);
+			const Node  *ch = node->children[c];
+			size_t      k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
 			if (k == ch->label.size())
 			{
-				const Node* res = this->find_prefix_node_c(ch, key, i + k, found_key);
+				const Node *res = this->find_prefix_node(ch, key, i + k, found_key);
 				if (res)
 					return res;
 			}
@@ -473,20 +461,20 @@ private:
 		return NULL;
 	}
 
-	bool	_erase(Node *n, const std::string& key, size_t i)
+	bool	_erase(Node *node, const std::string& key, size_t i)
 	{
 		if (i == key.size())
 		{
-			if (!n->value.has_value())
+			if (!node->value.has_value())
 				return false;
-			n->value = Optional<T>();
+			node->value = Optional<T>();
 			this->_size--;
 			return true;
 		}
 
-		for (size_t c = 0; c < n->children.size(); ++c)
+		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			Node	*ch = n->children[c];
+			Node	*ch = node->children[c];
 			size_t	k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
@@ -497,16 +485,16 @@ private:
 				{
 					if (!ch->value.has_value() && ch->children.size() == 1)
 					{
-						Node* grandchild = ch->children[0];
+						Node *grandchild = ch->children[0];
 						grandchild->label = ch->label + grandchild->label;
 						ch->children.clear();
 						delete ch;
-						n->children[c] = grandchild;
+						node->children[c] = grandchild;
 					}
 					else if (!ch->value.has_value() && ch->children.empty())
 					{
 						delete ch;
-						n->children.erase(n->children.begin() + c);
+						node->children.erase(node->children.begin() + c);
 					}
 				}
 				return removed;
@@ -518,17 +506,17 @@ private:
 	iterator	find_iter(const std::string& key)
 	{
 		iterator	it(this);
-		Node		*n = &root;
+		Node		*node = &root;
 		size_t		i = 0;
 
-		it.stack.push_back(Frame(n, ""));
+		it.stack.push_back(Frame(node, ""));
 
 		while (i < key.size())
 		{
 			bool found = false;
-			for (size_t c = 0; c < n->children.size(); ++c)
+			for (size_t c = 0; c < node->children.size(); ++c)
 			{
-				Node	*ch = n->children[c];
+				Node	*ch = node->children[c];
 				size_t	k = common_prefix(ch->label, key, i);
 				if (!k)
 					continue;
@@ -536,7 +524,7 @@ private:
 				{
 					it.stack.back().child_idx = c + 1;
 					it.stack.push_back(Frame(ch, key.substr(0, i)));
-					n = ch;
+					node = ch;
 					i += k;
 					found = true;
 					break;
@@ -546,7 +534,7 @@ private:
 				return end();
 		}
 
-		Node* target = it.stack.back().node;
+		Node *target = it.stack.back().node;
 		if (!target->value.has_value())
 			return end();
 		it.current = Optional<value_type>( value_type(key, target->value.value()));
