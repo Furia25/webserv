@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/23 15:16:45 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/27 12:53:59 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,11 +70,14 @@ SRC_FILES = \
 	Config/TOML/TOMLParser.cpp \
 	Config/TOML/TOMLToken.cpp \
 	Config/TOML/TOMLTokenizer.cpp \
-	HTTP/RequestHandler.cpp \
-	HTTP/Request.cpp \
 	HTTP/RequestBuilder.cpp \
+	HTTP/Request.cpp \
+	HTTP/RequestHandler.cpp \
+	HTTP/Router.cpp \
     HTTP/IJob.cpp \
-    HTTP/Handler.cpp \
+    HTTP/StaticHandler.cpp \
+	HTTP/AutoindexHandler.cpp \
+	HTTP/DeleteHandler.cpp \
 	HTTP/Response.cpp \
 	FileSystem.cpp \
 	Logger.cpp \

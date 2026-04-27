@@ -14,15 +14,36 @@
 # include "HTTP/Response.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HTTP/Handler.hpp"
+# include "HTTP/StaticHandler.hpp"
 # include "Utils/FileSystem.hpp"
+# include "HTTP/AutoindexHandler.hpp"
+# include "HTTP/DeleteHandler.hpp"
+# include <dirent.h>
 
-RequestHandler::RequestHandler(const Config::AppConfig& config) : serverConfig(config)
+RequestHandler::RequestHandler(const Config::AppConfig& config): router(config)
 {
 }
 
 RequestHandler::~RequestHandler()
 {
+}
+
+void RequestHandler::manageJobs(Connection &connection)
+{
+	int id = connection.getClientID();
+
+
+	if (ongoingJobs.count(id))
+	{
+		IJob* job = ongoingJobs[id];
+
+		if (job->isFinished()) 
+		{
+			delete job;
+			ongoingJobs.erase(id);
+			connection.setJob(NULL);
+		}
+	}
 }
 
 void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req)
@@ -42,12 +63,12 @@ void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code
 			{
 				if (req)
 				{
-					connection.addJob(new StaticHandler(*req, NULL, connection, error_path, host, code));
+					connection.addJob(new StaticHandler(*req, connection, error_path, host, code));
 				}
 				else
 				{
 					Request dummy_req(Method::GET, error_path, "", "HTTP/1.1", 0, HashMap<std::string, std::string>(), std::vector<uint8_t>());
-					connection.addJob(new StaticHandler(dummy_req, NULL, connection, error_path, host, code));
+					connection.addJob(new StaticHandler(dummy_req, connection, error_path, host, code));
 				}
 				ongoingRequests.erase(id);
 				return ;
@@ -55,6 +76,49 @@ void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code
 		}
 	}
 	Response::buildErrorResponse(connection, code);
+	ongoingRequests.erase(id);
+}
+
+void RequestHandler::handleStaticRoute(int id, Connection& connection, const Request& final_request, const Config::RouteConfig* route, const Config::ServerConfig* host, std::string physical_path)
+{
+	if (final_request.getMethod() == Method::GET || final_request.getMethod() == Method::HEAD)
+	{
+		if (!FileSystem::exists(physical_path))
+		{
+			dispatchError(id, connection, HTTPCode::NOT_FOUND, host, &final_request);
+			return;
+		}
+
+		if (FileSystem::isDirectory(physical_path))
+		{
+			const Config::StaticConfig* static_config = static_cast<const Config::StaticConfig*>(route);
+			std::string separator = (physical_path.empty() || physical_path[physical_path.length() - 1] == '/') ? "" : "/";
+			std::string index_file = physical_path + separator + static_config->index;
+			
+			if (!static_config->index.empty() && FileSystem::exists(index_file))
+			{
+				physical_path = index_file;
+			}
+			else if (static_config->autoindex)
+			{
+				connection.addJob(new AutoindexHandler(final_request, connection, physical_path));
+				ongoingRequests.erase(id);
+				return;
+			}
+			else
+			{
+				dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
+				return;
+			}
+		}
+
+		if (!FileSystem::isReadable(physical_path))
+		{
+			dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
+			return;
+		}
+	}
+	connection.addJob(new StaticHandler(final_request, connection, physical_path, host));
 	ongoingRequests.erase(id);
 }
 
@@ -95,56 +159,22 @@ void RequestHandler::onDataReceived(Connection &connection)
 		req.print();
 		Request final_request = req.build();
 
-		std::string request_host = "";
-		HashMap<std::string, std::string>::const_iterator it = final_request.getHeaders().find("host");
-		if (it != final_request.getHeaders().end())
-		request_host = it->second;
-		Config::ServerConfig *host;
-		if (serverConfig.servers.search(request_host, host) != true)
-		{
-			dispatchError(id, connection, HTTPCode::NOT_FOUND, NULL, &final_request);
-			return ;
-		}
+		RouteResult res = router.resolve(final_request);
 
-		Config::RouteConfig *route;
-		if (host->routes.search(final_request.getPath(), route) != true )
+		if (!res.success) 
 		{
-			dispatchError(id, connection, HTTPCode::NOT_FOUND, host, &final_request);
-			return ;
+			dispatchError(id, connection, res.errorCode, res.host, &final_request);
+			return;
 		}
-		
-		if (route->method_allowed[final_request.getMethod()] != true)
-		{
-			dispatchError(id, connection, HTTPCode::METHOD_NOT_ALLOWED, host, &final_request);
-			return ;
-		}
-
-		if (host->max_body_size < final_request.getContentLength())
-		{
-			dispatchError(id, connection, HTTPCode::PAYLOAD_TOO_LARGE, host, &final_request);
-			return ;
-		}
-
-		if (final_request.getPath().find("..") != std::string::npos)
-		{
-			dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
-			return ;
-		}
-
-		std::string physical_path = host->root + final_request.getPath();
-
-		switch (route->handler)
-		{
-			case HandlerType::STATIC:
-				connection.addJob(new StaticHandler(final_request, route, connection, physical_path, host));
-				break;
-			default:
-				dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, host, &final_request);
-				break;
-		}
+		IJob* newJob = NULL;
+		if (final_request.getMethod() == Method::DELETE)
+    		newJob = new DeleteHandler(connection, res.physicalPath);
+		else if (res.route->handler == HandlerType::STATIC) 
+    		handleStaticRoute(id, connection, final_request, res.route, res.host, res.physicalPath);
+		ongoingJobs[id] = newJob;
+		connection.setJob(newJob);
 		ongoingRequests.erase(id);
 	}
-	return ;
 }
 
 void RequestHandler::onConnection(Connection &connection)
@@ -154,6 +184,13 @@ void RequestHandler::onConnection(Connection &connection)
 
 void RequestHandler::onDisconnection(Connection &connection)
 {
+	int id = connection.getClientID();
+    ongoingRequests.erase(id);
+
+    if (ongoingJobs.count(id)) {
+        delete ongoingJobs[id];
+        ongoingJobs.erase(id);
+    }
 	ongoingRequests.erase(connection.getClientID());
 }
 

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:29:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 13:43:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,10 +57,9 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 
 void Connection::addJob(IJob *job)
 {
-	if (this->actual_job == NULL)
+	if (this->actual_job != NULL)
 	{
-		this->setDeletable();
-		return ;
+		delete this->actual_job;
 	}
 	this->actual_job = job;
 	this->setWritable(true);
@@ -108,12 +107,18 @@ void Connection::handleRead(void)
 
 void Connection::handleWrite(void)
 {
+	if (this->write_buffer.empty())
+		return;
+
 	const uint8_t	*buffer_ptr = &this->write_buffer[this->bytes_sended];
 	ssize_t			remaining;
 	ssize_t			sent;
 
 	if (this->bytes_sended >= this->write_buffer.size())
+	{
 		this->clearWriteBuffer();
+		return;
+	}
 	remaining = this->write_buffer.size() - this->bytes_sended;
 	sent = this->client_socket.send(buffer_ptr, remaining);
 	if (sent > 0)
@@ -165,7 +170,8 @@ void Connection::clearReadBuffer()
 
 void Connection::clearWriteBuffer()
 {
-	this->setWritable(false);
+	if (this->actual_job == NULL)
+		this->setWritable(false);
 	this->write_buffer.clear();
 	this->bytes_sended = 0;
 }

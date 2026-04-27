@@ -17,21 +17,26 @@
 # include "Config/Config.hpp"
 # include "HTTP/RequestBuilder.hpp"
 # include "map"
+# include "HTTP/Router.hpp"
 
 class RequestHandler : public IRequestHandler
 {
 public:
 	RequestHandler(const Config::AppConfig& config);
 	~RequestHandler();
-	void	onDataReceived(Connection& connection);
-	void	onConnection(Connection& connection);
-	void	onDisconnection(Connection& connection);
-	void	onError(Connection& connection);
+	void		onDataReceived(Connection& connection);
+	void		onConnection(Connection& connection);
+	void		onDisconnection(Connection& connection);
+	void		onError(Connection& connection);
 protected:
 private:
-	void dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req = NULL);
-	std::map<size_t, RequestBuilder> ongoingRequests;
-	const Config::AppConfig& serverConfig;
+	void		onDisconnection(Connection &connection);
+	void		manageJobs(Connection &connection);
+	void		dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req = NULL);
+	void		handleStaticRoute(int id, Connection& connection, const Request& final_request, const Config::RouteConfig* route, const Config::ServerConfig* host, std::string physical_path);
+	Router router;
+	std::map<size_t, RequestBuilder>			ongoingRequests;
+	HashMap<int, IJob*>							ongoingJobs;
 };
 
 #endif // _RequestHandler_H

@@ -15,20 +15,20 @@ tick_interval = 5
 [[servers]]
 host = "0.0.0.0"
 service = "8080"
-server_name = "website.com"
-root = "./www/site"
+server_name = "localhost"
+root = "www"
 max_body_size = 10485760
 
 	[servers.errors]
-	404 = "./www/errors/404.html"
-	500 = "./www/errors/500.html"
+	404 = "errors/404.html"
+	500 = "errors/500.html"
 
 	# Static files route
 	[[servers.routes]]
 	path = ""
-	methods = ["GET"]
+	methods = ["GET", "DELETE"]
 	handler = "STATIC"
-	root = "./www/site1"
+	root = "www"
 	index = "index.html"
 	autoindex = true
 
