@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/21 15:42:15 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 14:23:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,22 +18,15 @@
 # include <sys/stat.h>
 # include <unistd.h>
 
-class FileSystem
+namespace FileSystem
 {
-public:
-
-    static bool exists(const std::string &path);
-    static bool isDirectory(const std::string &path);
-    static bool isFile(const std::string &path);
-    static bool isReadable(const std::string &path);
-    static bool isWritable(const std::string &path);
-    static size_t getFileSize(const std::string &path);
-    static std::string getExtension(const std::string& path);
-private:
-    FileSystem();
-    FileSystem(const FileSystem& other);
-    ~FileSystem();
-    FileSystem& operator=(const FileSystem& other);
+	static bool			exists(const std::string &path);
+	static bool			isDirectory(const std::string &path);
+	static bool			isFile(const std::string &path);
+	static bool			isReadable(const std::string &path);
+	static bool			isWritable(const std::string &path);
+	static size_t		getFileSize(const std::string &path);
+	static std::string	getExtension(const std::string& path);
 };
 
 #endif

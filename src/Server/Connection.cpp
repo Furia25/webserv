@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 13:43:21 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 14:29:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,8 @@ void Connection::addJob(IJob *job)
 {
 	if (this->actual_job != NULL)
 	{
-		delete this->actual_job;
+		this->setDeletable();
+		return ;
 	}
 	this->actual_job = job;
 	this->setWritable(true);

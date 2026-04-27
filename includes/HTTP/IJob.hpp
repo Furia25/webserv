@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   IJob.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/20 18:00:00 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/21 14:22:24 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 14:25:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,9 @@
 class IJob
 {
 public:
-    virtual ~IJob() {}
+	virtual ~IJob() {}
 
-    virtual bool execute() = 0;
+	virtual bool execute() = 0;
 };
 
 #endif // IJOB_HPP

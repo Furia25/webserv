@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 18:09:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 17:38:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 14:30:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,25 +40,27 @@ LogMessage::~LogMessage()
 {
 	if (this->level < Logger::getGlobalLevel())
 		return ;
-	struct timeval	tv;
-	gettimeofday(&tv, NULL);
-
-	struct tm		datetime;
-	localtime_r(&tv.tv_sec, &datetime);
-
 	char			timestr[50];
-	std::strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &datetime);
-
-	int millis = tv.tv_usec / 1000;
-	std::ostream& os = Logger::getStream();
+	struct timeval	tv;
+	struct tm		datetime;
 	bool tty = isatty(STDOUT_FILENO);
 
-	if (tty) os << ANSI_BRIGHT_BLACK;
+	gettimeofday(&tv, NULL);
+	localtime_r(&tv.tv_sec, &datetime);
+
+	std::strftime(timestr, sizeof(timestr), "%Y-%m-%d %H:%M:%S", &datetime);
+	int millis = tv.tv_usec / 1000;
+	std::ostream& os = Logger::getStream();
+
+	if (tty)
+		os << ANSI_BRIGHT_BLACK;
 	os << '[' << timestr << "." << std::setfill('0') << std::setw(3) << millis << "] ";
 
-	if (tty) os << get_level_color(this->level);
+	if (tty)
+		os << get_level_color(this->level);
  	os << LogLevel::toString(this->level()) ;
-	if (tty) os << ANSI_RESET;
+	if (tty)
+		os << ANSI_RESET;
 	os << ' ' << stream.str() << "\n";
 }
 

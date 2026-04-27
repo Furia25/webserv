@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:32:29 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 14:27:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ private:
 	Alarm<Connection *>		alarmTimeout;
 
 	const Config::EngineConfig&	engineConfig;
-	IJob	*actual_job;
+	IJob						*actual_job;
 
 	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 

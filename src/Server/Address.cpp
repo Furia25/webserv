@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/10 17:13:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 14:31:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ Address::Address(const std::string &host, const std::string &service, const stru
 			raw_addr->ai_addr,
 			raw_addr->ai_addrlen,
 			NUMERICAL_HOSTNAME_RESOLUTION);
+
 		if (host == "")
 			this->host = info.first;
 		if (service == "")
@@ -73,6 +74,7 @@ static std::pair<std::string, std::string> get_hostname_info(const sockaddr *add
 		service, sizeof(service),
 		numeric ? NI_NUMERICHOST | NI_NUMERICSERV : 0
 	);
+
 	if (result != 0)
 		return std::make_pair("Unknown", "Unknown");
 	return std::make_pair(std::string(host), std::string(service));

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AutoindexHandler.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:45:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 11:01:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 14:25:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,8 @@
 # include "HTTP/IHandler.hpp"
 # include <dirent.h>
 
-class AutoindexHandler : public IHandler {
+class AutoindexHandler : public IHandler
+{
 private:
 	const Request		request;
 	Connection&			connection;
