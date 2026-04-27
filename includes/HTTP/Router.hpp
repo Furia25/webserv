@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 11:35:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 15:34:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,17 +16,21 @@
 # include "Config/Config.hpp"
 # include "HTTP/Request.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HTTP/RouteResult.hpp"
 
-class Router 
+namespace Router 
 {
-private:
-	const Config::AppConfig& _config;
-	std::string extractHost(const Request& req) const;
+	struct RouteResult
+	{
+		const Config::ServerConfig	*host;
+		const Config::RouteConfig	*route;
+		std::string					physicalPath;
+		HTTPCode					errorCode;
+		bool						success;
 
-public:
-	Router(const Config::AppConfig& config);
-	RouteResult resolve(const Request& req) const;
+		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
+	};
+
+	static inline RouteResult resolve(const Config::AppConfig &config, const Request &req);
 };
 
 #endif // _ROUTER_H

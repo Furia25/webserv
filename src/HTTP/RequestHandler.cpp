@@ -14,121 +14,43 @@
 # include "HTTP/Response.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HTTP/StaticHandler.hpp"
 # include "Utils/FileSystem.hpp"
-# include "HTTP/AutoindexHandler.hpp"
-# include "HTTP/DeleteHandler.hpp"
+# include "HTTP/Handler/StaticHandler.hpp"
+# include "HTTP/Handler/ErrorHandler.hpp"
+# include "HTTP/Handler/StatusHandler.hpp"
+# include "HTTP/Handler/UploadHandler.hpp"
+# include "HTTP/Handler/CGIHandler.hpp"
+# include "HTTP/Handler/RedirectHandler.hpp"
 # include <dirent.h>
 
-RequestHandler::RequestHandler(const Config::AppConfig& config): router(config)
-{
-}
+RequestHandler::RequestHandler(const Config::AppConfig& config) : config(config) {}
 
 RequestHandler::~RequestHandler()
 {
-}
-
-void RequestHandler::manageJobs(Connection &connection)
-{
-	int id = connection.getClientID();
-
-
-	if (ongoingJobs.count(id))
+	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 	{
-		IJob* job = ongoingJobs[id];
-
-		if (job->isFinished()) 
-		{
-			delete job;
-			ongoingJobs.erase(id);
-			connection.setJob(NULL);
-		}
+		if (it->second.actual_job != NULL)
+			delete it->second.actual_job;
 	}
 }
 
-void RequestHandler::dispatchError(int id, Connection& connection, HTTPCode code, const Config::ServerConfig* host, const Request* req)
+void	RequestHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-	if (host)
-	{
-		HashMap<HTTPCode, std::string>::const_iterator it = host->error_fallbacks.find(code);
-		if (it != host->error_fallbacks.end())
-		{
-			std::string error_path = it->second;
-			if (error_path.length() > 0 && error_path[0] != '/')
-				error_path = host->root + "/" + error_path;
-			else
-				error_path = host->root + error_path;
-
-			if (FileSystem::exists(error_path) && FileSystem::isFile(error_path) && FileSystem::isReadable(error_path))
-			{
-				if (req)
-				{
-					connection.addJob(new StaticHandler(*req, connection, error_path, host, code));
-				}
-				else
-				{
-					Request dummy_req(Method::GET, error_path, "", "HTTP/1.1", 0, HashMap<std::string, std::string>(), std::vector<uint8_t>());
-					connection.addJob(new StaticHandler(dummy_req, connection, error_path, host, code));
-				}
-				ongoingRequests.erase(id);
-				return ;
-			}
-		}
-	}
 	Response::buildErrorResponse(connection, code);
-	ongoingRequests.erase(id);
 }
 
-void RequestHandler::handleStaticRoute(int id, Connection& connection, const Request& final_request, const Config::RouteConfig* route, const Config::ServerConfig* host, std::string physical_path)
+void RequestHandler::dispatchError(Connection& connection, const Request& request, const Config::ServerConfig& host_config, const Config::RouteConfig& route_config, HTTPCode error_code)
 {
-	if (final_request.getMethod() == Method::GET || final_request.getMethod() == Method::HEAD)
-	{
-		if (!FileSystem::exists(physical_path))
-		{
-			dispatchError(id, connection, HTTPCode::NOT_FOUND, host, &final_request);
-			return;
-		}
-
-		if (FileSystem::isDirectory(physical_path))
-		{
-			const Config::StaticConfig* static_config = static_cast<const Config::StaticConfig*>(route);
-			std::string separator = (physical_path.empty() || physical_path[physical_path.length() - 1] == '/') ? "" : "/";
-			std::string index_file = physical_path + separator + static_config->index;
-			
-			if (!static_config->index.empty() && FileSystem::exists(index_file))
-			{
-				physical_path = index_file;
-			}
-			else if (static_config->autoindex)
-			{
-				connection.addJob(new AutoindexHandler(final_request, connection, physical_path));
-				ongoingRequests.erase(id);
-				return;
-			}
-			else
-			{
-				dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
-				return;
-			}
-		}
-
-		if (!FileSystem::isReadable(physical_path))
-		{
-			dispatchError(id, connection, HTTPCode::FORBIDDEN, host, &final_request);
-			return;
-		}
-	}
-	connection.addJob(new StaticHandler(final_request, connection, physical_path, host));
-	ongoingRequests.erase(id);
+	this->createJob<ErrorHandler>(connection, request, host_config, route_config, "", error_code);
 }
 
-void RequestHandler::onDataReceived(Connection &connection)
+void RequestHandler::onDataReceived(Connection& connection)
 {
-	int				id;
+	size_t			id = connection.getClientID();
 	size_t			dataSize;
+	HashMap<size_t, ClientData>::iterator	iterator = clientsData.find(id);
 
-	id = connection.getClientID();
-	RequestBuilder &req = ongoingRequests[id];
+	RequestBuilder& req = iterator->second.builder;
 	dataSize = connection.getReadBufferSize();
 	if (dataSize > 0)
 	{
@@ -144,13 +66,12 @@ void RequestHandler::onDataReceived(Connection &connection)
 		catch(const HTTPException& e)
 		{
 			req.setValidateStatus(0);
-			std::cerr << "HTTPException: " << e.what() << '\n';
-			dispatchError(id, connection, HTTPCode::BAD_REQUEST, NULL, NULL);
+			dispatchError(connection, e.getStatusCode());
 		}
 		catch(const std::exception& e)
 		{
-			std::cerr << "Exception: " << e.what() << '\n';
-			dispatchError(id, connection, HTTPCode::INTERNAL_SERVER_ERROR, NULL, NULL);
+			Logger::ERROR() << "Exception: " << e.what() << '\n';
+			dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		}
 		connection.consumeReadData(dataSize);
 	}
@@ -158,43 +79,49 @@ void RequestHandler::onDataReceived(Connection &connection)
 	{
 		req.print();
 		Request final_request = req.build();
+		Router::RouteResult res = Router::resolve(this->config, final_request);
 
-		RouteResult res = router.resolve(final_request);
-
-		if (!res.success) 
+		if (!res.success)
 		{
-			dispatchError(id, connection, res.errorCode, res.host, &final_request);
-			return;
+			dispatchError(connection, final_request, *res.host, *res.route, res.errorCode);
+			return ;
 		}
-		IJob* newJob = NULL;
-		if (final_request.getMethod() == Method::DELETE)
-    		newJob = new DeleteHandler(connection, res.physicalPath);
-		else if (res.route->handler == HandlerType::STATIC) 
-    		handleStaticRoute(id, connection, final_request, res.route, res.host, res.physicalPath);
-		ongoingJobs[id] = newJob;
-		connection.setJob(newJob);
-		ongoingRequests.erase(id);
+		switch (res.route->handler)
+		{
+		case HandlerType::STATIC :
+			this->createJob<StaticHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		break;
+		case HandlerType::REDIRECT :
+			this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		break;
+		case HandlerType::STATUS :
+			this->createJob<StatusHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		break;
+		case HandlerType::CGI :
+			this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		break;
+		case HandlerType::UPLOAD :
+			this->createJob<UploadHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		break;
+		}
 	}
 }
 
-void RequestHandler::onConnection(Connection &connection)
+void RequestHandler::onConnection(Connection& connection)
 {
-	(void)connection;
+	this->clientsData.insert(connection.getClientID(), ClientData());
 }
 
-void RequestHandler::onDisconnection(Connection &connection)
+void RequestHandler::onDisconnection(Connection& connection)
 {
-	int id = connection.getClientID();
-    ongoingRequests.erase(id);
-
-    if (ongoingJobs.count(id)) {
-        delete ongoingJobs[id];
-        ongoingJobs.erase(id);
-    }
-	ongoingRequests.erase(connection.getClientID());
+	HashMap<size_t, ClientData>::iterator	iterator = clientsData.find(connection.getClientID());
+	
+	if (iterator->second.actual_job != NULL)
+		delete iterator->second.actual_job;
+	clientsData.erase(iterator);
 }
 
-void RequestHandler::onError(Connection &connection)
+void RequestHandler::onError(Connection& connection)
 {
-	ongoingRequests.erase(connection.getClientID());
+	Logger::ERROR() << "Connection:" << connection << " errored";
 }

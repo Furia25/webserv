@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
+#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/27 12:53:59 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/27 15:04:28 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -79,7 +79,6 @@ SRC_FILES = \
 	HTTP/AutoindexHandler.cpp \
 	HTTP/DeleteHandler.cpp \
 	HTTP/Response.cpp \
-	FileSystem.cpp \
 	Logger.cpp \
 	main.cpp
 

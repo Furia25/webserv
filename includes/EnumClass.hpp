@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 16:05:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 01:11:17 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 16:34:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #ifndef _ENUMCLASS_H
 # define _ENUMCLASS_H
 
+# include "Utils/RadixTree.hpp"
 # include "macrosplosion.hpp"
 # include <exception>
 # include <cstring>
@@ -37,7 +38,13 @@ public:\
 	bool operator<=(const name& other) const { return _t <= other._t; }\
 	bool operator>(const name& other) const { return _t > other._t; }\
 	bool operator>=(const name& other) const { return _t >= other._t; }\
-	bool operator==(E e) const { return _t == e; }\
+	\
+	bool operator==(const E& e) const { return _t == e; }\
+	bool operator!=(const E& e) const { return _t != e; }\
+	bool operator<(const E& e) const { return _t < e; }\
+	bool operator<=(const E& e) const { return _t <= e; }\
+	bool operator>(const E& e) const { return _t > e; }\
+	bool operator>=(const E& e) const { return _t >= e; }\
 \
 __VA_ARGS__ \
 \

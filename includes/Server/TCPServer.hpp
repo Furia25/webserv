@@ -3,17 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 16:24:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _TCPSERVER_H
 # define _TCPSERVER_H
 
-# include <map>
 # include <vector>
 # include <cstring>
 # include <sys/types.h>
@@ -28,12 +27,12 @@
 
 # include "Config/Config.hpp"
 # include "EnumClass.hpp"
-# include "Address.hpp"
-# include "AddressResolver.hpp"
-# include "Socket.hpp"
-# include "IRequestHandler.hpp"
-# include "Listener.hpp"
-# include "Connection.hpp"
+# include "Server/Address.hpp"
+# include "Server/AddressResolver.hpp"
+# include "Server/Socket.hpp"
+# include "Server/IRequestHandler.hpp"
+# include "Server/Listener.hpp"
+# include "Server/Connection.hpp"
 # include "Logger.hpp"
 # include "Utils/HashMap.hpp"
 # include "Utils/HashedTimingWheel.hpp"

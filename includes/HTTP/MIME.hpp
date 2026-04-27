@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/15 22:27:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 16:45:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,23 @@
 
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple __VA_ARGS__
 # define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
-ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING););
+ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING);
+public:
+	static MIME	from_extension(const char *str)
+	{
+		char *temp_str = str;
+		if (!temp_str)
+			return MIME::bin;
+		if (temp_str[0] == '.')
+			temp_str++;
+		try { return MIME::from(temp_str); }
+		catch ( const std::domain_error& e)
+		{
+			return MIME::bin;
+		}
+	}
+	static MIME	from_extension(const std::string& str) { return MIME::from_extension(str.c_str()); }
+);
 # undef X
 # undef X_STRING
 # undef MIME_TYPE

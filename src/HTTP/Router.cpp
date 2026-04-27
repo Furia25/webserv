@@ -3,22 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 11:36:02 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 16:03:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTP/RouteResult.hpp"
 #include "HTTP/Router.hpp"
 
-Router::Router(const Config::AppConfig &config)
-	: _config(config)
-{
-}
-
-std::string Router::extractHost(const Request &req) const
+static inline std::string extractHost(const Request &req)
 {
 	HashMap<std::string,
 		std::string>::const_iterator it = req.getHeaders().find("host");
@@ -32,15 +26,16 @@ std::string Router::extractHost(const Request &req) const
 	return (host);
 }
 
-RouteResult Router::resolve(const Request &req) const
+Router::RouteResult Router::resolve(const Config::AppConfig &config, const Request &req)
 {
-	RouteResult res;
+	Router::RouteResult res;
 
 	std::string hostName = extractHost(req);
-
 	Config::ServerConfig *tmpHost = NULL;
-	if (!_config.servers.search(hostName, tmpHost))
+	RadixTree<Config::ServerConfig *>::const_iterator it = config.servers.find(hostName);
+	if (it == config.servers.end())
 	{
+		/*IL FAUT PEUT ETRE PRENDRE LE PREMIER SERVEUR c'est pour ca que j'ai mis un iterateur*/
 		res.errorCode = HTTPCode::NOT_FOUND;
 		return (res);
 	}
@@ -60,9 +55,7 @@ RouteResult Router::resolve(const Request &req) const
 	}
 	res.route = tmpRoute;
 
-	int methodIndex = static_cast<int>(req.getMethod());
-	if (methodIndex < 0 || methodIndex >= 6
-		|| res.route->method_allowed[methodIndex] == false)
+	if (res.route->method_allowed[static_cast<size_t>(req.getMethod())] == false)
 	{
 		res.errorCode = HTTPCode::METHOD_NOT_ALLOWED;
 		return (res);
@@ -74,6 +67,7 @@ RouteResult Router::resolve(const Request &req) const
 		return (res);
 	}
 
+	/*FAUT AUSSI PRENDRE EN COMPTE LALIAS*/
 	res.physicalPath = res.host->root + req.getPath();
 	res.success = true;
 	return (res);

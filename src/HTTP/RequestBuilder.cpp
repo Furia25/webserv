@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/24 16:21:28 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 16:09:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,8 +139,8 @@ void RequestBuilder::parseHeaderLine(std::string &line)
 
 		if (key == _HEADER_CONTENT_LENGTH_)
 			content_length = std::strtoul(value.c_str(), NULL, 10);
-		if (content_length > _DEFAULT_MAX_BODY_SIZE_)
-			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
+		/*if (content_length > _DEFAULT_MAX_BODY_SIZE_)
+			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);*/
 	}
 }
 
@@ -192,14 +192,9 @@ void RequestBuilder::check()
 Request RequestBuilder::build() const
 {
 	Method m = Method::UNKNOWN;
-	for (size_t i = 0; i < map_size; ++i) 
-	{
-		if (method == map[i].str) 
-		{
-			m = map[i].val;
-			break;
-		}
-	}
+	try {
+		m = Method::from(this->method);	
+	} catch (const std::domain_error& e) {}
 	return Request(m, request_path, query_path, protocol, content_length, headers, body);
 }
 

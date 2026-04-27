@@ -6,12 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 03:02:04 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 16:09:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONFIGDEFAULT_H
 # define _CONFIGDEFAULT_H
+
+# define CONFIG_MAX_PATH_SIZE 2048
 
 # define CONFIG_MAX_EVENTS	1024
 

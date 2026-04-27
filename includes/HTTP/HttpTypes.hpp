@@ -3,13 +3,12 @@
 /*                                                        :::      ::::::::   */
 /*   HttpTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/23 14:09:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 17:57:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #ifndef _HTTPTYPES_H
 # define _HTTPTYPES_H
@@ -23,12 +22,8 @@
 # include "EnumClass.hpp"
 # include "MIME.hpp"
 # include "Utils/Hash.hpp"
+# include "Config/ConfigDefault.hpp"
 
-#define _DEFAULT_MAX_BODY_SIZE_ 10485760
-#define _DEFAULT_MAX_PATH_SIZE_ 2048
-#define _HTTP_GET_ "GET"
-#define _HTTP_POST_ "POST"
-#define _HTTP_DELETE_ "DELETE"
 #define _HTTP_VERSION_ "HTTP/1.1"
 
 #define _HEADER_CONTENT_LENGTH_ "content-length"

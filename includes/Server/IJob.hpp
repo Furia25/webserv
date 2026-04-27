@@ -3,26 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   IJob.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:34:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:55:57 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 16:18:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ConfigBuilder.hpp"
+#ifndef IJOB_HPP
+# define IJOB_HPP
 
-ConfigBuilder::ConfigBuilder()
+class IJob
 {
-}
+public:
+	virtual ~IJob() {}
 
-void ConfigBuilder::from_file(Config& to_build, const std::string& filepath)
-{
-	toml::Document	document;
+	virtual bool execute() = 0;
+};
 
-	document.from_file(filepath);
-}
-
-ConfigBuilder::~ConfigBuilder()
-{
-}
+#endif // IJOB_HPP

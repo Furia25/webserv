@@ -6,13 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 14:29:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 17:04:29 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server/Connection.hpp"
 #include "Server/TCPServer.hpp"
-#include "HTTP/IJob.hpp"
+#include "Server/IJob.hpp"
 
 size_t Connection::last_id = 0;
 
@@ -35,8 +35,13 @@ Connection::~Connection()
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void)server;
-	if (events & EPOLLHUP && events & EPOLLRDHUP)
+	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
+	{
+		if (events & EPOLLERR)
+			this->server.getHandler().onError(*this);
 		this->setDeletable();
+		return ;
+	}
 	if (this->state == CLOSING && this->write_buffer.size() == 0
 		&& this->read_buffer.size() == 0)
 		this->setDeletable();
@@ -50,13 +55,21 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 	{
 		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
 		if (this->actual_job != NULL)
-			this->actual_job->execute();
-		this->handleWrite();
+		{
+			if (!this->actual_job->execute())
+				this->actual_job = NULL;
+			this->handleWrite();
+		}
 	}
 }
 
-void Connection::addJob(IJob *job)
+void Connection::setJob(IJob *job)
 {
+	if (job == NULL)
+	{
+		this->actual_job = NULL;
+		return ;
+	}
 	if (this->actual_job != NULL)
 	{
 		this->setDeletable();
@@ -80,11 +93,18 @@ void Connection::timeout(Alarm<Connection *> &alarm)
 	this->setDeletable();
 }
 
+void Connection::setClosing(void)
+{
+	this->state = CLOSING;
+	TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
+}
+
 void Connection::setDeletable(void)
 {
 	this->state = DELETABLE;
 	this->setWritable(false);
 	this->server.dropConnection(this);
+	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 }
 
 void Connection::handleRead(void)
@@ -100,16 +120,16 @@ void Connection::handleRead(void)
 	if (n > 0)
 		this->read_buffer.insert(this->read_buffer.end(), buffer, buffer + n);
 	else if (n == 0)
-	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
-		this->state = CLOSING;
-	}
+		this->setClosing();
 }
 
 void Connection::handleWrite(void)
 {
 	if (this->write_buffer.empty())
+	{
+		this->setWritable(false);
 		return;
+	}
 
 	const uint8_t	*buffer_ptr = &this->write_buffer[this->bytes_sended];
 	ssize_t			remaining;

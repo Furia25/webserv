@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 14:27:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/27 16:21:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,13 +49,14 @@ public:
 	void			sendData(const uint8_t *data, size_t len);
 	void			sendData(const std::string& data);
 	void			setDeletable(void);
+	void			setClosing(void);
 
 	void			clearReadBuffer();
 	void			clearWriteBuffer();
 	void			compactReadBuffer();
 	void			compactWriteBuffer();
 
-	void			addJob(IJob* job);
+	void			setJob(IJob* job);
 	size_t			getClientID(void)	const;
 	Socket&			getSocket(void);
 	const Socket&	getSocket(void) const;

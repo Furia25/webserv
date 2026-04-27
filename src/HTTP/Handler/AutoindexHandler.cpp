@@ -3,27 +3,24 @@
 /*                                                        :::      ::::::::   */
 /*   AutoindexHandler.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:45:48 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 10:58:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/27 17:26:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTP/AutoindexHandler.hpp"
+#include "HTTP/Handler/AutoindexHandler.hpp"
 
-AutoindexHandler::AutoindexHandler(const Request req, Connection &conn, const std::string& path): request(req), connection(conn), physical_path(path), isFinished(false)
+void AutoindexHandler::onExecute()
 {
-}
-
-bool AutoindexHandler::execute()
-{
+	/*CA CEST PAS OUF*/
 	std::string path = request.getPath();
 	std::string body = "<html><head><title>Index of " + path
 		+ "</title></head>";
 	body += "<body><h1>Index of " + path + "</h1><hr><ul>";
 
-	DIR *dir = opendir(physical_path.c_str());
+	DIR *dir = opendir(physicalPath.c_str());
 	if (dir)
 	{
 		struct dirent *ent;
@@ -41,13 +38,9 @@ bool AutoindexHandler::execute()
 		closedir(dir);
 		body += "</ul><hr></body></html>";
 
-		Response::buildRawResponse(connection, HTTPCode::OK, "text/html", body);
+		Response::buildRawResponse(connection, HTTPCode::OK, MIME::html, body);
 	}
 	else
-	{
-		Response::buildErrorResponse(connection, HTTPCode::FORBIDDEN);
-	}
-
-	isFinished = true;
-	return (true);
+		throw HTTPException(HTTPCode::FORBIDDEN);
+	this->setFinished();
 }
