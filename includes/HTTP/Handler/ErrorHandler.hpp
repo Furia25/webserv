@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:54:35 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 18:38:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 15:01:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,17 @@ public:
 		HTTPCode status_code = HTTPCode::INTERNAL_SERVER_ERROR)
 	: AHandler(connection, request, host_config, route_config, physical_path, status_code) {}
 
-	void	onExecute() { throw HTTPException(statusCode); };
+	void	onExecute();
 private:
+	enum State
+	{
+		INIT,
+		SEND_HEADERS,
+		SEND_BODY,
+		SEND_DEFAULT_ERROR,
+		FINISHED
+	};
+	State			state;
 };
 
 #endif // _ERRORHANDLER_H

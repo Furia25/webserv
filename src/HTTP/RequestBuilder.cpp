@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 16:09:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 13:28:13 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,21 @@ RequestBuilder &RequestBuilder::operator=(const RequestBuilder &other)
 
 RequestBuilder::~RequestBuilder()
 {
+}
+
+void RequestBuilder::reset()
+{
+	this->raw_buffer.clear();
+	this->parsing_is_complete = false;
+	this->header_is_parsed = false;
+	this->is_validated = true;
+	this->content_length = 0;
+	this->headers.clear();
+	this->method.clear();
+	this->request_path.clear();
+	this->query_path.clear();
+	this->protocol.clear();
+	this->body.clear();
 }
 
 void RequestBuilder::feed(const uint8_t *fragment, size_t length)
@@ -139,8 +154,6 @@ void RequestBuilder::parseHeaderLine(std::string &line)
 
 		if (key == _HEADER_CONTENT_LENGTH_)
 			content_length = std::strtoul(value.c_str(), NULL, 10);
-		/*if (content_length > _DEFAULT_MAX_BODY_SIZE_)
-			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);*/
 	}
 }
 

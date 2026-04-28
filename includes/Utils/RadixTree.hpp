@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RadixTree.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/26 20:35:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 14:36:01 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,8 +73,8 @@ public:
 
 		iterator() : tree(NULL) {}
 
-		reference	operator*()  { return *current; }
-		pointer		operator->() { return  current.operator->(); }
+		reference	operator*() const { return *const_cast<Optional<value_type>&>(current); }
+		pointer		operator->() const { return const_cast<Optional<value_type>&>(current).operator->(); }
 
 		iterator&	operator++()
 		{
@@ -176,7 +176,7 @@ public:
 		const_iterator(const iterator& it) : it(it) {}
 
 		reference	operator*()  const { return *it; }
-		pointer		operator->() const { return  it.operator->(); }
+		pointer		operator->() const { return it.operator->(); }
 
 		const_iterator&	operator++()	{ ++it; return *this; }
 		const_iterator	operator++(int) { const_iterator tree(*this); ++it; return tree; }

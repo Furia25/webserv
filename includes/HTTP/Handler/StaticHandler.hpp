@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 18:46:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 14:22:04 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,11 +43,14 @@ private:
 		INIT,
 		SEND_HEADERS,
 		SEND_BODY,
+		SEND_AUTOINDEX,
 		FINISHED
 	};
 	State						state;
-	std::ifstream				fileStream;
 	const Config::StaticConfig&	staticConfig;
+
+	void	handleAutoindex();
+	void	handleDelete();
 };
 
 #endif // _STATICHANDLER_H

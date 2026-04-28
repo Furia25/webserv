@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 15:42:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 13:28:02 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,7 @@ public:
 
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
-
+	void		reset();
 	Request		build() const;
 
 	void		print() const;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 18:41:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 13:44:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include "Server/Connection.hpp"
 # include "HTTP/Response.hpp"
 # include "Server/IJob.hpp"
+# include "Utils/FileReader.hpp"
 
 class AHandler : public IJob
 {
@@ -38,6 +39,7 @@ protected:
 		const Config::RouteConfig& route_config,
 		const std::string& physical_path,
 		HTTPCode status_code = HTTPCode::OK) :
+			fileHeaderSent(false),
 			connection(connection),
 			request(request),
 			hostConfig(host_config),
@@ -46,13 +48,15 @@ protected:
 			finished(false),
 			statusCode(status_code) {};
 
-	Connection&					connection;
-	const Request&				request;
-	const Config::ServerConfig& hostConfig;
-	const Config::RouteConfig&	routeConfig;
-	std::string					physicalPath;
-	bool						finished;
-	HTTPCode					statusCode;
+	FileReader						fileReader;
+	bool							fileHeaderSent;
+	Connection&						connection;
+	const Request&					request;
+	const Config::ServerConfig& 	hostConfig;
+	const Config::RouteConfig&		routeConfig;
+	std::string						physicalPath;
+	bool							finished;
+	HTTPCode						statusCode;
 
 private:
 	void	handleError();

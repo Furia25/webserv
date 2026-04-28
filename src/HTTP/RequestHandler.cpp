@@ -92,18 +92,19 @@ void RequestHandler::onDataReceived(Connection& connection)
 			this->createJob<StaticHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::REDIRECT :
-			this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::STATUS :
-			this->createJob<StatusHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			// this->createJob<StatusHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::CGI :
-			this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::UPLOAD :
-			this->createJob<UploadHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			// this->createJob<UploadHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		}
+		req.reset();
 	}
 }
 

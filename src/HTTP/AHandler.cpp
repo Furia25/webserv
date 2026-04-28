@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 16:59:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 13:53:06 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "AHandler.hpp"
-#include "Utils/FileSystem.hpp"
+# include "HTTP/AHandler.hpp"
+# include "Utils/FileSystem.hpp"
+# include "HTTP/Response.hpp"
 
 bool AHandler::execute()
 {
@@ -47,7 +48,33 @@ bool AHandler::execute()
 
 void AHandler::handleError()
 {
-	/*Read File brick by brick*/
+	if (!this->physicalPath.empty() && FileSystem::isFile(this->physicalPath))
+	{
+		if (!this->fileHeaderSent)
+		{
+			this->fileReader.open(this->physicalPath);
+			MIME	mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
+			Response::buildFileHeaderResponse(this->connection, this->statusCode, mime_type, this->fileReader.getFileSize());
+			this->fileHeaderSent = true;
+		}
+		if (!this->fileReader.hasFinished())
+		{
+			std::vector<uint8_t> buffer;
+			size_t bytesRead = this->fileReader.readChunk(buffer, 8192);
+			if (bytesRead > 0)
+				Response::sendBodyChunk(this->connection, buffer.data(), bytesRead);
+		}
+		if (this->fileReader.hasFinished())
+		{
+			this->fileReader.close();
+			this->setFinished();
+		}
+		else
+		{
+			Response::buildErrorResponse(this->connection, this->statusCode);
+			this->setFinished();
+		}
+	}
 }
 
 void AHandler::initError()

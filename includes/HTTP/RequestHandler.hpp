@@ -17,6 +17,8 @@
 # include "Config/Config.hpp"
 # include "HTTP/RequestBuilder.hpp"
 # include "HTTP/Router.hpp"
+# include "HTTP/AHandler.hpp"
+# include "HTTP/Handler/ErrorHandler.hpp"
 
 class RequestHandler : public IRequestHandler
 {
@@ -44,8 +46,6 @@ private:
 	void	dispatchError(Connection& connection, HTTPCode code);
 	void	dispatchError(Connection& connection, const Request& request,
 				const Config::ServerConfig& host_config, const Config::RouteConfig& route_config, HTTPCode error_code);
-	void	handleStaticRoute(Connection& connection, const Request& final_request,
-				const Config::RouteConfig* route, const Config::ServerConfig* host, std::string physical_path);
 
 	HashMap<size_t, ClientData>	clientsData;
 	const Config::AppConfig&	config;
@@ -56,6 +56,13 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
 	const std::string& physical_path, HTTPCode status_code)
 {
+	ClientData& client_data = this->clientsData.at(connection.getClientID());
+	if (client_data.actual_job != NULL)
+	{
+		delete client_data.actual_job;
+		client_data.actual_job = NULL;
+	}
+
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(connection, request, host_config, route_config, physical_path, status_code);
@@ -66,7 +73,7 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
 	}
 	connection.setJob(handler);
-	this->clientsData.at(connection.getClientID())->second.actual_job = handler;
+	client_data.actual_job = handler;
 }
 
 #endif // _RequestHandler_H

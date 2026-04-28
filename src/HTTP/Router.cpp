@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 16:03:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 14:34:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ Router::RouteResult Router::resolve(const Config::AppConfig &config, const Reque
 		res.errorCode = HTTPCode::NOT_FOUND;
 		return (res);
 	}
+	tmpHost = it->second;
 	res.host = tmpHost;
 
 	if (req.getPath().find("..") != std::string::npos)

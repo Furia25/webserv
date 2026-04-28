@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 15:34:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 13:52:08 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ namespace Router
 		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
 	};
 
-	static inline RouteResult resolve(const Config::AppConfig &config, const Request &req);
+	RouteResult resolve(const Config::AppConfig &config, const Request &req);
 };
 
 #endif // _ROUTER_H

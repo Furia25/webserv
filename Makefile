@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
+#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/27 15:04:28 by vdurand          ###   ########.fr        #
+#    Updated: 2026/04/28 14:57:14 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -74,11 +74,11 @@ SRC_FILES = \
 	HTTP/Request.cpp \
 	HTTP/RequestHandler.cpp \
 	HTTP/Router.cpp \
-    HTTP/IJob.cpp \
-    HTTP/StaticHandler.cpp \
-	HTTP/AutoindexHandler.cpp \
-	HTTP/DeleteHandler.cpp \
+    HTTP/AHandler.cpp \
+    HTTP/Handler/StaticHandler.cpp \
+	HTTP/Handler/ErrorHandler.cpp \
 	HTTP/Response.cpp \
+	HTTP/FileReader.cpp \
 	Logger.cpp \
 	main.cpp
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MIME.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 16:45:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/28 10:09:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,7 @@ ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING);
 public:
 	static MIME	from_extension(const char *str)
 	{
-		char *temp_str = str;
+		const char *temp_str = str;
 		if (!temp_str)
 			return MIME::bin;
 		if (temp_str[0] == '.')
