@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/29 14:08:41 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/29 17:55:34 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,7 @@ Connection::Connection(TCPServer& server, Socket& server_socket) : server(server
 
 Connection::~Connection()
 {
-	if (this->actual_job != NULL) 
-		delete this->actual_job;
+	this->actual_job = NULL;
 	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 }
 
@@ -59,10 +58,7 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		if (this->actual_job != NULL)
 		{
 			if (!this->actual_job->execute())
-			{
-				delete this->actual_job;
 				this->actual_job = NULL;
-			}
 		}
 		this->handleWrite();
 	}
@@ -70,15 +66,12 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 
 void Connection::setJob(IJob *job)
 {
-	if (this->actual_job != NULL)
-		delete this->actual_job;
-
 	this->actual_job = job;
 	
 	this->bytes_sended = 0; 
 	this->write_buffer.clear(); 
 
-	if (job != NULL)
+	if (actual_job != NULL)
 		this->setWritable(true);
 }
 

@@ -66,14 +66,15 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 	try {
 		handler = new T(connection, request, host_config, route_config, physical_path, status_code);
 		handler->onCreation();
+		client_data.actual_job = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
 		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
+		client_data.actual_job = handler;
 	}
 	connection.setJob(handler);
-	client_data.actual_job = handler;
 }
 
 #endif // _RequestHandler_H

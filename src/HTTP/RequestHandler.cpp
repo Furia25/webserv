@@ -27,6 +27,11 @@ RequestHandler::RequestHandler(const Config::AppConfig& config) : config(config)
 
 RequestHandler::~RequestHandler()
 {
+	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
+	{
+		if (it->second.actual_job != NULL)
+			delete it->second.actual_job;
+	}
 }
 
 void	RequestHandler::dispatchError(Connection& connection, HTTPCode code)
@@ -110,7 +115,17 @@ void RequestHandler::onConnection(Connection& connection)
 
 void RequestHandler::onDisconnection(Connection& connection)
 {
-	this->clientsData.erase(connection.getClientID());
+	if (this->clientsData.contain(connection.getClientID()))
+	{
+		ClientData& data = this->clientsData.at(connection.getClientID());
+
+		if (data.actual_job != NULL)
+		{
+			delete data.actual_job;
+			data.actual_job = NULL;
+		}
+		this->clientsData.erase(connection.getClientID());
+	}
 }
 
 void RequestHandler::onError(Connection& connection)
