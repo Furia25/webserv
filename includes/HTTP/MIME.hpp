@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/28 10:09:21 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/29 17:03:08 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,16 +92,31 @@ ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING);
 public:
 	static MIME	from_extension(const char *str)
 	{
-		const char *temp_str = str;
-		if (!temp_str)
-			return MIME::bin;
-		if (temp_str[0] == '.')
-			temp_str++;
-		try { return MIME::from(temp_str); }
-		catch ( const std::domain_error& e)
-		{
-			return MIME::bin;
-		}
+		std::string ext = str;
+		if (!ext.empty() && ext[0] == '.')
+			ext = ext.substr(1);
+		if (ext == "html" || ext == "htm") 
+			return MIME::html;
+		if (ext == "css")
+			return MIME::css;
+		if (ext == "js")
+			return MIME::js;
+		if (ext == "png")
+			return MIME::png;
+		if (ext == "jpg" || ext == "jpeg")
+			return MIME::jpeg;
+		if (ext == "gif")
+			return MIME::gif;
+		if (ext == "ico")
+			return MIME::ico;
+		if (ext == "json")
+			return MIME::json;
+		if (ext == "txt")
+			return MIME::txt;
+		if (ext == "pdf")
+			return MIME::pdf;
+
+		return MIME::bin;
 	}
 	static MIME	from_extension(const std::string& str) { return MIME::from_extension(str.c_str()); }
 );

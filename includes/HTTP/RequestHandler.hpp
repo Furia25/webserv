@@ -62,7 +62,6 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 		delete client_data.actual_job;
 		client_data.actual_job = NULL;
 	}
-
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(connection, request, host_config, route_config, physical_path, status_code);
@@ -70,6 +69,7 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 	}
 	catch (const HTTPException& e)
 	{
+		delete handler;
 		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
 	}
 	connection.setJob(handler);

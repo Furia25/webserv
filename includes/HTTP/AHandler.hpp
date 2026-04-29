@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 13:44:06 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/29 14:32:18 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,8 @@ protected:
 			fileHeaderSent(false),
 			connection(connection),
 			request(request),
-			hostConfig(host_config),
-			routeConfig(route_config),
+			hostConfig(&host_config),
+			routeConfig(&route_config),
 			physicalPath(physical_path),
 			finished(false),
 			statusCode(status_code) {};
@@ -51,9 +51,9 @@ protected:
 	FileReader						fileReader;
 	bool							fileHeaderSent;
 	Connection&						connection;
-	const Request&					request;
-	const Config::ServerConfig& 	hostConfig;
-	const Config::RouteConfig&		routeConfig;
+	const Request					request;
+	const Config::ServerConfig* 	hostConfig;
+	const Config::RouteConfig*		routeConfig;
 	std::string						physicalPath;
 	bool							finished;
 	HTTPCode						statusCode;

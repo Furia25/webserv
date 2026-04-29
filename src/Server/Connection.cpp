@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 17:04:29 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/04/29 14:08:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,8 @@ Connection::Connection(TCPServer& server, Socket& server_socket) : server(server
 
 Connection::~Connection()
 {
+	if (this->actual_job != NULL) 
+		delete this->actual_job;
 	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 }
 
@@ -57,26 +59,27 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		if (this->actual_job != NULL)
 		{
 			if (!this->actual_job->execute())
+			{
+				delete this->actual_job;
 				this->actual_job = NULL;
-			this->handleWrite();
+			}
 		}
+		this->handleWrite();
 	}
 }
 
 void Connection::setJob(IJob *job)
 {
-	if (job == NULL)
-	{
-		this->actual_job = NULL;
-		return ;
-	}
 	if (this->actual_job != NULL)
-	{
-		this->setDeletable();
-		return ;
-	}
+		delete this->actual_job;
+
 	this->actual_job = job;
-	this->setWritable(true);
+	
+	this->bytes_sended = 0; 
+	this->write_buffer.clear(); 
+
+	if (job != NULL)
+		this->setWritable(true);
 }
 
 void Connection::setWritable(bool writable)
@@ -127,7 +130,8 @@ void Connection::handleWrite(void)
 {
 	if (this->write_buffer.empty())
 	{
-		this->setWritable(false);
+		if (this->actual_job == NULL)
+			this->setWritable(false);
 		return;
 	}
 
@@ -144,6 +148,12 @@ void Connection::handleWrite(void)
 	sent = this->client_socket.send(buffer_ptr, remaining);
 	if (sent > 0)
 		this->bytes_sended += sent;
+	else if (sent == -1) 
+	{
+		if (errno != EAGAIN && errno != EWOULDBLOCK) 
+			this->setDeletable();
+		return ;
+	}
 	if (this->bytes_sended >= this->write_buffer.size())
 		this->clearWriteBuffer();
 }
