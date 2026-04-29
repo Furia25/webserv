@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 13:06:39 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/29 19:19:12 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,8 @@ size_t FileReader::readChunk(std::vector<uint8_t>& buffer, size_t chunkSize)
 	if (!this->fileStream.is_open() || this->isEOF)
 		return 0;
 	
+	if (chunkSize > 8192)
+		chunkSize = 8192;
 	uint8_t buffer_tmp[chunkSize];
 	this->fileStream.read((char *)buffer_tmp, chunkSize);
 
