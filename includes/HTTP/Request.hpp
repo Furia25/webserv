@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 13:45:28 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 18:58:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include "EnumClass.hpp"
 # include "Utils/HashMap.hpp"
 # include "HttpTypes.hpp"
+# include "Utils/FileWriter.hpp"
 
 class Request
 {
@@ -33,17 +34,20 @@ private:
 public:
 	Request(Method m, const std::string& p, const std::string& q, 
 			const std::string& proto, size_t cl, 
-			const HashMap<std::string, std::string>& h, 
-			const std::vector<uint8_t>& b);
+			const HashMap<std::string, std::string>& h);
 	~Request();
 
-	Method										getMethod() const;
-	const std::string&							getPath() const;
-	const std::string&							getQueryString() const;
-	const std::string&							getProtocol() const;
-	size_t										getContentLength() const;
-	const HashMap<std::string, std::string>&	getHeaders() const;
-	const std::vector<uint8_t>&					getBody() const;
+	void	appendToBody(const uint8_t* data, size_t size);
+	void	reserveBody(size_t size);
+	
+	size_t										getBodySize()		const;
+	size_t										isLessThanOneMO()	const;
+	Method										getMethod() 		const;
+	const std::string&							getPath() 			const;
+	const std::string&							getQueryString() 	const;
+	const std::string&							getProtocol() 		const;
+	size_t										getContentLength() 	const;
+	const HashMap<std::string, std::string>&	getHeaders() 		const;
 };
 
 #endif

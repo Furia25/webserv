@@ -6,13 +6,14 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 13:28:13 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 14:41:48 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/RequestBuilder.hpp"
 # include <algorithm>
 # include "HTTP/HttpTypes.hpp"
+# include "Utils/FileWriter.hpp"
 
 
 RequestBuilder::RequestBuilder() 
@@ -39,7 +40,6 @@ RequestBuilder &RequestBuilder::operator=(const RequestBuilder &other)
 		this->request_path = other.request_path;
 		this->query_path = other.query_path;
 		this->protocol = other.protocol;
-		this->body = other.body;
 	}
 	return (*this);
 }
@@ -60,13 +60,12 @@ void RequestBuilder::reset()
 	this->request_path.clear();
 	this->query_path.clear();
 	this->protocol.clear();
-	this->body.clear();
 }
 
 void RequestBuilder::feed(const uint8_t *fragment, size_t length)
 {
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-
+	
 	if (!header_is_parsed)
 	{
 		size_t header_end = find_header_end();
@@ -74,18 +73,9 @@ void RequestBuilder::feed(const uint8_t *fragment, size_t length)
 		{
 			parse_all_headers(raw_buffer, header_end);
 			header_is_parsed = true;
-			
-			if (raw_buffer.size() > header_end + 4)
-				body.insert(body.end(), raw_buffer.begin() + header_end + 4, raw_buffer.end());
 		}
 	}
-	else
-		body.insert(body.end(), fragment, fragment + length);
-	if (header_is_parsed)
-	{
-		if (body.size() >= content_length)
-			parsing_is_complete = true;
-	}
+
 }
 
 size_t RequestBuilder::find_header_end()
@@ -208,7 +198,7 @@ Request RequestBuilder::build() const
 	try {
 		m = Method::from(this->method);	
 	} catch (const std::domain_error& e) {}
-	return Request(m, request_path, query_path, protocol, content_length, headers, body);
+	return Request(m, request_path, query_path, protocol, content_length, headers);
 }
 
 void RequestBuilder::print() const 
@@ -224,12 +214,27 @@ void RequestBuilder::print() const
 		std::cout << "Host:  [" << it->second << "]" << std::endl;
 		std::cout << "Content-Length: " << content_length << std::endl;
 		std::cout << "Headers Count: " << headers.size() << std::endl;
-		std::cout << "Body Size: " << body.size() << std::endl;
-		if (!body.empty())
-		std::cout << "Body (first 20 bytes): " << std::string(body.begin(), body.begin() + std::min(body.size(), (size_t)20)) << "..." << std::endl;
 		std::cout << "Complete: " << (is_validated ? "YES" : "NO") << std::endl;
 		std::cout << "---------------------" << std::endl;
 	}
+}
+
+std::vector<uint8_t> RequestBuilder::getExtraData()
+{
+	size_t header_end = find_header_end();
+
+	if	(header_end == std::string::npos)
+		return std::vector<uint8_t>();
+
+	size_t body_start = header_end + 4;
+
+	if	(body_start >= raw_buffer.size())
+		return std::vector<uint8_t>();
+
+	std::vector<uint8_t> extra(raw_buffer.begin() + body_start, raw_buffer.end());
+
+	raw_buffer.clear();
+	return extra;
 }
 
 const bool &RequestBuilder::getCompleteStatus() const { return parsing_is_complete; }

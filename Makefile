@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/04/29 19:29:21 by antbonin         ###   ########.fr        #
+#    Updated: 2026/04/30 14:43:14 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -79,7 +79,8 @@ SRC_FILES = \
 	HTTP/Handler/ErrorHandler.cpp \
 	HTTP/Response.cpp \
 	HTTP/FileReader.cpp \
-	HTTP/FileWriter \
+	HTTP/FileWriter.cpp \
+	HTTP/Itoa.cpp \
 	Logger.cpp \
 	main.cpp
 

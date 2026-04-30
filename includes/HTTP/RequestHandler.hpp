@@ -19,6 +19,8 @@
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
+# include "Utils/FileWriter.hpp"
+# include "HTTP/Router.hpp"
 
 class RequestHandler : public IRequestHandler
 {
@@ -34,9 +36,17 @@ private:
 
 	struct ClientData
 	{
-		RequestBuilder	builder;
-		IJob			*actual_job;
+		RequestBuilder			builder;
+		Request*				request;
+		FileWriter*				fileWriter;
+		Router::RouteResult 	routeRes;
+		bool					isStreaming;
+		IJob					*actual_job;
+		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), actual_job(NULL) {};
 	};
+
+	void 					launchJob(Connection &connection, ClientData &client);
+	void					checkCompletion(Connection& connection, ClientData& clientData);
 
 	template <typename T>
 	void	createJob(Connection& connection, const Request& request,

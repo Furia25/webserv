@@ -6,18 +6,19 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/21 16:01:36 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 15:53:30 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Request.hpp"
 
+#define _IS_ONE_MO_ 1048576
+
 Request::Request(Method m, const std::string& p, const std::string& q, 
                  const std::string& proto, size_t cl, 
-                 const HashMap<std::string, std::string>& h, 
-                 const std::vector<uint8_t>& b)
+                 const HashMap<std::string, std::string>& h)
     : method(m), path(p), query_string(q), protocol(proto), 
-      content_length(cl), headers(h), body(b)
+      content_length(cl), headers(h)
 {
 }
 
@@ -25,37 +26,54 @@ Request::~Request()
 {
 }
 
-Method Request::getMethod() const
+void    Request::reserveBody(size_t size)
+{
+    if (size < _IS_ONE_MO_)
+        this->body.reserve(size);
+}
+
+void    Request::appendToBody(const uint8_t* data, size_t size)
+{
+    if (size > 0)
+        this->body.insert(this->body.end(), data, data + size);
+}
+
+size_t    Request::getBodySize() const
+{
+    return this->body.size();
+}
+
+Method  Request::getMethod() const
 {
     return (method);
 }
 
-const std::string& Request::getPath() const
+const std::string&  Request::getPath() const
 {
     return (path);
 }
 
-const std::string& Request::getQueryString() const
+const std::string&  Request::getQueryString() const
 {
     return (query_string);
 }
 
-const std::string& Request::getProtocol() const
+const std::string&  Request::getProtocol() const
 {
     return (protocol);
 }
 
-size_t Request::getContentLength() const
+size_t    Request::getContentLength() const
 {
     return (content_length);
 }
 
-const HashMap<std::string, std::string>& Request::getHeaders() const
+const HashMap<std::string, std::string>&    Request::getHeaders() const
 {
     return (headers);
 }
 
-const std::vector<uint8_t>& Request::getBody() const
+size_t    Request::isLessThanOneMO() const
 {
-    return (body);
+    return (this->content_length < _IS_ONE_MO_);
 }

@@ -10,86 +10,59 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/RequestHandler.hpp"
-# include "HTTP/Response.hpp"
 # include "Config/Config.hpp"
-# include "HTTP/HttpTypes.hpp"
-# include "Utils/FileSystem.hpp"
-# include "HTTP/Handler/StaticHandler.hpp"
+# include "HTTP/Handler/CGIHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
+# include "HTTP/Handler/RedirectHandler.hpp"
+# include "HTTP/Handler/StaticHandler.hpp"
 # include "HTTP/Handler/StatusHandler.hpp"
 # include "HTTP/Handler/UploadHandler.hpp"
-# include "HTTP/Handler/CGIHandler.hpp"
-# include "HTTP/Handler/RedirectHandler.hpp"
-# include <dirent.h>
+# include "HTTP/HttpTypes.hpp"
+# include "HTTP/RequestHandler.hpp"
+# include "HTTP/Response.hpp"
+# include "Utils/FileSystem.hpp"
+# include "Utils/Itoa.hpp"
 
-RequestHandler::RequestHandler(const Config::AppConfig& config) : config(config) {}
+RequestHandler::RequestHandler(const Config::AppConfig &config)
+	: config(config)
+{
+}
 
 RequestHandler::~RequestHandler()
 {
-	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
+	for (HashMap<size_t,
+			ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 	{
 		if (it->second.actual_job != NULL)
 			delete it->second.actual_job;
 	}
 }
 
-void	RequestHandler::dispatchError(Connection& connection, HTTPCode code)
+void RequestHandler::dispatchError(Connection &connection, HTTPCode code)
 {
 	Response::buildErrorResponse(connection, code);
 }
 
-void RequestHandler::dispatchError(Connection& connection, const Request& request, const Config::ServerConfig& host_config, const Config::RouteConfig& route_config, HTTPCode error_code)
+void RequestHandler::dispatchError(Connection &connection,
+		const Request &request, const Config::ServerConfig &host_config,
+		const Config::RouteConfig &route_config, HTTPCode error_code)
 {
-	this->createJob<ErrorHandler>(connection, request, host_config, route_config, "", error_code);
+	this->createJob<ErrorHandler>(connection, request, host_config,
+			route_config, "", error_code);
 }
 
-void RequestHandler::onDataReceived(Connection& connection)
+void RequestHandler::launchJob(Connection &connection, ClientData &client)
 {
-	size_t			id = connection.getClientID();
-	size_t			dataSize;
-	HashMap<size_t, ClientData>::iterator	iterator = clientsData.find(id);
-
-	RequestBuilder& req = iterator->second.builder;
-	dataSize = connection.getReadBufferSize();
-	if (dataSize > 0)
+	if (!client.request)
 	{
-		try
-		{
-			req.feed(connection.getReadBufferPtr(), connection.getReadBufferSize());
-			if (req.isHeaderParsed() && !req.isValidated())
-			{
-				req.check();
-				req.setValidateStatus(1);
-			}
-		}
-		catch(const HTTPException& e)
-		{
-			req.setValidateStatus(0);
-			dispatchError(connection, e.getStatusCode());
-		}
-		catch(const std::exception& e)
-		{
-			Logger::ERROR() << "Exception: " << e.what() << '\n';
-			dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-		}
-		connection.consumeReadData(dataSize);
+		Logger::ERROR() << "No request to create the job At RequestHandler.";
+		return;
 	}
-	if (req.getCompleteStatus() && req.isValidated())
-	{
-		req.print();
-		Request final_request = req.build();
-		Router::RouteResult res = Router::resolve(this->config, final_request);
 
-		if (!res.success)
-		{
-			dispatchError(connection, final_request, *res.host, *res.route, res.errorCode);
-			return ;
-		}
-		switch (res.route->handler)
-		{
+	switch (client.routeRes.route->handler)
+	{
 		case HandlerType::STATIC :
-			this->createJob<StaticHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		this->createJob<StaticHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
 		break;
 		case HandlerType::REDIRECT :
 			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
@@ -103,33 +76,156 @@ void RequestHandler::onDataReceived(Connection& connection)
 		case HandlerType::UPLOAD :
 			// this->createJob<UploadHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
-		}
-		req.reset();
 	}
 }
 
-void RequestHandler::onConnection(Connection& connection)
+void	RequestHandler::checkCompletion(Connection &connection, ClientData &client) 
+{
+	if (!client.request)
+		return;
+
+	size_t requestLength = client.request->getContentLength();
+	size_t bodyLength = 0;
+
+	if (client.isStreaming) 
+	{
+		if (!client.fileWriter)
+			return;
+		bodyLength = client.fileWriter->getBytesWritten();
+	}
+	else 
+		bodyLength = client.request->getBodySize();
+
+	if (bodyLength > requestLength)
+	{
+		dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
+		return;
+	}
+
+	if (bodyLength == requestLength) 
+	{
+		if (client.isStreaming && client.fileWriter)
+			client.fileWriter->close();
+
+		this->launchJob(connection, client);
+
+		client.isStreaming = false; 
+	}
+}
+void RequestHandler::onDataReceived(Connection &connection)
+{
+	size_t	id = connection.getClientID();
+	size_t	dataSize = connection.getReadBufferSize();
+	if (dataSize == 0) return;
+
+	HashMap<size_t, ClientData>::iterator	it = clientsData.find(id);
+	if (it == clientsData.end()) return;
+
+	ClientData	&client = it->second;
+	const uint8_t*	fragment = connection.getReadBufferPtr();
+
+	try 
+	{
+		if (!client.isStreaming && !client.builder.isHeaderParsed())
+		{
+            client.builder.feed(fragment, dataSize);
+
+			if (client.builder.isHeaderParsed())
+			{
+				client.builder.print();
+				client.request = new Request(client.builder.build());
+				client.routeRes = Router::resolve(this->config, *client.request);
+
+				if (!client.routeRes.success)
+				{
+					dispatchError(connection, client.routeRes.errorCode);
+					return;
+				}
+
+				if (client.request->getContentLength() > 0)
+				{
+					std::vector<uint8_t> extra = client.builder.getExtraData();
+
+					if (!client.request->isLessThanOneMO())
+					{
+						client.isStreaming = true;
+
+						if (!client.fileWriter) client.fileWriter = new FileWriter();
+						{
+							std::stringstream ss;
+							ss << "tmp/upload_" << id;
+							client.fileWriter->open(ss.str());
+						}
+
+						if (!extra.empty())
+							client.fileWriter->writeChunk(extra.data(), extra.size());
+					}
+					else 
+					{
+						client.isStreaming = false;
+						if (!extra.empty())
+						{
+							client.request->reserveBody(client.request->getContentLength());
+							client.request->appendToBody(extra.data(), extra.size());
+						}
+					}
+					checkCompletion(connection, client);
+				}
+				else
+					this->launchJob(connection, client);
+			}
+		} 
+		else
+		{
+
+			if (client.isStreaming)
+				client.fileWriter->writeChunk(fragment, dataSize);
+			else
+				client.request->appendToBody(fragment, dataSize);
+
+			checkCompletion(connection, client);
+		}
+		connection.consumeReadData(dataSize);
+	}
+	catch (const std::exception &e)
+	{
+		Logger::ERROR() << "Exception: " << e.what() << '\n';
+		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+	}
+}
+
+void RequestHandler::onConnection(Connection &connection)
 {
 	this->clientsData.insert(connection.getClientID(), ClientData());
 }
 
-void RequestHandler::onDisconnection(Connection& connection)
+void RequestHandler::onDisconnection(Connection &connection)
 {
-	if (this->clientsData.contain(connection.getClientID()))
-	{
-		ClientData& data = this->clientsData.at(connection.getClientID());
+	HashMap<size_t, ClientData>::iterator it = this->clientsData.find(connection.getClientID());
 
-		if (data.actual_job != NULL)
+	if	(it != this->clientsData.end())
+	{
+		ClientData &data = it->second;
+		if	(data.request != NULL)
+		{
+			delete data.request;
+			data.request = NULL;
+		}
+		if	(data.fileWriter != NULL)
+		{
+			delete data.fileWriter;
+			data.fileWriter = NULL;
+		}
+		if	(data.actual_job != NULL)
 		{
 			delete data.actual_job;
 			data.actual_job = NULL;
 		}
-		this->clientsData.erase(connection.getClientID());
+		this->clientsData.erase(it);
 	}
 }
 
-void RequestHandler::onError(Connection& connection)
+void RequestHandler::onError(Connection &connection)
 {
 	Logger::ERROR() << "Connection:" << connection << " errored";
 }
-

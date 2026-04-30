@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 13:28:02 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 18:58:34 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ private:
 	std::string							request_path;
 	std::string							query_path;
 	std::string							protocol;
-	std::vector<uint8_t>				body;
+	
 
 	size_t	find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
 	size_t	find_header_end();
@@ -74,10 +74,12 @@ public:
 
 	void		print() const;
 
-	const bool&	getCompleteStatus() const;
-	const bool&	isHeaderParsed() const;
-	const bool&	isValidated() const;
-	void		setValidateStatus(int status);
+	std::vector<uint8_t>	getExtraData();
+
+	const bool&		getCompleteStatus() 	const;
+	const bool&		isHeaderParsed() 		const;
+	const bool&		isValidated() 			const;
+	void			setValidateStatus(int status);
 };
 
 #endif // _REQUESTBUILDER_H

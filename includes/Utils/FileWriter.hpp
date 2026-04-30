@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:41 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 19:35:14 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 14:20:49 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,14 @@ public:
 	~FileWriter(){this->close();};
 	
 	void			open(const std::string& path, bool append = false);
-	size_t			writeChunk(const std::vector<uint8_t>& buffer);
+	size_t			writeChunk(const void* data, size_t size);
 	size_t			writeChunk(const char* data, size_t size);
 	void			close();
 	void			abort();
-	size_t			getBytesWritten()const ;
-	bool			getError()const ;
+
+	size_t				getBytesWritten()	const ;
+	bool				getError()			const ;
+	const std::string&	getFilePath()		const ;
 
 private:
 	std::string 		filePath;

@@ -6,20 +6,13 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 10:42:29 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/04/30 16:13:35 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Response.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include <sstream>
-
-static inline std::string itoa(int n)
-{
-	std::stringstream ss;
-	ss << n;
-	return ss.str();
-}
+# include "Utils/Itoa.hpp"
 
 static inline std::string buildStatusLine(HTTPCode code)
 {
@@ -28,11 +21,10 @@ static inline std::string buildStatusLine(HTTPCode code)
 
 void Response::buildErrorResponse(Connection& connection, HTTPCode code)
 {
-	std::string body = "<html><head><title>"
-		+ itoa(static_cast<int>(code))
+	std::string body = "<html><head><title>" + itoa(static_cast<int>(code))
 		+ " " + HTTPCode::toString(code)
-		+ "</title></head><body><h1>"
-		+ itoa(static_cast<int>(code)) + " " + HTTPCode::toString(code) + "</h1></body></html>";
+		+ "</title></head><body><h1>" + itoa(static_cast<int>(code)) 
+		+ " " + HTTPCode::toString(code) + "</h1></body></html>";
 	
 	std::string response = buildStatusLine(code);
 	response += "Content-Type: text/html\r\n";
