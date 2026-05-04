@@ -52,6 +52,11 @@ private:
 	void	createJob(Connection& connection, const Request& request,
 				const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
 				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
+				
+	template <typename T>
+	void	createJob(Connection& connection, const Request& request,
+	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+	const std::string& physical_path, HTTPCode status_code, bool isUpload);
 
 	void	dispatchError(Connection& connection, HTTPCode code);
 	void	dispatchError(Connection& connection, const Request& request,
@@ -75,6 +80,32 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(connection, request, host_config, route_config, physical_path, status_code);
+		handler->onCreation();
+		client_data.actual_job = handler;
+	}
+	catch (const HTTPException& e)
+	{
+		delete handler;
+		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
+		client_data.actual_job = handler;
+	}
+	connection.setJob(handler);
+}
+
+template <typename T>
+inline void RequestHandler::createJob(Connection& connection, const Request& request,
+	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+	const std::string& physical_path, HTTPCode status_code, bool isUpload)
+{
+	ClientData& client_data = this->clientsData.at(connection.getClientID());
+	if (client_data.actual_job != NULL)
+	{
+		delete client_data.actual_job;
+		client_data.actual_job = NULL;
+	}
+	AHandler	*handler = NULL;
+	try {
+		handler = new T(connection, request, host_config, route_config, physical_path, status_code, isUpload);
 		handler->onCreation();
 		client_data.actual_job = handler;
 	}
