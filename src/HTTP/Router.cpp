@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 14:34:21 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 17:02:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,30 +31,37 @@ Router::RouteResult Router::resolve(const Config::AppConfig &config, const Reque
 	Router::RouteResult res;
 
 	std::string hostName = extractHost(req);
-	Config::ServerConfig *tmpHost = NULL;
 	RadixTree<Config::ServerConfig *>::const_iterator it = config.servers.find(hostName);
+	Config::ServerConfig *tmpHost;
 	if (it == config.servers.end())
 	{
-		/*IL FAUT PEUT ETRE PRENDRE LE PREMIER SERVEUR c'est pour ca que j'ai mis un iterateur*/
-		res.errorCode = HTTPCode::NOT_FOUND;
-		return (res);
+		try {
+			it = config.servers.begin();
+			tmpHost = it->second;
+		} catch (const std::exception& e)
+		{
+			res.errorCode = HTTPCode::NOT_FOUND;
+			return (res);
+		}
 	}
-	tmpHost = it->second;
+	else
+		tmpHost = it->second;
 	res.host = tmpHost;
 
+	/*We have to make better checks c'est pas super ça parce que il faut juste pas qu'on dépasse le fichier disque de la route*/
 	if (req.getPath().find("..") != std::string::npos)
 	{
 		res.errorCode = HTTPCode::FORBIDDEN;
 		return (res);
 	}
 
-	Config::RouteConfig *tmpRoute = NULL;
-	if (!tmpHost->routes.search_prefix(req.getPath(), tmpRoute))
+	RadixTree<Config::RouteConfig *>::const_iterator iterator = tmpHost->routes.find(req.getPath());
+	if (iterator == tmpHost->routes.end())
 	{
 		res.errorCode = HTTPCode::NOT_FOUND;
 		return (res);
 	}
-	res.route = tmpRoute;
+	res.route = iterator->second;
 
 	if (res.route->method_allowed[static_cast<size_t>(req.getMethod())] == false)
 	{
@@ -68,8 +75,17 @@ Router::RouteResult Router::resolve(const Config::AppConfig &config, const Reque
 		return (res);
 	}
 
-	/*FAUT AUSSI PRENDRE EN COMPTE LALIAS*/
-	res.physicalPath = res.host->root + req.getPath();
+	if (!res.route->alias.empty())
+	{
+		const std::string &routePath = iterator->first;
+		const std::string &reqPath   = req.getPath();
+		std::string remainder = reqPath.substr(routePath.size());
+		res.physicalPath = res.host->root + res.route->alias + remainder;
+	}
+	else
+	{
+		res.physicalPath = res.host->root + req.getPath();
+	}
 	res.success = true;
 	return (res);
 }

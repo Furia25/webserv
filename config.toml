@@ -13,15 +13,23 @@ tick_interval = 5
 
 # --- Main Website (Port 8080) ---
 [[servers]]
-host = "0.0.0.0"
+host = "localhost"
 service = "8080"
-server_name = "localhost"
+server_name = "test"
 root = "www"
 max_body_size = 150000000
 
 	[servers.errors]
 	404 = "errors/404.html"
 	500 = "errors/500.html"
+
+	# Static files route
+	[[servers.routes]]
+	path = "/"
+	methods = ["GET", "DELETE", "POST"]
+	handler = "STATIC"
+	index = "index.html"
+	autoindex = true
 
 	# File upload route
 	[[servers.routes]]
@@ -33,12 +41,11 @@ max_body_size = 150000000
 	allow_overwrite = false
 	upload_store = "./www/site1/uploads"
 
-	# Static files route
 	[[servers.routes]]
-	path = "/"
-	methods = ["GET", "DELETE", "POST"]
+	path = "/caffeine"
+	methods = ["GET"]
 	handler = "STATIC"
-	root = "www"
+	alias = "/routes/test"
 	index = "index.html"
 	autoindex = true
 

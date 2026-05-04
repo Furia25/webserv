@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 14:32:18 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 16:09:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ protected:
 	HTTPCode						statusCode;
 
 private:
-	void	handleError();
+	/*void	handleError();*/
 	void	initError();
 };
 
