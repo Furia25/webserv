@@ -51,18 +51,18 @@ void RequestHandler::dispatchError(Connection &connection,
 			route_config, "", error_code);
 }
 
-void RequestHandler::launchJob(Connection &connection, ClientData &client)
+void RequestHandler::launchJob(Connection& connection, ClientData& client)
 {
 	if (!client.request)
 	{
 		Logger::ERROR() << "No request to create the job At RequestHandler.";
 		return;
 	}
-
+	std::cout << HandlerType::toString(client.routeRes.route->handler) << std::endl;
 	switch (client.routeRes.route->handler)
 	{
 		case HandlerType::STATIC :
-		this->createJob<StaticHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
+			this->createJob<StaticHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
 		break;
 		case HandlerType::REDIRECT :
 			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);

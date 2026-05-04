@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/04 16:23:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/04 17:02:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,7 +139,6 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 		std::string handler_str;
 		loader.value(routes_array[index], "handler", handler_str);
 		HandlerType handler = HandlerType::from(handler_str);
-
 		RouteConfig	*final_route = NULL;
 		switch (handler)
 		{
@@ -151,7 +150,9 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 			default:
 				loader.push_error(route_name, "unknown handler type -> " + handler_str);
 				continue;
+		
 		}
+		final_route->handler = handler;
 		try
 		{
 			loader.direct_section(routes_array[index], route_name, *final_route);
