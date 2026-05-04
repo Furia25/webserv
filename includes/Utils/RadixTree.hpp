@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RadixTree.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/28 14:36:01 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 15:57:43 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,25 +302,6 @@ public:
 	size_type	count(const std::string& key) const
 	{
 		return (this->find_node_count(&root, key, 0) != NULL) ? 1 : 0;
-	}
-
-	bool	search(const std::string& key, T& val) const
-	{
-		const Node *node = this->find_node_count(&this->root, key, 0);
-		if (node == NULL)
-			return false;
-		val = node->value.value();
-		return true;
-	}
-
-	bool	search_prefix(const std::string& key, T& val) const
-	{
-		std::string	dummy;
-		const Node	*node = this->find_prefix_node(&this->root, key, 0, dummy);
-		if (node == NULL)
-			return false;
-		val = node->value.value();
-		return true;
 	}
 
 	void	insert(const std::string& key, const T& val)

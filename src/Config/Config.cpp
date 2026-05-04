@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/26 20:13:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/04 16:23:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ Config::AppConfig::AppConfig(const std::string& path)
 			loader.direct_section(server_array[index], ss.str(), *server_config);
 			if (this->servers.count(server_config->name) != 0)
 				throw std::runtime_error("Can't redefine server " + std::string(server_config->name));
-			this->servers.insert(server_config->name, server_config);
+			this->servers.insert(server_config->host, server_config);
 		}
 		catch (const std::exception& e)
 		{
@@ -97,6 +97,8 @@ void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 
 	this->loadErrors(errors_table, loader);
 	this->loadRoutes(routes_array, loader);
+	for (RadixTree<RouteConfig *>::const_iterator it = this->routes.begin(); it != this->routes.end(); ++it)
+		std::cout << it->first << "\n";
 }
 
 void Config::ServerConfig::loadErrors(toml::Table& errors_table, Config::Loader& loader)

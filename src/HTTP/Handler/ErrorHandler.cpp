@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 17:35:56 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 16:25:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,13 +69,7 @@ void ErrorHandler::onExecute()
 
 	case SEND_DEFAULT_ERROR:
 	{
-		std::stringstream ss;
-		ss << "<html><head><title>Error " << static_cast<int>(statusCode) << "</title></head>" 
-		<< "<body><center><h1>" << static_cast<int>(statusCode) << "</h1><hr>"
-		<< "WebServ/1.0 (Custom Error Page)</center></body></html>";
-        
-		std::string body = ss.str();
-		Response::buildRawResponse(connection, statusCode, MIME::html, body);
+		Response::buildErrorResponse(connection, statusCode);
 		this->state = FINISHED;
 		break;
 	}

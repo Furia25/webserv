@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 13:57:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 15:47:44 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -370,6 +370,7 @@ void toml::TOMLParser::handleNumbers(const Token& token, std::stringstream& lite
 		case 'n': // nan
 			if (base == 10)
 				candidate = Value::FLOATING;
+			goto write;
 		default: write:
 			first_char = false;
 			ss << c;

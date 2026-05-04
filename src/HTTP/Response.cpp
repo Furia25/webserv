@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 16:13:35 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/04 16:29:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,18 +21,13 @@ static inline std::string buildStatusLine(HTTPCode code)
 
 void Response::buildErrorResponse(Connection& connection, HTTPCode code)
 {
-	std::string body = "<html><head><title>" + itoa(static_cast<int>(code))
-		+ " " + HTTPCode::toString(code)
-		+ "</title></head><body><h1>" + itoa(static_cast<int>(code)) 
-		+ " " + HTTPCode::toString(code) + "</h1></body></html>";
-	
-	std::string response = buildStatusLine(code);
-	response += "Content-Type: text/html\r\n";
-	response += "Content-Length: " + itoa(body.length()) + "\r\n";
-	response += "Connection: close\r\n\r\n";
-	response += body;
-	
-	connection.sendData(response);
+	std::stringstream ss;
+	ss << "<html><head><title>Error " << static_cast<int>(code) << "</title></head>" 
+		<< "<body><center><h1>" << static_cast<int>(code) << "</h1><hr>"
+		<< "WebServ/1.0 (Defautl Error Page)</center></body></html>";
+
+	std::string body = ss.str();
+	Response::buildRawResponse(connection, code, MIME::html, body);
 }
 
 void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime_type, const std::string& body)
