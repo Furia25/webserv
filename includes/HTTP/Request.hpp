@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 18:58:21 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 12:46:53 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ public:
 	void	appendToBody(const uint8_t* data, size_t size);
 	void	reserveBody(size_t size);
 	
+	const std::vector<uint8_t>&					getBody()			const;
 	size_t										getBodySize()		const;
 	size_t										isLessThanOneMO()	const;
 	Method										getMethod() 		const;

@@ -77,6 +77,7 @@ SRC_FILES = \
     HTTP/AHandler.cpp \
     HTTP/Handler/StaticHandler.cpp \
 	HTTP/Handler/ErrorHandler.cpp \
+	HTTP/Handler/UploadHandler.cpp \
 	HTTP/Response.cpp \
 	HTTP/FileReader.cpp \
 	HTTP/FileWriter.cpp \

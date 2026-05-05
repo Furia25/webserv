@@ -54,9 +54,9 @@ private:
 				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
 				
 	template <typename T>
-	void	createJob(Connection& connection, const Request& request,
+	void	createJobUpload(Connection& connection, const Request& request,
 	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
-	const std::string& physical_path, HTTPCode status_code, bool isUpload);
+	const std::string& physical_path, bool isUpload, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode code);
 	void	dispatchError(Connection& connection, const Request& request,
@@ -93,9 +93,9 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 }
 
 template <typename T>
-inline void RequestHandler::createJob(Connection& connection, const Request& request,
+inline void RequestHandler::createJobUpload(Connection& connection, const Request& request,
 	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
-	const std::string& physical_path, HTTPCode status_code, bool isUpload)
+	const std::string& physical_path, bool isUpload, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());
 	if (client_data.actual_job != NULL)

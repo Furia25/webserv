@@ -74,7 +74,7 @@ void RequestHandler::launchJob(Connection& connection, ClientData& client)
 			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::UPLOAD :
-			// this->createJob<UploadHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			this->createJobUpload<UploadHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath, client.isStreaming, HTTPCode::OK);
 		break;
 	}
 }

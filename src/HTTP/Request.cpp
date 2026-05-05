@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/04/30 15:53:30 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 12:47:57 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,4 +76,9 @@ const HashMap<std::string, std::string>&    Request::getHeaders() const
 size_t    Request::isLessThanOneMO() const
 {
     return (this->content_length < _IS_ONE_MO_);
+}
+
+const std::vector<uint8_t>& Request::getBody() const
+{
+    return this->body;
 }
