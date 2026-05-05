@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:11:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:33:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,7 +249,8 @@ const TCPServer &Connection::getServer(void) const
 
 size_t Connection::getHash(void) const
 {
-	return Hash<size_t>(this->id);
+	Hash<size_t> hasher;
+	return hasher(this->id);
 }
 
 const char *Connection::getStateString(State state)

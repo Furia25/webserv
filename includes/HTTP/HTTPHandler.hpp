@@ -13,18 +13,20 @@
 # ifndef _HTTPHandler_H
 # define _HTTPHandler_H
 
-# define _temp_file_path_ "/tmp/webserv_upload_"
-
-# include "Server/IHTTPHandler.hpp"
+# include "Server/IRequestHandler.hpp"
 # include "Config/Config.hpp"
+# include "HTTP/HTTPHandler.hpp"
 # include "HTTP/RequestBuilder.hpp"
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
 # include "Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
+# include "Server/IJob.hpp"
 
-class HTTPHandler : public IHTTPHandler
+# define _temp_file_path_ "/tmp/webserv_upload_"
+
+class HTTPHandler : public IRequestHandler
 {
 public:
 	HTTPHandler(const Config::AppConfig& config);
@@ -33,8 +35,11 @@ public:
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
 	void		onError(Connection& connection);
+
+	size_t		getTotalRequests(void) const { return this->totalRequests; };
 protected:
 private:
+	size_t	totalRequests;
 
 	struct ClientData
 	{
@@ -81,14 +86,14 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	}
 	AHandler	*handler = NULL;
 	try {
-		handler = new T(connection, request, host_config, route_config, physical_path, status_code);
+		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code);
 		handler->onCreation();
 		client_data.actual_job = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
-		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
+		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
 		client_data.actual_job = handler;
 	}
 	connection.setJob(handler);
@@ -107,14 +112,14 @@ inline void HTTPHandler::createJobUpload(Connection& connection, const Request& 
 	}
 	AHandler	*handler = NULL;
 	try {
-		handler = new T(connection, request, host_config, route_config, physical_path, status_code, isUpload);
+		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code, isUpload);
 		handler->onCreation();
 		client_data.actual_job = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
-		handler = new ErrorHandler(connection, request, host_config, route_config, physical_path, e.getStatusCode());
+		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
 		client_data.actual_job = handler;
 	}
 	connection.setJob(handler);

@@ -68,7 +68,7 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::STATUS :
-			// this->createJob<StatusHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			this->createJob<StatusHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
 		break;
 		case HandlerType::CGI :
 			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
@@ -186,6 +186,7 @@ void HTTPHandler::onDataReceived(Connection &connection)
 			checkCompletion(connection, client);
 		}
 		connection.consumeReadData(dataSize);
+		this->totalRequests++;
 	}
 	catch (const std::exception &e)
 	{

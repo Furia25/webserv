@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:54:35 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/29 17:11:52 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:31:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,13 +21,14 @@ class ErrorHandler : public AHandler
 {
 public:
 	ErrorHandler(
+		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
 		const Config::ServerConfig& host_config,
 		const Config::RouteConfig& route_config,
 		const std::string& physical_path,
 		HTTPCode status_code = HTTPCode::INTERNAL_SERVER_ERROR)
-	: AHandler(connection, request, host_config, route_config, physical_path, status_code), state(INIT) {}
+	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), state(INIT) {}
 
 	void	onExecute();
 private:

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:30:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,12 +173,12 @@ void TCPServer::clearConnections()
 	this->connections.clear();
 }
 
-void TCPServer::bindHandler(IHTTPHandler &handler)
+void TCPServer::bindHandler(IRequestHandler &handler)
 {
 	this->handler = &handler;
 }
 
-IHTTPHandler& TCPServer::getHandler(void)
+IRequestHandler& TCPServer::getHandler(void)
 {
 	return *this->handler;
 }

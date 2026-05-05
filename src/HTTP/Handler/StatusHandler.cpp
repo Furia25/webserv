@@ -6,10 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:24:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:43:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+# include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Handler/StatusHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "HTTP/HttpTypes.hpp"
@@ -44,9 +45,7 @@ void StatusHandler::onExecute()
 	if (this->statusConfig.request_info)
 	{
 		json << " \"requests\": {\n"
-			<< " \"total\": " << totalHandled << ",\n"
-			<< " \"success\": " << (totalHandled - errors) << ",\n"
-			<< " \"errors\": " << errors << "\n"
+			<< " \"total\": " << this->handler.getTotalRequests() << ",\n"
 			<< " },\n";
 	}
 	if (this->statusConfig.timestamp)
