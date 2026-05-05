@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:43:25 by vdurand          ###   ########.fr       */
+/*   Created: 2026/05/05 18:57:13 by vdurand           #+#    #+#             */
+/*   Updated: 2026/05/05 19:04:49 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,47 +19,65 @@
 
 void StatusHandler::onExecute()
 {
-	const TCPServer&	server	= connection.getServer();
-	time_t				now = time(NULL);
-	
-	std::ostream& os = Logger::getStream();
-	long uptime = (long)(now - server.getStartTime());
+	const TCPServer& server = connection.getServer();
+	std::vector<std::string> sections;
+	std::stringstream ss;
 
-	std::ostringstream json;
-	json << "{\n" << " \"status\": \"ok\",\n";
+	sections.push_back("\"status\": \"ok\"");
+
 	if (this->statusConfig.server_info)
 	{
-		json << " \"server\": {\n"
-			<< " \"name\": \"webserv\",\n"
-			<< " \"version\": \"1.0.0\",\n"
-			<< " \"uptime_seconds\": " << uptime << "\n"
-			<< " },\n";
+		time_t now = time(NULL);
+		long uptime = (long)(now - server.getStartTime());
+		
+		ss.str(""); ss.clear();
+		ss << "\"server\": {\n"
+			<< "	\"name\": \"" << this->hostConfig->name << "\",\n"
+			<< "	\"version\": \"" SERV_VERSION "\",\n"
+			<< "	\"uptime_seconds\": " << uptime << "\n"
+			<< "}";
+		sections.push_back(ss.str());
 	}
+
 	if (this->statusConfig.connection_info)
 	{
-		json << " \"connections\": {\n"
-			<< " \"active\": " << server.getConnectionsCount() << ",\n"
-			<< " \"total_handled\": " << server.getTotalConnections() << "\n"
-			<< " },\n";
+		ss.str(""); ss.clear();
+		ss << "\"connections\": {\n"
+		   << "	\"active\": " << server.getConnectionsCount() << ",\n"
+		   << "	\"total_handled\": " << server.getTotalConnections() << "\n"
+		   << "}";
+		sections.push_back(ss.str());
 	}
+
 	if (this->statusConfig.request_info)
 	{
-		json << " \"requests\": {\n"
-			<< " \"total\": " << this->handler.getTotalRequests() << ",\n"
-			<< " },\n";
+		ss.str(""); ss.clear();
+		ss << "\"requests\": {\n"
+		   << "	\"total\": " << this->handler.getTotalRequests() << "\n"
+		   << "}";
+		sections.push_back(ss.str());
 	}
+
 	if (this->statusConfig.timestamp)
 	{
-		struct tm		datetime;
-		char			timestr[50];
-		struct timeval	tv;
-
-		gettimeofday(&tv, NULL);
-		localtime_r(&tv.tv_sec, &datetime);
+		struct tm datetime;
+		char timestr[50];
+		time_t now = time(NULL);
+		localtime_r(&now, &datetime);
 		std::strftime(timestr, sizeof(timestr), "%Y-%m-%dT%H:%M:%SZ", &datetime);
-		json << " \"timestamp\": \"" << timestr << "\"\n";
+		
+		sections.push_back("\"timestamp\": \"" + std::string(timestr) + "\"");
 	}
-	json << "}";
 
-	Response::buildRawResponse(this->connection, HTTPCode::OK, MIME::json, json.str());
+	std::string json = "{\n";
+	for (size_t i = 0; i < sections.size(); ++i)
+	{
+		json += "  " + sections[i];
+		if (i < sections.size() - 1)
+			json += ",";
+		json += "\n";
+	}
+	json += "}";
+
+	Response::buildRawResponse(this->connection, HTTPCode::OK, MIME::json, json);
 }

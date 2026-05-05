@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:54:35 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:31:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:45:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ private:
 		SEND_DEFAULT_ERROR,
 		FINISHED
 	};
-	State			state;
+	FileReader	fileReader;
+	State		state;
 };
 
 #endif // _ERRORHANDLER_H

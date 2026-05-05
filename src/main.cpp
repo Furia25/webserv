@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 19:03:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
-		std::cout << "error : usage ./webserv [config.toml]" << std::endl;
+		std::cout << "error : usage ./" SERV_NAME " [config.toml]" << std::endl;
 		return EXIT_FAILURE;
 	}
 	try

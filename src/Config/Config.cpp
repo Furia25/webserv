@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:15:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:58:51 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -280,9 +280,9 @@ void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 
 void Config::StatusConfig::loadChild(toml::Variant &table, Config::Loader &loader)
 {
-	loader.value_or<bool>(table, "", this->start_time, false);
-	loader.value_or<bool>(table, "", this->server_info, false);
-	loader.value_or<bool>(table, "", this->connection_info, false);
-	loader.value_or<bool>(table, "", this->request_info, false);
-	loader.value_or<bool>(table, "", this->timestamp, false);
+	loader.value_or<bool>(table, "show_start_time", this->start_time, false);
+	loader.value_or<bool>(table, "show_server_info", this->server_info, false);
+	loader.value_or<bool>(table, "show_connection_info", this->connection_info, false);
+	loader.value_or<bool>(table, "show_request_info", this->request_info, false);
+	loader.value_or<bool>(table, "show_timestamp", this->timestamp, false);
 }

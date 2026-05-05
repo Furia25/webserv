@@ -6,12 +6,15 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 16:09:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 19:02:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CONFIGDEFAULT_H
 # define _CONFIGDEFAULT_H
+
+# define SERV_NAME	"webserv"
+# define SERV_VERSION	"1.0.0"
 
 # define CONFIG_MAX_PATH_SIZE 2048
 

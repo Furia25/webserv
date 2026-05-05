@@ -13,6 +13,7 @@
 # ifndef _HTTPHandler_H
 # define _HTTPHandler_H
 
+# include "Config/ConfigDefault.hpp"
 # include "Server/IRequestHandler.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HTTPHandler.hpp"
@@ -24,7 +25,7 @@
 # include "HTTP/Router.hpp"
 # include "Server/IJob.hpp"
 
-# define _temp_file_path_ "/tmp/webserv_upload_"
+# define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
 
 class HTTPHandler : public IRequestHandler
 {
