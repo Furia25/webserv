@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:29:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 17:30:24 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,34 @@ void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime
 	response += body;
 	
 	connection.sendData(response);
+}
+
+void Response::sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type)
+{
+	std::string headers = buildStatusLine(code);
+	headers += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
+	headers += "Transfer-Encoding: chunked\r\n";
+	headers += "Connection: keep-alive\r\n\r\n";
+    
+	connection.sendData(headers);
+}
+
+void Response::sendChunk(Connection& connection, const std::string& body)
+{
+	if (body.empty()) 
+		return;
+
+	std::stringstream ss;
+	ss << std::hex << body.size();
+
+	std::string chunk = ss.str() + "\r\n" + body + "\r\n";
+	connection.sendData(chunk);
+}
+
+void Response::sendEndChunks(Connection& connection)
+{
+	std::string end = "0\r\n\r\n";
+	connection.sendData(end);
 }
 
 void Response::buildEmptyResponse(Connection& connection, HTTPCode code)

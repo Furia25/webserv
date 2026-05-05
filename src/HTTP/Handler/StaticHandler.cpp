@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:59:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 17:28:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,33 +87,33 @@ void	StaticHandler::handleDelete()
 
 void StaticHandler::handleAutoindex()
 {
-	std::string path = this->request.getPath();
-	std::string body = "<html><head><title>Index of " + path + "</title></head>";
-	body += "<body><h1>Index of " + path + "</h1><hr><ul>";
-
+	std::string	path = this->request.getPath();
 	DIR *dir = opendir(this->physicalPath.c_str());
-	if (dir)
-	{
-		struct dirent *ent;
-		while ((ent = readdir(dir)) != NULL)
-		{
-			std::string name = ent->d_name;
-			if (name == ".")
-				continue;
-
-			std::string sep = (path.empty() || path[path.length() - 1] == '/') ? "" : "/";
-			std::string link = path + sep + name;
-			body += "<li><a href=\"" + link + "\">" + name + "</a></li>";
-		}
-		closedir(dir);
-		body += "</ul><hr></body></html>";
-
-		Response::buildRawResponse(this->connection, HTTPCode::OK, MIME::html, body);
-	}
-	else
-	{
+	if (!dir)
 		throw HTTPException(HTTPCode::FORBIDDEN);
+
+	Response::sendChunkedHeader(this->connection, HTTPCode::OK, MIME::html);
+
+	std::string	headerHtml = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><ul>";
+	Response::sendChunk(this->connection, headerHtml);
+
+	struct dirent *ent;
+	while ((ent = readdir(dir)) != NULL)
+	{
+		std::string name = ent->d_name;
+		if (name == ".") continue;
+
+		std::string sep = (path.empty() || path[path.length() - 1] == '/') ? "" : "/";
+		std::string body = "<li><a href=\"" + path + sep + name + "\">" + name + "</a></li>";
+
+		Response::sendChunk(this->connection, body);
 	}
+	closedir(dir);
+
+	Response::sendChunk(this->connection, "</ul><hr></body></html>");
+	Response::sendEndChunks(this->connection);
+
+	this->setFinished();
 }
 
 void StaticHandler::onExecute()

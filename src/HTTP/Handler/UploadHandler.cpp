@@ -1,6 +1,33 @@
-#include "HTTP/Handler/UploadHandler.hpp"
-#include "HTTP/HttpTypes.hpp"
-#include "Utils/Itoa.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   UploadHandler.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
+/*   Updated: 2026/05/05 17:55:02 by antbonin         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+# include "HTTP/Handler/UploadHandler.hpp"
+# include "HTTP/RequestHandler.hpp"
+# include "HTTP/HttpTypes.hpp"
+# include "Utils/Itoa.hpp"
+# include <stdio.h>
+# include <unistd.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+
+void	UploadHandler::cleanTempFile(const std::string& path)
+{
+	struct stat buffer;
+	if (stat(path.c_str(), &buffer) == 0)
+	{
+		if	(std::remove(path.c_str()) != 0)
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+	}
+}
 
 void UploadHandler::onExecute()
 {
@@ -15,9 +42,12 @@ void UploadHandler::onExecute()
 
 	if (this->isUpload)
 	{
-		std::string tempPath = "tmp/upload_" + itoa(connection.getClientID());
+		std::string tempPath = _temp_file_path_ + itoa(connection.getClientID());
 		if (std::rename(tempPath.c_str(), destination.c_str()) != 0)
+		{
+			cleanTempFile(tempPath);
 			throw HTTPException(HTTPCode::BAD_GATEWAY);
+		}
 	}
 	else
 	{
@@ -26,7 +56,7 @@ void UploadHandler::onExecute()
 		std::ofstream outFile(destination.c_str(), std::ios::binary);
 		if (!outFile)
 			throw HTTPException(HTTPCode::BAD_GATEWAY);
-		
+
 		outFile.write(reinterpret_cast<const char *>(body.data()), body.size());
 		outFile.close();
 	}

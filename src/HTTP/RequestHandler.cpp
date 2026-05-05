@@ -153,7 +153,7 @@ void RequestHandler::onDataReceived(Connection &connection)
 						if (!client.fileWriter) client.fileWriter = new FileWriter();
 						{
 							std::stringstream ss;
-							ss << "tmp/upload_" << id;
+							ss << _temp_file_path_ << id;
 							client.fileWriter->open(ss.str());
 						}
 
