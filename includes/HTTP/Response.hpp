@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 17:57:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 17:31:48 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,12 @@ public:
     static void buildEmptyResponse(Connection& connection, HTTPCode code);
     
     static void buildFileHeaderResponse(Connection& connection, HTTPCode code, MIME mime_type, size_t fileSize);
+    
+    static void sendEndChunks(Connection& connection);
+    
+    static void sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type);
+
+    static void sendChunk(Connection& connection, const std::string& body);
     
     static void sendBodyChunk(Connection& connection, const uint8_t* data, size_t len);
 };

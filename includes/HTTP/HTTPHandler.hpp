@@ -13,6 +13,8 @@
 # ifndef _RequestHandler_H
 # define _RequestHandler_H
 
+# define _temp_file_path_ "/tmp/webserv_upload_"
+
 # include "Server/IRequestHandler.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/RequestBuilder.hpp"

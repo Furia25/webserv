@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/04 17:34:27 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 16:24:22 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ public:
 	: AHandler(connection, request, host_config, route_config, physical_path, status_code),
 	uploadConfig(static_cast<const Config::UploadConfig&>(route_config)), isUpload(upload) {};
 
+	void	cleanTempFile(const std::string& path);
 	void	onExecute();
 private:
 	const Config::UploadConfig&	uploadConfig;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:25:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 16:32:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ void ErrorHandler::onExecute()
 			std::string errorFile = hostConfig->error_fallbacks.at(statusCode);
 			physicalPath = hostConfig->root + "/" + errorFile;
 		}
-
 		if (!physicalPath.empty() && FileSystem::exists(physicalPath) && FileSystem::isFile(physicalPath))
 			this->state = SEND_HEADERS;
 		else
