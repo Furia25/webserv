@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/31 10:58:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:06:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 	}
 	if (events & EPOLLIN)
 	{
-		while (server.actual_connections < MAX_CLIENTS)
+		while (server.actualConnections < MAX_CLIENTS)
 		{
 			Connection *client_connection = NULL;
 			try {

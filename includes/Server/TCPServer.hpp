@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 16:24:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:21:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,10 @@ public:
 	void				bindHandler(IRequestHandler& handler);
 	IRequestHandler&	getHandler(void);
 
+	time_t				getStartTime(void) const { return this->startTime; };
+	size_t				getTotalConnections(void) const { return Connection::last_id; };
+	size_t				getConnectionsCount(void) const { return this->actualConnections; };
+
 	static void			tickCallback(void *instance);
 
 	static	HashedTimingWheel<EPOLL_TIMEOUT> AlarmManager;
@@ -72,12 +76,13 @@ protected:
 	void	clearListeners();
 	void	clearConnections();
 private:
-	size_t						actual_connections;
+	time_t						startTime;
+	size_t						actualConnections;
 	int							epoll_fd;
 	IRequestHandler				*handler;
 	std::vector<Listener*>		listeners;
 	HashMap<int, Connection*>	connections;
-	std::vector<Connection *>	deletable_connections;
+	std::vector<Connection *>	deletableConnections;
 
 	const Config::EngineConfig&			engineConfig;
 

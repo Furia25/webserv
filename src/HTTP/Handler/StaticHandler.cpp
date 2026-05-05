@@ -6,11 +6,10 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:59:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 14:51:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/Handler/StaticHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/FileSystem.hpp"
@@ -22,9 +21,9 @@ void StaticHandler::onCreation()
 	if (FileSystem::isDirectory(physicalPath))
 	{
 		std::string separator = (physicalPath.empty() || physicalPath[physicalPath.length() - 1] == '/') ? "" : "/";
-		std::string index_file = physicalPath + separator + this->staticConfig->index;
+		std::string index_file = physicalPath + separator + this->staticConfig.index;
 
-		if (!this->staticConfig->index.empty() && FileSystem::exists(index_file))
+		if (!this->staticConfig.index.empty() && FileSystem::exists(index_file))
 			this->physicalPath = index_file;
 	}
 	switch (this->request.getMethod())
@@ -34,7 +33,7 @@ void StaticHandler::onCreation()
 	{
 		if (FileSystem::isDirectory(physicalPath))
 		{
-			if (!this->staticConfig->autoindex)
+			if (!this->staticConfig.autoindex)
 				throw HTTPException(HTTPCode::FORBIDDEN); // 403
 		}
 		else 
@@ -58,15 +57,8 @@ void StaticHandler::onCreation()
 	}
 }
 
-StaticHandler::~StaticHandler() {
-	if (this->routeConfig)
-		const_cast<Config::RouteConfig*>(this->routeConfig)->ref_count--;
-}
-
 void	StaticHandler::handleDelete()
 {
-	if (this->routeConfig)
-		const_cast<Config::RouteConfig*>(this->routeConfig)->ref_count--;
 	if (!FileSystem::exists(physicalPath))
 		throw HTTPException(HTTPCode::NOT_FOUND);
 	else if (FileSystem::isDirectory(physicalPath))
@@ -128,7 +120,7 @@ void StaticHandler::onExecute()
 			state = FINISHED;
 			break;
 		}
-		if (FileSystem::isDirectory(this->physicalPath) && this->staticConfig->autoindex)
+		if (FileSystem::isDirectory(this->physicalPath) && this->staticConfig.autoindex)
 		{
 			state = SEND_AUTOINDEX;
 			break;

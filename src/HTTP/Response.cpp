@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:29:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 14:38:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,6 @@ void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime
 	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
 	response += "Content-Length: " + itoa(body.size()) + "\r\n";
 	response += "Connection: close\r\n\r\n";
-	/*Ca c'est chaud on peux pas faire une response comme ca ducoup avec le body direct faut renvoyer petit a petit*/
-	/*Normalement je l'appele pas buildrawresponse pour envoyer un gros body seulement sur des petits truc*/
 	response += body;
 	
 	connection.sendData(response);

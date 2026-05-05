@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MIME.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/29 17:03:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:00:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,39 +90,40 @@
 # define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
 ENUM_CLASS(MIME, MIME_TYPE, X, ENUM_LITERALS(MIME_TYPE, X, X_STRING);
 public:
-	static MIME	from_extension(const char *str)
+	static MIME from_extension(const char *str)
 	{
-		std::string ext = str;
-		if (!ext.empty() && ext[0] == '.')
-			ext = ext.substr(1);
-		if (ext == "html" || ext == "htm") 
-			return MIME::html;
-		if (ext == "css")
-			return MIME::css;
-		if (ext == "js")
-			return MIME::js;
-		if (ext == "png")
-			return MIME::png;
-		if (ext == "jpg" || ext == "jpeg")
-			return MIME::jpeg;
-		if (ext == "gif")
-			return MIME::gif;
-		if (ext == "ico")
-			return MIME::ico;
-		if (ext == "json")
-			return MIME::json;
-		if (ext == "txt")
-			return MIME::txt;
-		if (ext == "pdf")
-			return MIME::pdf;
+		if (str == NULL)
+			ENUM_CLASS_STRING_ERROR("NULL");
 
+		size_t				start = (str[0] == '.') ? 1 : 0;
+		const char*			key = str + start;
+		static RadixTree<E>	ext_tree;
+		static bool			ext_init = false;
+
+		if (!ext_init)
+		{
+			#define _ENUM_CLASS_EXT_INSERT(el, ...) ext_tree.insert(M_STR(X(el)), X(el));
+			M_TUPLE_FOREACH(MIME_TYPE, _ENUM_CLASS_EXT_INSERT)
+
+			ext_init = true;
+		}
+		RadixTree<E>::const_iterator it = ext_tree.find(key);
+		if (it != ext_tree.end())
+			return it->second;
 		return MIME::bin;
 	}
-	static MIME	from_extension(const std::string& str) { return MIME::from_extension(str.c_str()); }
+
+	static MIME from_extension(const std::string& str)
+	{
+		if (str.empty())
+			return MIME(MIME::bin);
+		return from_extension(str.c_str());
+	}
 );
 # undef X
 # undef X_STRING
 # undef MIME_TYPE
+#undef _ENUM_CLASS_EXT_INSERT
 
 
 #endif // _MIME_H

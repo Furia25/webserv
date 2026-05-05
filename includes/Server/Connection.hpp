@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 16:21:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:05:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,12 +56,15 @@ public:
 	void			compactReadBuffer();
 	void			compactWriteBuffer();
 
-	void			setJob(IJob* job);
-	size_t			getClientID(void)	const;
-	Socket&			getSocket(void);
-	const Socket&	getSocket(void) const;
-	State			getState(void) const;
-	const Address&	getAddress(void) const;
+	void				setJob(IJob* job);
+	size_t				getClientID(void)	const;
+	Socket&				getSocket(void);
+	const Socket&		getSocket(void) const;
+	State				getState(void) const;
+	const Address&		getAddress(void) const;
+	TCPServer&			getServer(void);
+	const TCPServer&	getServer(void) const;
+	size_t				getHash(void) const;
 
 	void						consumeReadData(size_t n);
 	const uint8_t				*getReadBufferPtr() const;

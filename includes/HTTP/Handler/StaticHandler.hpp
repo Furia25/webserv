@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:43:47 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 14:48:03 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:22:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,12 +31,9 @@ public:
 		const std::string& physical_path,
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(connection, request, host_config, route_config, physical_path, status_code), state(INIT),
-	staticConfig(&static_cast<const Config::StaticConfig&>(route_config)) {
-		if (this->routeConfig)
-        const_cast<Config::RouteConfig*>(this->routeConfig)->ref_count++;
-	};
+	staticConfig(static_cast<const Config::StaticConfig&>(route_config)) {};
 
-	virtual ~StaticHandler();
+	virtual	~StaticHandler() {};
 	void	onExecute();
 	void	onCreation();
 private:
@@ -49,8 +46,9 @@ private:
 		SEND_AUTOINDEX,
 		FINISHED
 	};
+	FileReader					fileReader;
 	State						state;
-	const Config::StaticConfig*	staticConfig;
+	const Config::StaticConfig&	staticConfig;
 
 	void	handleAutoindex();
 	void	handleDelete();

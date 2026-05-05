@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/26 19:23:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:12:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,8 @@ struct RouteConfig
 	std::string	alias;
 
 	const ServerConfig	*server_config;
-	int			ref_count;
 
-	RouteConfig(const ServerConfig *server_config) : server_config(server_config), ref_count(0) {};
+	RouteConfig(const ServerConfig *server_config) : server_config(server_config) {};
 	virtual ~RouteConfig() {};
 
 	virtual void		loadChild(toml::Variant& table, Config::Loader& loader) = 0;
@@ -105,9 +104,15 @@ struct CGIConfig : public RouteConfig
 
 struct StatusConfig : public RouteConfig
 {
+	bool	start_time;
+	bool	server_info;
+	bool	connection_info;
+	bool	request_info;
+	bool	timestamp;
+
 	StatusConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
-	void	loadChild(toml::Variant& table, Config::Loader& loader) {(void) table; (void) loader;};
+	void	loadChild(toml::Variant& table, Config::Loader& loader);
 
 	~StatusConfig() {};
 };

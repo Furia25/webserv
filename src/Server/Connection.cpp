@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/29 17:55:34 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:11:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -235,6 +235,21 @@ Connection::State Connection::getState(void) const
 const Address &Connection::getAddress(void) const
 {
 	return (this->client_socket.getAddress());
+}
+
+TCPServer& Connection::getServer(void)
+{
+	return this->server;
+}
+
+const TCPServer &Connection::getServer(void) const
+{
+	return this->server;
+}
+
+size_t Connection::getHash(void) const
+{
+	return Hash<size_t>(this->id);
 }
 
 const char *Connection::getStateString(State state)

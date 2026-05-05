@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:41:18 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 13:30:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 17:54:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,5 @@
 ENUM_CLASS(HeaderParam, _HEADER_PARAM, X, ENUM_LITERALS(_HEADER_PARAM, X, X_STRING););
 # undef X
 # undef X_STRING
-
 
 #endif // _HEADERPARAM_H

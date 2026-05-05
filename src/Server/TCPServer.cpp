@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:29:22 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:06:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ static void signal_handler(int signum)
 
 TCPServer::TCPServer(const Config::EngineConfig& engine_config) : engineConfig(engine_config)
 {
-	this->actual_connections = 0;
+	this->actualConnections = 0;
 	this->epoll_fd = ::epoll_create(100);
 	if (this->epoll_fd == -1)
 		throw std::runtime_error("Unable to init epoll :" + std::string(strerror(errno)));
@@ -84,9 +84,9 @@ void TCPServer::openListener(const char *host, const char *service)
 
 void TCPServer::cleanConnections(void)
 {
-	for (std::vector<Connection *>::iterator it = this->deletable_connections.begin(); it != this->deletable_connections.end(); ++it)
+	for (std::vector<Connection *>::iterator it = this->deletableConnections.begin(); it != this->deletableConnections.end(); ++it)
 		delete *it;
-	this->deletable_connections.clear();
+	this->deletableConnections.clear();
 }
 
 void TCPServer::registerConnection(Connection *connection)
@@ -94,7 +94,7 @@ void TCPServer::registerConnection(Connection *connection)
 	this->connections.insert(connection->getSocket().getFd(), connection);
 	this->handler->onConnection(*connection);
 	this->addPollEvent(*connection, CONNECTION_EVENTS);
-	this->actual_connections++;
+	this->actualConnections++;
 }
 
 void TCPServer::dropConnection(Connection *connection)
@@ -102,9 +102,9 @@ void TCPServer::dropConnection(Connection *connection)
 	this->connections.erase(connection->getSocket().getFd());
 	this->handler->onDisconnection(*connection);
 	this->removePollEvent(*connection);
-	this->deletable_connections.push_back(connection);
+	this->deletableConnections.push_back(connection);
 	Logger::INFO() << "Connection dropped: Client " << connection->getSocket().getAddress();
-	this->actual_connections--;
+	this->actualConnections--;
 }
 
 /*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER

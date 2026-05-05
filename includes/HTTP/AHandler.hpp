@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 16:09:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:25:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ public:
 	bool	isFinished() const { return this->finished; };
 
 protected:
-	AHandler(Connection& connection,
+	AHandler(
+		Connection& connection,
 		const Request& request,
 		const Config::ServerConfig& host_config,
 		const Config::RouteConfig& route_config,
@@ -48,7 +49,7 @@ protected:
 			finished(false),
 			statusCode(status_code) {};
 
-	FileReader						fileReader;
+	const
 	bool							fileHeaderSent;
 	Connection&						connection;
 	const Request					request;
@@ -59,7 +60,6 @@ protected:
 	HTTPCode						statusCode;
 
 private:
-	/*void	handleError();*/
 	void	initError();
 };
 
