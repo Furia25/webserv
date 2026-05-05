@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 17:55:02 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Handler/UploadHandler.hpp"
-# include "HTTP/RequestHandler.hpp"
+# include "HTTP/HTTPHandler.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/Itoa.hpp"
 # include <stdio.h>

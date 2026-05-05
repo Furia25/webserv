@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RequestHandler.cpp                             :+:      :+:    :+:   */
+/*   HTTPHandler.cpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -18,17 +18,17 @@
 # include "HTTP/Handler/StatusHandler.hpp"
 # include "HTTP/Handler/UploadHandler.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "HTTP/RequestHandler.hpp"
+# include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"
 # include "Utils/Itoa.hpp"
 
-RequestHandler::RequestHandler(const Config::AppConfig &config)
+HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 	: config(config)
 {
 }
 
-RequestHandler::~RequestHandler()
+HTTPHandler::~HTTPHandler()
 {
 	for (HashMap<size_t,
 			ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
@@ -38,12 +38,12 @@ RequestHandler::~RequestHandler()
 	}
 }
 
-void RequestHandler::dispatchError(Connection &connection, HTTPCode code)
+void HTTPHandler::dispatchError(Connection &connection, HTTPCode code)
 {
 	Response::buildErrorResponse(connection, code);
 }
 
-void RequestHandler::dispatchError(Connection &connection,
+void HTTPHandler::dispatchError(Connection &connection,
 		const Request &request, const Config::ServerConfig &host_config,
 		const Config::RouteConfig &route_config, HTTPCode error_code)
 {
@@ -51,11 +51,11 @@ void RequestHandler::dispatchError(Connection &connection,
 			route_config, "", error_code);
 }
 
-void RequestHandler::launchJob(Connection& connection, ClientData& client)
+void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 {
 	if (!client.request)
 	{
-		Logger::ERROR() << "No request to create the job At RequestHandler.";
+		Logger::ERROR() << "No request to create the job At HTTPHandler.";
 		return;
 	}
 	std::cout << HandlerType::toString(client.routeRes.route->handler) << std::endl;
@@ -79,7 +79,7 @@ void RequestHandler::launchJob(Connection& connection, ClientData& client)
 	}
 }
 
-void	RequestHandler::checkCompletion(Connection &connection, ClientData &client) 
+void	HTTPHandler::checkCompletion(Connection &connection, ClientData &client) 
 {
 	if (!client.request)
 		return;
@@ -112,7 +112,7 @@ void	RequestHandler::checkCompletion(Connection &connection, ClientData &client)
 		client.isStreaming = false; 
 	}
 }
-void RequestHandler::onDataReceived(Connection &connection)
+void HTTPHandler::onDataReceived(Connection &connection)
 {
 	size_t	id = connection.getClientID();
 	size_t	dataSize = connection.getReadBufferSize();
@@ -194,12 +194,12 @@ void RequestHandler::onDataReceived(Connection &connection)
 	}
 }
 
-void RequestHandler::onConnection(Connection &connection)
+void HTTPHandler::onConnection(Connection &connection)
 {
 	this->clientsData.insert(connection.getClientID(), ClientData());
 }
 
-void RequestHandler::onDisconnection(Connection &connection)
+void HTTPHandler::onDisconnection(Connection &connection)
 {
 	HashMap<size_t, ClientData>::iterator it = this->clientsData.find(connection.getClientID());
 
@@ -225,7 +225,7 @@ void RequestHandler::onDisconnection(Connection &connection)
 	}
 }
 
-void RequestHandler::onError(Connection &connection)
+void HTTPHandler::onError(Connection &connection)
 {
 	Logger::ERROR() << "Connection:" << connection << " errored";
 }

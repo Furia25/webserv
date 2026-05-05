@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:21:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@
 # include "Server/Address.hpp"
 # include "Server/AddressResolver.hpp"
 # include "Server/Socket.hpp"
-# include "Server/IRequestHandler.hpp"
+# include "Server/IHTTPHandler.hpp"
 # include "Server/Listener.hpp"
 # include "Server/Connection.hpp"
 # include "Logger.hpp"
@@ -59,8 +59,8 @@ public:
 
 	void				cleanConnections(void);
 
-	void				bindHandler(IRequestHandler& handler);
-	IRequestHandler&	getHandler(void);
+	void				bindHandler(IHTTPHandler& handler);
+	IHTTPHandler&	getHandler(void);
 
 	time_t				getStartTime(void) const { return this->startTime; };
 	size_t				getTotalConnections(void) const { return Connection::last_id; };
@@ -79,7 +79,7 @@ private:
 	time_t						startTime;
 	size_t						actualConnections;
 	int							epoll_fd;
-	IRequestHandler				*handler;
+	IHTTPHandler				*handler;
 	std::vector<Listener*>		listeners;
 	HashMap<int, Connection*>	connections;
 	std::vector<Connection *>	deletableConnections;

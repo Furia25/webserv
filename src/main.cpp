@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/26 19:54:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 #include "HeaderParam.hpp"
 #include "Logger.hpp"
 #include "HTTP/HttpTypes.hpp"
-#include "HTTP/RequestHandler.hpp"
+#include "HTTP/HTTPHandler.hpp"
 
 int main(int argc, char **argv)
 {
@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 	{
 		Config::AppConfig	my_config(argv[1]);
 		TCPServer			server(my_config.engineConfig);
-		RequestHandler		testHandler(my_config);
+		HTTPHandler		testHandler(my_config);
 
 		Logger::setDefaultStream(std::cout);
 		Logger::setTickInterval(5);

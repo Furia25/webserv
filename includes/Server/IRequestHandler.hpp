@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   IRequestHandler.hpp                                :+:      :+:    :+:   */
+/*   IHTTPHandler.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -11,15 +11,15 @@
 /* ************************************************************************** */
 
 
-#ifndef _IREQUESTHANDLER_H
-# define _IREQUESTHANDLER_H
+#ifndef _IHTTPHandler_H
+# define _IHTTPHandler_H
 
 # include <vector>
 # include <stdint.h>
 
 # include "Connection.hpp"
 
-class IRequestHandler
+class IHTTPHandler
 {
 public:
 	virtual void	onDataReceived(Connection& connection) = 0;
@@ -28,4 +28,4 @@ public:
 	virtual void	onError(Connection& connection) = 0;
 };
 
-#endif // _IREQUESTHANDLER_H
+#endif // _IHTTPHandler_H

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:25:26 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 18:27:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ public:
 
 protected:
 	AHandler(
+		HTTP
 		Connection& connection,
 		const Request& request,
 		const Config::ServerConfig& host_config,

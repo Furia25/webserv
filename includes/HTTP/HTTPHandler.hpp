@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RequestHandler.hpp                             :+:      :+:    :+:   */
+/*   HTTPHandler.hpp                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,12 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# ifndef _RequestHandler_H
-# define _RequestHandler_H
+# ifndef _HTTPHandler_H
+# define _HTTPHandler_H
 
 # define _temp_file_path_ "/tmp/webserv_upload_"
 
-# include "Server/IRequestHandler.hpp"
+# include "Server/IHTTPHandler.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/RequestBuilder.hpp"
 # include "HTTP/Router.hpp"
@@ -24,11 +24,11 @@
 # include "Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
 
-class RequestHandler : public IRequestHandler
+class HTTPHandler : public IHTTPHandler
 {
 public:
-	RequestHandler(const Config::AppConfig& config);
-	~RequestHandler();
+	HTTPHandler(const Config::AppConfig& config);
+	~HTTPHandler();
 	void		onDataReceived(Connection& connection);
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
@@ -69,7 +69,7 @@ private:
 };
 
 template <typename T>
-inline void RequestHandler::createJob(Connection& connection, const Request& request,
+inline void HTTPHandler::createJob(Connection& connection, const Request& request,
 	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
 	const std::string& physical_path, HTTPCode status_code)
 {
@@ -95,7 +95,7 @@ inline void RequestHandler::createJob(Connection& connection, const Request& req
 }
 
 template <typename T>
-inline void RequestHandler::createJobUpload(Connection& connection, const Request& request,
+inline void HTTPHandler::createJobUpload(Connection& connection, const Request& request,
 	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
 	const std::string& physical_path, bool isUpload, HTTPCode status_code)
 {
@@ -120,4 +120,4 @@ inline void RequestHandler::createJobUpload(Connection& connection, const Reques
 	connection.setJob(handler);
 }
 
-#endif // _RequestHandler_H
+#endif // _HTTPHandler_H
