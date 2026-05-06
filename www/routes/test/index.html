@@ -32,7 +32,6 @@
 			overflow-x: hidden;
 		}
 
-		/* ─── FULLSCREEN TERMINAL HERO ─── */
 		.terminal-hero {
 			width: 100%;
 			max-width: 860px;
@@ -70,6 +69,19 @@
 			letter-spacing: 0.05em;
 		}
 
+		.t-status {
+			font-size: 0.65rem;
+			padding: 0.15rem 0.5rem;
+			border-radius: 4px;
+			background: rgba(0,255,100,0.1);
+			color: var(--green);
+			border: 1px solid rgba(0,255,100,0.2);
+			letter-spacing: 0.05em;
+			transition: all 0.3s;
+		}
+		.t-status.err { background: rgba(255,95,87,0.1); color: var(--red); border-color: rgba(255,95,87,0.2); }
+		.t-status.poll { background: rgba(93,184,254,0.1); color: var(--blue); border-color: rgba(93,184,254,0.2); }
+
 		.t-body {
 			padding: 1.2rem 1.4rem 1.4rem;
 			font-size: 0.82rem;
@@ -99,12 +111,14 @@
 		.tag.post   { color: var(--yellow); }
 		.tag.delete { color: var(--red); }
 		.tag.sys    { color: var(--purple); }
+		.tag.poll   { color: var(--blue); }
 
 		.hi-green  { color: var(--green); }
 		.hi-yellow { color: var(--yellow); }
 		.hi-red    { color: var(--red); }
 		.hi-blue   { color: var(--blue); }
 		.hi-purple { color: var(--purple); }
+		.hi-dim    { color: #555; }
 
 		.cursor {
 			display: inline-block;
@@ -131,7 +145,6 @@
 			transition: width 0.08s linear;
 		}
 
-		/* ─── HERO TEXT ─── */
 		.hero {
 			text-align: center;
 			margin-bottom: 2.5rem;
@@ -177,7 +190,6 @@
 
 		.subtitle { font-size: 0.9rem; color: var(--dim); }
 
-		/* ─── GRID ─── */
 		.grid {
 			display: grid;
 			grid-template-columns: 1fr 1fr;
@@ -261,12 +273,16 @@
 			border-radius: 8px;
 			padding: 0.9rem 0.8rem;
 			text-align: center;
+			transition: border-color 0.3s;
 		}
+		.stat.flash { border-color: rgba(0,255,100,0.4); }
+
 		.stat-val {
 			font-size: 1.3rem;
 			font-weight: bold;
 			color: var(--green);
 			margin-bottom: 0.15rem;
+			transition: color 0.3s;
 		}
 		.stat-val.warn  { color: var(--yellow); }
 		.stat-val.err   { color: var(--red);    }
@@ -309,6 +325,7 @@
 		<div class="t-dot y"></div>
 		<div class="t-dot g"></div>
 		<span class="t-title">webserv — zsh — 220×52</span>
+		<span class="t-status" id="pollBadge">● LIVE</span>
 	</div>
 	<div class="t-body" id="termBody"></div>
 </div>
@@ -334,35 +351,35 @@
 	</div>
 
 	<div class="panel">
-		<p class="panel-title">📊 Live stats</p>
+		<p class="panel-title">📊 Live stats  <span id="lastPoll" style="color:#2a2a2a;font-size:0.6rem;margin-left:0.5rem"></span></p>
 		<div class="stats-grid">
 			<div class="stat">
-				<div class="stat-val" id="sReq">1</div>
+				<div class="stat-val" id="sReq">—</div>
 				<div class="stat-label">Requests</div>
 			</div>
 			<div class="stat">
-				<div class="stat-val" id="sUptime">0s</div>
+				<div class="stat-val" id="sUptime">—</div>
 				<div class="stat-label">Uptime</div>
 			</div>
 			<div class="stat">
-				<div class="stat-val blue">8080</div>
+				<div class="stat-val blue" id="sPort">—</div>
 				<div class="stat-label">Port</div>
 			</div>
 			<div class="stat">
-				<div class="stat-val" id="s200">1</div>
-				<div class="stat-label">200 OK</div>
+				<div class="stat-val" id="sActive">—</div>
+				<div class="stat-label">Active conn.</div>
 			</div>
 			<div class="stat">
-				<div class="stat-val warn" id="s404">0</div>
-				<div class="stat-label">404</div>
+				<div class="stat-val warn" id="sTotal">—</div>
+				<div class="stat-label">Total conn.</div>
 			</div>
 			<div class="stat">
-				<div class="stat-val err" id="s500">0</div>
-				<div class="stat-label">500</div>
+				<div class="stat-val" id="sStatus">—</div>
+				<div class="stat-label">Status</div>
 			</div>
 			<div class="stat" style="grid-column:span 2">
-				<div class="stat-val blue">C++98</div>
-				<div class="stat-label">Built with pain &amp; caffeine</div>
+				<div class="stat-val blue" id="sName">—</div>
+				<div class="stat-label">Server · version</div>
 			</div>
 		</div>
 	</div>
@@ -383,6 +400,9 @@
 		div.className = 'ln' + (instant ? '' : ' hidden');
 		div.innerHTML = `<span class="ts">${ts()}</span><span class="tag ${tagClass}">[${tag}]</span><span class="msg">${msg}</span>`;
 		body.appendChild(div);
+		// keep max 200 lines
+		const lines = body.querySelectorAll('.ln');
+		if(lines.length > 200) lines[0].remove();
 		body.scrollTop = body.scrollHeight;
 		return div;
 	}
@@ -421,26 +441,20 @@
 		});
 	}
 
+	// ── BOOT SEQUENCE ──────────────────────────────────────────────────────────
+
 	const bootScript = [
-		{ tag:'SYS',  cls:'sys',  msg:'<span class="hi-purple">webserv</span> v0.1.0  —  starting up...' },
-		{ tag:'SYS',  cls:'sys',  msg:'PID <span class="hi-blue">42137</span>   UID <span class="hi-blue">1000</span>   host <span class="hi-green">localhost</span>' },
+		{ tag:'SYS',  cls:'sys',  msg:'<span class="hi-purple">webserv</span>  —  starting up...' },
 		{ tag:'INFO', cls:'info', msg:'Reading config → <span class="hi-green">webserv.conf</span>' },
 		{ tag:'INFO', cls:'info', msg:'Config OK — <span class="hi-green">0 errors</span>, <span class="hi-yellow">2 warnings</span>' },
 		{ tag:'WARN', cls:'warn', msg:'autoindex ON for /files/  —  directory listing exposed' },
 		{ tag:'WARN', cls:'warn', msg:'No SSL configured  —  running plain HTTP (good luck in prod)' },
 		{ tag:'__PROGRESS__', label:'Loading modules...' },
-		{ tag:'INFO', cls:'info', msg:'Virtual hosts registered:' },
-		{ tag:'OK',   cls:'ok',   msg:'  <span class="hi-green">✓</span>  <span class="hi-blue">localhost:8080</span>          root /var/www/html' },
-		{ tag:'OK',   cls:'ok',   msg:'  <span class="hi-green">✓</span>  <span class="hi-blue">example.com:8080</span>        root /var/www/example' },
-		{ tag:'OK',   cls:'ok',   msg:'  <span class="hi-green">✓</span>  <span class="hi-blue">api.example.com:8080</span>    root /var/www/api' },
-		{ tag:'INFO', cls:'info', msg:'Routes: GET /  GET /static  POST /upload  DELETE /files' },
-		{ tag:'INFO', cls:'info', msg:'Max body: <span class="hi-yellow">10 MB</span>   Timeout: <span class="hi-yellow">30s</span>   Workers: <span class="hi-blue">1</span>  (we\'re not nginx)' },
 		{ tag:'INFO', cls:'info', msg:'epoll_create1()  →  fd <span class="hi-blue">7</span>' },
-		{ tag:'INFO', cls:'info', msg:'socket() bind() listen() on <span class="hi-green">0.0.0.0:8080</span>  →  fd <span class="hi-blue">3</span>' },
+		{ tag:'INFO', cls:'info', msg:'socket() bind() listen()  →  fd <span class="hi-blue">3</span>' },
 		{ tag:'__PROGRESS__', label:'Warming up event loop...' },
-		{ tag:'SYS',  cls:'sys',  msg:'Event loop running. Waiting for connections...' },
+		{ tag:'SYS',  cls:'sys',  msg:'Event loop running. Fetching <span class="hi-green">/status</span> every <span class="hi-blue">3s</span>...' },
 		{ tag:'SYS',  cls:'sys',  msg:'──────────────────────────────────────────────────────────────' },
-		{ tag:'GET',  cls:'get',  msg:'<span class="hi-blue">127.0.0.1</span>   <span class="hi-green">GET</span>  /index.html   <span class="hi-green">200</span>   2ms   1.4KB' },
 	];
 
 	async function runBoot(){
@@ -453,66 +467,167 @@
 			await reveal(div, 90 + rnd(0,70));
 		}
 		mkCursorLine();
-		startLiveLog();
+		startPolling();
 	}
 
-	const methods  = [{m:'GET',c:'get',w:65},{m:'POST',c:'post',w:25},{m:'DELETE',c:'delete',w:10}];
-	const routes   = ['/index.html','/','/static/main.css','/static/app.js','/upload','/files/notes.txt','/favicon.ico','/api/ping','/api/status','/not-found'];
-	const statuses = [{s:'200',col:'hi-green',w:65},{s:'404',col:'hi-yellow',w:18},{s:'500',col:'hi-red',w:5},{s:'201',col:'hi-green',w:7},{s:'304',col:'hi-blue',w:5}];
-	const ips      = ['127.0.0.1','192.168.1.42','10.0.0.7','::1','172.16.0.3'];
+	// ── STATUS POLLING ─────────────────────────────────────────────────────────
 
+	let prevData = null;
+	let pollCount = 0;
+	const POLL_INTERVAL = 3000;
+	const STATUS_URL = '/status';
+
+	function fmtUptime(s){
+		if(s < 60)   return s + 's';
+		if(s < 3600) return Math.floor(s/60) + 'm' + String(s%60).padStart(2,'0') + 's';
+		return Math.floor(s/3600) + 'h' + String(Math.floor((s%3600)/60)).padStart(2,'0') + 'm';
+	}
+
+	function flashStat(id){
+		const el = document.getElementById(id);
+		if(!el) return;
+		const parent = el.closest('.stat');
+		if(parent){
+			parent.classList.add('flash');
+			setTimeout(()=> parent.classList.remove('flash'), 600);
+		}
+	}
+
+	function updateStats(d){
+		const up   = d.server?.uptime_seconds ?? 0;
+		const req  = d.requests?.total ?? 0;
+		const act  = d.connections?.active ?? 0;
+		const tot  = d.connections?.total_handled ?? 0;
+		const name = d.server?.name ?? '?';
+		const ver  = d.server?.version ?? '?';
+		const stat = d.status ?? '?';
+
+		// detect changes and flash
+		if(prevData){
+			if((prevData.requests?.total) !== req) flashStat('sReq');
+			if((prevData.connections?.active) !== act) flashStat('sActive');
+			if((prevData.connections?.total_handled) !== tot) flashStat('sTotal');
+		}
+
+		document.getElementById('sReq').textContent    = req;
+		document.getElementById('sUptime').textContent = fmtUptime(up);
+		document.getElementById('sActive').textContent = act;
+		document.getElementById('sTotal').textContent  = tot;
+		document.getElementById('sName').textContent   = name + ' v' + ver;
+		document.getElementById('sPort').textContent   = '8080';
+
+		const sEl = document.getElementById('sStatus');
+		sEl.textContent = stat;
+		sEl.className   = 'stat-val' + (stat === 'ok' ? '' : ' err');
+
+		document.getElementById('lastPoll').textContent = 'last poll ' + ts();
+	}
+
+	function logStatusLine(d, latencyMs){
+		const up  = d.server?.uptime_seconds ?? 0;
+		const req = d.requests?.total ?? 0;
+		const act = d.connections?.active ?? 0;
+		const tot = d.connections?.total_handled ?? 0;
+		const stat = d.status ?? '?';
+		const statCol = stat === 'ok' ? 'hi-green' : 'hi-red';
+		const prev = prevData;
+
+		// diff labels
+		const reqDiff = prev ? (req - (prev.requests?.total ?? 0)) : 0;
+		const totDiff = prev ? (tot - (prev.connections?.total_handled ?? 0)) : 0;
+		const reqTag  = reqDiff > 0 ? ` <span class="hi-yellow">(+${reqDiff})</span>` : '';
+		const totTag  = totDiff > 0 ? ` <span class="hi-yellow">(+${totDiff})</span>` : '';
+
+		const msg =
+			`<span class="${statCol}">${stat}</span>  ` +
+			`up <span class="hi-blue">${fmtUptime(up)}</span>  ` +
+			`req <span class="hi-green">${req}</span>${reqTag}  ` +
+			`conn active <span class="hi-purple">${act}</span>  ` +
+			`handled <span class="hi-dim">${tot}</span>${totTag}  ` +
+			`<span class="hi-dim">${latencyMs}ms</span>`;
+
+		mkLine('POLL', 'poll', msg, true);
+		mkCursorLine();
+	}
+
+	function logPollError(err){
+		const badge = document.getElementById('pollBadge');
+		badge.className = 't-status err';
+		badge.textContent = '● ERR';
+		mkLine('ERR', 'err', `<span class="hi-red">GET /status failed</span>  —  ${err}`, true);
+		mkCursorLine();
+	}
+
+	async function pollStatus(){
+		const badge = document.getElementById('pollBadge');
+		badge.className = 't-status poll';
+		badge.textContent = '↻ POLL';
+
+		const t0 = Date.now();
+		try {
+			const res = await fetch(STATUS_URL, { cache: 'no-store' });
+			const latency = Date.now() - t0;
+			if(!res.ok) throw new Error('HTTP ' + res.status);
+			const data = await res.json();
+
+			badge.className = 't-status';
+			badge.textContent = '● LIVE';
+
+			updateStats(data);
+			logStatusLine(data, latency);
+
+			// Optionally inject synthetic request log lines based on diff
+			const prev = prevData;
+			if(prev){
+				const newReqs = (data.requests?.total ?? 0) - (prev.requests?.total ?? 0);
+				for(let i = 0; i < Math.min(newReqs, 5); i++){
+					logFakeRequest(data);
+				}
+			}
+
+			prevData = data;
+			pollCount++;
+
+		} catch(e){
+			badge.className = 't-status err';
+			badge.textContent = '● ERR';
+			logPollError(e.message || String(e));
+		}
+	}
+
+	// fake request lines injected when request count increases
+	const methods  = [{m:'GET',c:'get',w:65},{m:'POST',c:'post',w:25},{m:'DELETE',c:'delete',w:10}];
+	const routes   = ['/index.html','/','/static/main.css','/static/app.js','/upload','/files/notes.txt','/favicon.ico','/api/ping','/status','/api/health'];
+	const statuses = [{s:'200',col:'hi-green',w:70},{s:'404',col:'hi-yellow',w:15},{s:'201',col:'hi-green',w:8},{s:'304',col:'hi-blue',w:7}];
+	const ips      = ['127.0.0.1','192.168.1.42','10.0.0.7','::1','172.16.0.3'];
 	function wPick(arr){ let r=Math.random()*arr.reduce((a,x)=>a+x.w,0); for(const x of arr){r-=x.w; if(r<=0)return x;} return arr[arr.length-1]; }
 
-	let req200=1, req404=0, req500=0, totalReq=1;
-
-	function startLiveLog(){
-		function next(){
-			const meth = wPick(methods);
-			const stat = wPick(statuses);
-			const route = pick(routes);
-			const ip   = pick(ips);
-			const ms   = rnd(1,140);
-			const kb   = (Math.random()*60).toFixed(1);
-
-			const methColor = meth.c==='get' ? 'hi-green' : meth.c==='post' ? 'hi-yellow' : 'hi-red';
-			const msg = `<span class="hi-blue">${ip}</span>   <span class="${methColor}">${meth.m}</span>  ${route}   <span class="${stat.col}">${stat.s}</span>   ${ms}ms   ${kb}KB`;
-
-			mkLine(meth.m, meth.c, msg, true);
-			mkCursorLine();
-
-			totalReq++;
-			if(stat.s==='200'||stat.s==='201') req200++;
-			else if(stat.s==='404') req404++;
-			else if(stat.s==='500') req500++;
-
-			document.getElementById('sReq').textContent = totalReq;
-			document.getElementById('s200').textContent = req200;
-			document.getElementById('s404').textContent = req404;
-			document.getElementById('s500').textContent = req500;
-
-			setTimeout(next, rnd(350, 2000));
-		}
-		setTimeout(next, rnd(400,1200));
+	function logFakeRequest(){
+		const meth  = wPick(methods);
+		const stat  = wPick(statuses);
+		const route = pick(routes);
+		const ip    = pick(ips);
+		const ms    = rnd(1,140);
+		const kb    = (Math.random()*60).toFixed(1);
+		const mCol  = meth.c==='get' ? 'hi-green' : meth.c==='post' ? 'hi-yellow' : 'hi-red';
+		const msg   = `<span class="hi-blue">${ip}</span>   <span class="${mCol}">${meth.m}</span>  ${route}   <span class="${stat.col}">${stat.s}</span>   ${ms}ms   ${kb}KB`;
+		mkLine(meth.m, meth.c, msg, true);
 	}
 
-	// uptime
-	const t0 = Date.now();
-	setInterval(()=>{
-		const s = Math.floor((Date.now()-t0)/1000);
-		const el = document.getElementById('sUptime');
-		if(s<60) el.textContent=s+'s';
-		else if(s<3600) el.textContent=Math.floor(s/60)+'m'+String(s%60).padStart(2,'0')+'s';
-		else el.textContent=Math.floor(s/3600)+'h'+String(Math.floor((s%3600)/60)).padStart(2,'0')+'m';
-	}, 1000);
+	function startPolling(){
+		pollStatus(); // immediate first poll
+		setInterval(pollStatus, POLL_INTERVAL);
+	}
 
-	// upload
+	// ── FILE UPLOAD UI ─────────────────────────────────────────────────────────
+
 	const fileInput = document.getElementById('fileInput');
 	const dropZone  = document.getElementById('dropZone');
-	const status    = document.getElementById('status');
+	const statusEl  = document.getElementById('status');
 
 	fileInput.addEventListener('change', ()=>{
 		const f = fileInput.files[0];
-		if(f){ status.textContent=`📄 ${f.name}  (${(f.size/1024).toFixed(1)} KB)  ready`; status.style.color='var(--green)'; }
+		if(f){ statusEl.textContent=`📄 ${f.name}  (${(f.size/1024).toFixed(1)} KB)  ready`; statusEl.style.color='var(--green)'; }
 	});
 
 	['dragover','dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e=>{

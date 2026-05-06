@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:33:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 02:53:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 
 size_t Connection::last_id = 0;
 
-Connection::Connection(TCPServer& server, Socket& server_socket) : server(server), bytes_sended(0),
-	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), engineConfig(server.engineConfig), actual_job(NULL)
+Connection::Connection(TCPServer& server, Socket& server_socket, port_t origin_port) : server(server), bytes_sended(0),
+	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), originPort(origin_port), engineConfig(server.engineConfig), actualJob(NULL)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(4096);
@@ -29,7 +29,7 @@ Connection::Connection(TCPServer& server, Socket& server_socket) : server(server
 
 Connection::~Connection()
 {
-	this->actual_job = NULL;
+	this->actualJob = NULL;
 	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 }
 
@@ -55,10 +55,10 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
 		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
-		if (this->actual_job != NULL)
+		if (this->actualJob != NULL)
 		{
-			if (!this->actual_job->execute())
-				this->actual_job = NULL;
+			if (!this->actualJob->execute())
+				this->actualJob = NULL;
 		}
 		this->handleWrite();
 	}
@@ -66,12 +66,12 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 
 void Connection::setJob(IJob *job)
 {
-	this->actual_job = job;
+	this->actualJob = job;
 	
 	this->bytes_sended = 0; 
 	this->write_buffer.clear(); 
 
-	if (actual_job != NULL)
+	if (actualJob != NULL)
 		this->setWritable(true);
 }
 
@@ -123,7 +123,7 @@ void Connection::handleWrite(void)
 {
 	if (this->write_buffer.empty())
 	{
-		if (this->actual_job == NULL)
+		if (this->actualJob == NULL)
 			this->setWritable(false);
 		return;
 	}
@@ -194,7 +194,7 @@ void Connection::clearReadBuffer()
 
 void Connection::clearWriteBuffer()
 {
-	if (this->actual_job == NULL)
+	if (this->actualJob == NULL)
 		this->setWritable(false);
 	this->write_buffer.clear();
 	this->bytes_sended = 0;
@@ -251,6 +251,11 @@ size_t Connection::getHash(void) const
 {
 	Hash<size_t> hasher;
 	return hasher(this->id);
+}
+
+port_t Connection::getOriginPort(void) const
+{
+	return this->originPort;
 }
 
 const char *Connection::getStateString(State state)

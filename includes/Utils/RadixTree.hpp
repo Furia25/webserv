@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/04 15:57:43 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 02:52:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,6 +297,15 @@ public:
 		if (node == NULL)
 			return end();
 		return find_iter(found_key);
+	}
+
+	const_iterator	find_prefix(const std::string& key) const
+	{
+		std::string	found_key;
+		const Node	*node = find_prefix_node(&this->root, key, 0, found_key);
+		if (node == NULL)
+			return end();
+		return const_cast<RadixTree*>(this)->find_iter(found_key);
 	}
 
 	size_type	count(const std::string& key) const

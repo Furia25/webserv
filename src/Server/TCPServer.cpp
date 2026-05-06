@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:30:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:48:17 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ static void signal_handler(int signum)
 
 TCPServer::TCPServer(const Config::EngineConfig& engine_config) : engineConfig(engine_config)
 {
+	this->startTime = 0;
 	this->actualConnections = 0;
 	this->epoll_fd = ::epoll_create(100);
 	if (this->epoll_fd == -1)
@@ -40,6 +41,7 @@ TCPServer::~TCPServer()
 
 void TCPServer::run(void)
 {
+	this->startTime = time(NULL);
 	std::signal(SIGINT, signal_handler);
 	std::signal(SIGPIPE, SIG_IGN);
 
@@ -68,7 +70,7 @@ void TCPServer::openListener(const std::string &host, const std::string &service
 	this->openListener(host == "" ? NULL : host.c_str(), service.c_str());
 }
 
-void TCPServer::openListener(const std::string& host, unsigned int port)
+void TCPServer::openListener(const std::string& host, port_t port)
 {
 	std::stringstream	ss;
 	ss << port;
@@ -78,6 +80,7 @@ void TCPServer::openListener(const std::string& host, unsigned int port)
 void TCPServer::openListener(const char *host, const char *service)
 {
 	Listener *listener = new Listener(host, service);
+	Logger::INFO() << "Listening on " << listener->getAddress();
 	this->listeners.push_back(listener);
 	this->addPollEvent(*listener, LISTENER_EVENTS);
 }

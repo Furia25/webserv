@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 19:02:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:03:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ public:
 	void				run(void);
 
 	void				openListener(const std::string& host, const std::string& service);
-	void				openListener(const std::string& host, unsigned int port);
+	void				openListener(const std::string& host, port_t port);
 	void				openListener(const char *host, const char *service);
 
 	void				cleanConnections(void);

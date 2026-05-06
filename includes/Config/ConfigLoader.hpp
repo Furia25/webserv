@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:45:49 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 04:24:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 02:34:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 # include <string>
 
 # include "toml.hpp"
+# include "Server/Address.hpp"
+# include "Server/AddressResolver.hpp"
 
 namespace Config
 {
@@ -141,8 +143,6 @@ public:
 			ss << "  - " << *it << "\n";
 		return ss.str();
 	}
-
-private:
 	std::vector<std::string>	errors;
 };
 

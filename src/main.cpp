@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 19:03:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:40:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,20 +30,41 @@ int main(int argc, char **argv)
 	}
 	try
 	{
-		Config::AppConfig	my_config(argv[1]);
-		TCPServer			server(my_config.engineConfig);
-		HTTPHandler		testHandler(my_config);
+		Config::AppConfig	config(argv[1]);
+		TCPServer			server(config.engineConfig);
+		HTTPHandler			handler(config);
 
-		Logger::setDefaultStream(std::cout);
-		Logger::setTickInterval(5);
+		if (config.loggingConfig.log_file == "")
+			Logger::setDefaultStream(std::cout);
+		else
+			Logger::setLogFile(config.loggingConfig.log_file);
+
+		Logger::setGlobalLevel(config.loggingConfig.log_level);
+		Logger::setTickInterval(config.loggingConfig.tick_interval);
 		Logger::setTickCallback(&TCPServer::tickCallback, &server);
-		server.bindHandler(testHandler);
-		server.openListener("localhost", "8080");
+		
+
+		for (size_t i = 0; i < config.servers.size(); ++i)
+		{
+			const Config::ServerConfig&	server_config = *config.servers[i];
+			std::stringstream			ss;
+			ss << "Virtual Server \"" << server_config.name << "\" initialized with:\n";
+			for (RadixTree<Config::RouteConfig *>::const_iterator it = server_config.routes.begin(); it != server_config.routes.end(); ++it)
+				ss << "	Route: " << it->second->path << '\n';
+			Logger::INFO() << ss.str();
+			for (size_t y = 0; y < server_config.bindings.size(); ++y)
+			{
+				const std::pair<std::string, port_t>& binding = server_config.bindings[y];
+				server.openListener(binding.first, binding.second);
+			}
+		}
+
+		server.bindHandler(handler);
 		server.run();
 	}
 	catch (const std::exception& e)
 	{
-		Logger::FATAL() << "Fatal error : \n" << e.what() << "\nerrno: " << strerror(errno);
+		Logger::FATAL() << "Fatal error : " << e.what() << '\n';
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;

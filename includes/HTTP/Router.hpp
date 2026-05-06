@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 13:52:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 01:25:29 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "Config/Config.hpp"
 # include "HTTP/Request.hpp"
 # include "HTTP/HttpTypes.hpp"
+# include "Server/Connection.hpp"
 
 namespace Router 
 {
@@ -30,7 +31,7 @@ namespace Router
 		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
 	};
 
-	RouteResult resolve(const Config::AppConfig &config, const Request &req);
+	RouteResult resolve(const Connection& connection, const Config::AppConfig &config, const Request &req);
 };
 
 #endif // _ROUTER_H

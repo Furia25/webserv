@@ -6,37 +6,47 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/04 17:02:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:45:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTP/Router.hpp"
 
-static inline std::string extractHost(const Request &req)
+static inline void extract_host(const Request &req, std::string& host)
 {
-	HashMap<std::string,
-		std::string>::const_iterator it = req.getHeaders().find("host");
-	if (it == req.getHeaders().end())
-		return ("");
+	host = "";
 
-	std::string host = it->second;
-	size_t colon_pos = host.find(':');
-	if (colon_pos != std::string::npos)
-		return (host.substr(0, colon_pos));
-	return (host);
+	HashMap<std::string, std::string>::const_iterator it = req.getHeaders().find("host");
+	if (it == req.getHeaders().end())
+		return;
+
+	const std::string&	full_host = it->second;
+	size_t				last_colon = full_host.find_last_of(':');
+	size_t				closing_bracket = full_host.find_last_of(']');
+
+	if (last_colon != std::string::npos && (closing_bracket == std::string::npos || last_colon > closing_bracket))
+		host = full_host.substr(0, last_colon);
+	else
+		host = full_host;
+
+	if (host.length() >= 2 && host[0] == '[' && host[host.length() - 1] == ']')
+		host = host.substr(1, host.length() - 2);
 }
 
-Router::RouteResult Router::resolve(const Config::AppConfig &config, const Request &req)
+Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &req)
 {
-	Router::RouteResult res;
+	Router::RouteResult	res;
+	std::string			host;
 
-	std::string hostName = extractHost(req);
-	RadixTree<Config::ServerConfig *>::const_iterator it = config.servers.find(hostName);
+	extract_host(req, host);
+	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
+	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
 	Config::ServerConfig *tmpHost;
-	if (it == config.servers.end())
+	if (it == tree.end())
 	{
-		try {
-			it = config.servers.begin();
+		try
+		{
+			it = tree.begin();
 			tmpHost = it->second;
 		} catch (const std::exception& e)
 		{

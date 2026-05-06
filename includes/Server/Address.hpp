@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:30:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/22 17:52:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 01:39:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@
 # define MAX_PORT	UINT16_MAX
 
 # define NUMERICAL_HOSTNAME_RESOLUTION	true
+
+typedef uint16_t port_t;
 
 class Address
 {
@@ -44,6 +46,7 @@ public:
 	int						getType(void) const;
 	int						getProtocol(void) const;
 	int						getFlags(void) const;
+	port_t					getPort(void) const;
 
 protected:
 private:
@@ -56,7 +59,7 @@ private:
 
 	std::string			host;
 	std::string			service;
-
+	port_t				port;
 };
 
 std::ostream&	operator<<(std::ostream& os, const Address& addr);

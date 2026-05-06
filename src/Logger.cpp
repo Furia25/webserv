@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 18:09:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 14:30:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:22:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ LogMessage::~LogMessage()
 	char			timestr[50];
 	struct timeval	tv;
 	struct tm		datetime;
-	bool tty = isatty(STDOUT_FILENO);
+	bool tty = !Logger::file_stream.is_open();
 
 	gettimeofday(&tv, NULL);
 	localtime_r(&tv.tv_sec, &datetime);
@@ -62,6 +62,7 @@ LogMessage::~LogMessage()
 	if (tty)
 		os << ANSI_RESET;
 	os << ' ' << stream.str() << "\n";
+	os.flush();
 }
 
 void Logger::setDefaultStream(std::ostream &stream)

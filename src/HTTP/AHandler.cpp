@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/04 16:12:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:25:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,12 +70,9 @@ bool AHandler::execute()
 
 void AHandler::initError()
 {
-	for (HashMap<HTTPCode, std::string>::const_iterator it = hostConfig->error_fallbacks.begin(); it != hostConfig->error_fallbacks.end(); ++it)
-		std::cout << it->first << " : " << it->second << '\n';
 	HashMap<HTTPCode, std::string>::const_iterator it = hostConfig->error_fallbacks.find(this->statusCode);
 	if (it != hostConfig->error_fallbacks.end())
 	{
-		std::cout << "find errors" << '\n';
 		std::string error_path = it->second;
 		if (error_path.length() > 0 && error_path[0] != '/')
 			error_path = hostConfig->root + "/" + error_path;
