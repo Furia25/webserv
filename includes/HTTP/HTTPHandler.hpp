@@ -50,6 +50,7 @@ private:
 		bool					isStreaming;
 		IJob					*actualJob;
 		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), actualJob(NULL) {};
+		void reset();
 	};
 
 	HashMap<size_t, ClientData>	clientsData;

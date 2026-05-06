@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 03:45:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 11:07:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,37 +65,53 @@ Router::RouteResult Router::resolve(const Connection& connection, const Config::
 		return (res);
 	}
 
-	RadixTree<Config::RouteConfig *>::const_iterator iterator = tmpHost->routes.find(req.getPath());
-	if (iterator == tmpHost->routes.end())
+	std::string currentPath = req.getPath();
+	RadixTree<Config::RouteConfig *>::const_iterator routeIt = tmpHost->routes.end();
+
+	while (true)
 	{
-		res.errorCode = HTTPCode::NOT_FOUND;
-		return (res);
+		routeIt = tmpHost->routes.find(currentPath);
+
+		if (routeIt != tmpHost->routes.end()) 
+			break;
+		if (currentPath == "/" || currentPath.empty()) 
+		{
+			res.errorCode = HTTPCode::NOT_FOUND;
+			return res;
+		}
+		size_t lastSlash = currentPath.find_last_of('/');
+		if (lastSlash == std::string::npos) 
+			currentPath = "/";
+		else if (lastSlash == 0) 
+			currentPath = "/";
+		else
+			currentPath = currentPath.substr(0, lastSlash);
 	}
-	res.route = iterator->second;
+
+	res.route = routeIt->second;
+	const std::string &foundRoutePath = routeIt->first;
 
 	if (res.route->method_allowed[static_cast<size_t>(req.getMethod())] == false)
 	{
 		res.errorCode = HTTPCode::METHOD_NOT_ALLOWED;
-		return (res);
+		return res;
 	}
 
 	if (res.host->max_body_size < req.getContentLength())
 	{
 		res.errorCode = HTTPCode::PAYLOAD_TOO_LARGE;
-		return (res);
+		return res;
 	}
 
+	std::string remainder = req.getPath().substr(foundRoutePath.size());
+	if (!remainder.empty() && remainder[0] == '/' && !foundRoutePath.empty() && foundRoutePath[foundRoutePath.size() - 1] == '/')
+		remainder = remainder.substr(1);
+
 	if (!res.route->alias.empty())
-	{
-		const std::string &routePath = iterator->first;
-		const std::string &reqPath   = req.getPath();
-		std::string remainder = reqPath.substr(routePath.size());
 		res.physicalPath = res.host->root + res.route->alias + remainder;
-	}
 	else
-	{
-		res.physicalPath = res.host->root + req.getPath();
-	}
+		res.physicalPath = res.host->root + foundRoutePath + remainder;
+
 	res.success = true;
-	return (res);
+	return res;
 }

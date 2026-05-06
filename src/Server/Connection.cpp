@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 02:53:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 11:34:48 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -240,6 +240,11 @@ const Address &Connection::getAddress(void) const
 TCPServer& Connection::getServer(void)
 {
 	return this->server;
+}
+
+IJob*	Connection::getJob() const
+{
+	return this->actualJob;
 }
 
 const TCPServer &Connection::getServer(void) const

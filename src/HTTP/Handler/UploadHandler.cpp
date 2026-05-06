@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 19:43:41 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 12:05:14 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,15 +38,24 @@ void UploadHandler::onExecute()
 	else
 		fileName = request.getPath();
 
-	std::string destination = uploadConfig.upload_store + "/" + fileName;
+	std::string destination = uploadConfig.upload_store + "/" + fileName + "_" + itoa(connection.getHash());
 
 	if (this->isUpload)
 	{
-		std::string tempPath = _temp_file_path_ + itoa(connection.getHash());
+		std::string tempPath = _temp_file_path_  +  itoa(connection.getHash());
 		if (std::rename(tempPath.c_str(), destination.c_str()) != 0)
 		{
+			std::ifstream src(tempPath.c_str(), std::ios::binary);
+			std::ofstream dst(destination.c_str(), std::ios::binary);
+			if (!src || !dst)
+			{
+				cleanTempFile(tempPath);
+				throw HTTPException(HTTPCode::BAD_GATEWAY);
+			}
+			dst << src.rdbuf();
+			src.close();
+			dst.close();
 			cleanTempFile(tempPath);
-			throw HTTPException(HTTPCode::BAD_GATEWAY);
 		}
 	}
 	else

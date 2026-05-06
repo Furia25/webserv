@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 02:02:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 11:33:34 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,19 +58,20 @@ public:
 	void			compactWriteBuffer();
 
 	void				setJob(IJob* job);
+	IJob*				getJob()			const ;
 	size_t				getClientID(void)	const;
 	Socket&				getSocket(void);
-	const Socket&		getSocket(void) const;
-	State				getState(void) const;
-	const Address&		getAddress(void) const;
+	const Socket&		getSocket(void) 	const;
+	State				getState(void) 		const;
+	const Address&		getAddress(void) 	const;
 	TCPServer&			getServer(void);
-	const TCPServer&	getServer(void) const;
-	size_t				getHash(void) const;
+	const TCPServer&	getServer(void) 	const;
+	size_t				getHash(void) 		const;
 	port_t				getOriginPort(void) const;
 
 	void						consumeReadData(size_t n);
 	const uint8_t				*getReadBufferPtr() const;
-	const std::vector<uint8_t>&	getReadVector() const;
+	const std::vector<uint8_t>&	getReadVector() 	const;
 	size_t						getReadBufferSize() const;
 
 	static const char		*getStateString(State state);

@@ -30,11 +30,9 @@ HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 
 HTTPHandler::~HTTPHandler()
 {
-	for (HashMap<size_t,
-			ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
+	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 	{
-		if (it->second.actualJob != NULL)
-			delete it->second.actualJob;
+		it->second.reset();
 	}
 }
 
@@ -76,6 +74,27 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 			this->createJobUpload<UploadHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath, client.isStreaming, HTTPCode::OK);
 		break;
 	}
+}
+
+void	HTTPHandler::ClientData::reset()
+{
+	builder.reset();
+	if (request) 
+	{
+		delete request;
+		request = NULL;
+	}
+	if (fileWriter) 
+	{
+		delete fileWriter;
+		fileWriter = NULL;
+	}
+	if (actualJob) 
+	{
+		delete actualJob;
+		actualJob = NULL;
+	}
+	isStreaming = false;
 }
 
 void	HTTPHandler::checkCompletion(Connection &connection, ClientData &client) 
@@ -121,6 +140,10 @@ void HTTPHandler::onDataReceived(Connection &connection)
 	if (it == clientsData.end()) return;
 
 	ClientData	&client = it->second;
+	
+	if (client.actualJob != NULL && connection.getJob() == NULL)
+		client.reset();
+
 	const uint8_t*	fragment = connection.getReadBufferPtr();
 
 	try 
@@ -205,22 +228,7 @@ void HTTPHandler::onDisconnection(Connection &connection)
 
 	if	(it != this->clientsData.end())
 	{
-		ClientData &data = it->second;
-		if	(data.request != NULL)
-		{
-			delete data.request;
-			data.request = NULL;
-		}
-		if	(data.fileWriter != NULL)
-		{
-			delete data.fileWriter;
-			data.fileWriter = NULL;
-		}
-		if	(data.actualJob != NULL)
-		{
-			delete data.actualJob;
-			data.actualJob = NULL;
-		}
+		it->second.reset();
 		this->clientsData.erase(it);
 	}
 }
