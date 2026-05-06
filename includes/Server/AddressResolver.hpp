@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 02:49:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/06 03:18:47 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 02:51:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,15 +22,11 @@
 
 # include "Address.hpp"
 
-class AddressResolver
+namespace AddressResolver
 {
-public:
-	static std::vector<Address>	resolve(const std::string& host = "", const std::string& service = "80", int type = SOCK_STREAM);
-	static std::vector<Address> resolve(const char *host = NULL, const char *service = "80", int type = SOCK_STREAM);
-protected:
-private:
-	AddressResolver();
-	~AddressResolver();
+	std::vector<Address>	resolve(const std::string& host = "", const std::string& service = "80", int type = SOCK_STREAM);
+	std::vector<Address>	resolve(const char *host = NULL, const char *service = "80", int type = SOCK_STREAM);
+	port_t					getPortFromService(const std::string& service_name);
 };
 
 #endif // _ADDRESSRESOLVER_H

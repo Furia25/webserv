@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/05 18:43:33 by vdurand          ###   ########.fr        #
+#    Updated: 2026/05/06 03:34:06 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -82,7 +82,6 @@ SRC_FILES = \
 	HTTP/Response.cpp \
 	HTTP/FileReader.cpp \
 	HTTP/FileWriter.cpp \
-	HTTP/Itoa.cpp \
 	Logger.cpp \
 	main.cpp
 

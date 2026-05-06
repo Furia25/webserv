@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:36:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 02:02:37 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 	X(CLOSING)\
 	X(DELETABLE)
 
+class Listener;
 class IJob;
 
 class Connection : public IEpollHandler
@@ -43,7 +44,7 @@ public:
 		#undef X
 	};
 
-	Connection(TCPServer& server, Socket& server_socket);
+	Connection(TCPServer& server, Socket& server_socket, port_t origin_port);
 	virtual ~Connection();
 
 	void			sendData(const uint8_t *data, size_t len);
@@ -65,6 +66,7 @@ public:
 	TCPServer&			getServer(void);
 	const TCPServer&	getServer(void) const;
 	size_t				getHash(void) const;
+	port_t				getOriginPort(void) const;
 
 	void						consumeReadData(size_t n);
 	const uint8_t				*getReadBufferPtr() const;
@@ -90,9 +92,10 @@ private:
 	static size_t			last_id;
 	State					state;
 	Alarm<Connection *>		alarmTimeout;
+	port_t					originPort;
 
 	const Config::EngineConfig&	engineConfig;
-	IJob						*actual_job;
+	IJob						*actualJob;
 
 	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
 

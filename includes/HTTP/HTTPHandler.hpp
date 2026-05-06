@@ -40,7 +40,6 @@ public:
 	size_t		getTotalRequests(void) const { return this->totalRequests; };
 protected:
 private:
-	size_t	totalRequests;
 
 	struct ClientData
 	{
@@ -49,9 +48,13 @@ private:
 		FileWriter*				fileWriter;
 		Router::RouteResult 	routeRes;
 		bool					isStreaming;
-		IJob					*actual_job;
-		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), actual_job(NULL) {};
+		IJob					*actualJob;
+		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), actualJob(NULL) {};
 	};
+
+	HashMap<size_t, ClientData>	clientsData;
+	const Config::AppConfig&	config;
+	size_t						totalRequests;
 
 	void 					launchJob(Connection &connection, ClientData &client);
 	void					checkCompletion(Connection& connection, ClientData& clientData);
@@ -70,8 +73,6 @@ private:
 	void	dispatchError(Connection& connection, const Request& request,
 				const Config::ServerConfig& host_config, const Config::RouteConfig& route_config, HTTPCode error_code);
 
-	HashMap<size_t, ClientData>	clientsData;
-	const Config::AppConfig&	config;
 };
 
 template <typename T>
@@ -80,22 +81,22 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	const std::string& physical_path, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());
-	if (client_data.actual_job != NULL)
+	if (client_data.actualJob != NULL)
 	{
-		delete client_data.actual_job;
-		client_data.actual_job = NULL;
+		delete client_data.actualJob;
+		client_data.actualJob = NULL;
 	}
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code);
 		handler->onCreation();
-		client_data.actual_job = handler;
+		client_data.actualJob = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
 		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
-		client_data.actual_job = handler;
+		client_data.actualJob = handler;
 	}
 	connection.setJob(handler);
 }
@@ -106,22 +107,22 @@ inline void HTTPHandler::createJobUpload(Connection& connection, const Request& 
 	const std::string& physical_path, bool isUpload, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());
-	if (client_data.actual_job != NULL)
+	if (client_data.actualJob != NULL)
 	{
-		delete client_data.actual_job;
-		client_data.actual_job = NULL;
+		delete client_data.actualJob;
+		client_data.actualJob = NULL;
 	}
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code, isUpload);
 		handler->onCreation();
-		client_data.actual_job = handler;
+		client_data.actualJob = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
 		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
-		client_data.actual_job = handler;
+		client_data.actualJob = handler;
 	}
 	connection.setJob(handler);
 }

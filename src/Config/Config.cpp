@@ -6,11 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:58:51 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:41:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/Config.hpp"
+#include "Utils/Itoa.hpp"
 #include <sstream>
 
 Config::AppConfig::AppConfig(const std::string& path)
@@ -28,15 +29,25 @@ Config::AppConfig::AppConfig(const std::string& path)
 	for (size_t index = 0; index < server_array.size(); ++index)
 	{
 		ServerConfig	*server_config = new ServerConfig();
-
 		try
 		{
 			std::stringstream	ss;
 			ss << "servers[" << index << ']';
 			loader.direct_section(server_array[index], ss.str(), *server_config);
-			if (this->servers.count(server_config->name) != 0)
-				throw std::runtime_error("Can't redefine server " + std::string(server_config->name));
-			this->servers.insert(server_config->host, server_config);
+			for (size_t index = 0; index < server_config->bindings.size(); ++index)
+			{
+				const std::pair<std::string, port_t> binding = server_config->bindings[index];
+				const std::string&	host = binding.first;
+				port_t				port = binding.second;
+
+				if (!this->serversMap.contain(port))
+					this->serversMap.insert(port, RadixTree<ServerConfig *>());
+				else if (this->serversMap.at(port).count(host) != 0)
+					throw std::runtime_error("Can't redefine binding in server "
+						+ server_config->name + " for " + host + ":" + itoa(port));
+				this->serversMap.at(port).insert(host, server_config);
+			}
+			this->servers.push_back(server_config);
 		}
 		catch (const std::exception& e)
 		{
@@ -47,13 +58,17 @@ Config::AppConfig::AppConfig(const std::string& path)
 	}
 
 	if (loader.hasErrors())
+	{
+		for (std::vector<ServerConfig *>::iterator it = this->servers.begin(); it != this->servers.end(); ++it)
+			delete *it;
 		throw Config::Exception(loader.format());
+	}
 }
 
 Config::AppConfig::~AppConfig()
 {
-	for (RadixTree<ServerConfig *>::iterator it = this->servers.begin(); it != this->servers.end(); ++it)
-		delete it->second;
+	for (std::vector<ServerConfig *>::iterator it = this->servers.begin(); it != this->servers.end(); ++it)
+		delete *it;
 }
 
 void Config::LoggingConfig::load(toml::Variant &table, Config::Loader &loader)
@@ -82,23 +97,44 @@ Config::ServerConfig::~ServerConfig()
 
 void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 {
-	toml::Table	errors_table;
-	toml::Array	routes_array;
+	toml::Array	bindings_array;
+	loader.array_section(table, "bindings", false, bindings_array);
 
+	toml::Array	routes_array;
 	loader.array_section(table, "routes", false, routes_array);
+
+	toml::Table	errors_table;
 	try { errors_table = table.take_section("errors", true).as<toml::Table>(); }
 	catch (const std::exception& e) { loader.push_error("errors", e.what()); }
 
-	loader.value(table, "host", this->host);
-	loader.value(table, "service", this->service);
 	loader.value_or(table, "server_name", this->name, std::string("default"));
 	loader.value_or(table, "root", this->root, std::string("./"));
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, CONFIG_BODY_SIZE, 0, UINT64_MAX);
 
+	this->loadBindings(bindings_array, loader);
 	this->loadErrors(errors_table, loader);
 	this->loadRoutes(routes_array, loader);
-	for (RadixTree<RouteConfig *>::const_iterator it = this->routes.begin(); it != this->routes.end(); ++it)
-		std::cout << it->first << "\n";
+}
+
+void Config::ServerConfig::loadBindings(toml::Array& bindings_array, Config::Loader& loader)
+{
+	for (size_t index = 0; index < bindings_array.size(); ++index)
+	{
+		Loader child;
+		std::stringstream	ss;
+		ss << "bindings[" << index << ']';
+		const std::string	bindings_name = ss.str();
+
+		std::string host, service;
+		child.value(bindings_array[index], "host", host);
+		child.value(bindings_array[index], "service", service);
+		port_t port = AddressResolver::getPortFromService(service);
+		if (port == 0)
+			child.push_error("Unable to resolve service", "invalid port or service name");
+		this->bindings.push_back(std::make_pair(host, port));
+		for (std::vector<std::string>::const_iterator it = child.errors.begin(); it != child.errors.end(); ++it)
+			loader.push_error(bindings_name, *it);
+	}
 }
 
 void Config::ServerConfig::loadErrors(toml::Table& errors_table, Config::Loader& loader)

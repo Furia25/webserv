@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:31:42 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/27 14:31:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:45:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,15 +18,25 @@ Address::Address()
 {
 	std::memset(&this->data, 0, sizeof(data));
 	addr_len = 0;
+	port = 0;
 }
 
 Address::Address(const std::string &host, const std::string &service, const struct addrinfo *raw_addr) :
 	domain(raw_addr->ai_family), type(raw_addr->ai_socktype), protocol(raw_addr->ai_protocol),
 	flags(raw_addr->ai_flags), host(host), service(service)
-	
 {
 	std::memcpy(&this->data, raw_addr->ai_addr, raw_addr->ai_addrlen);
 	addr_len = raw_addr->ai_addrlen;
+	if (raw_addr->ai_family == AF_INET)
+	{
+		struct sockaddr_in *ipv4 = reinterpret_cast<struct sockaddr_in*>(raw_addr->ai_addr);
+		this->port = ntohs(ipv4->sin_port);
+	}
+	else if (raw_addr->ai_family == AF_INET6)
+	{
+		struct sockaddr_in6 *ipv6 = reinterpret_cast<struct sockaddr_in6*>(raw_addr->ai_addr);
+		this->port = ntohs(ipv6->sin6_port);
+	}
 	if (host == "" || service == "")
 	{
 		std::pair<std::string, std::string> info = get_hostname_info(
@@ -60,6 +70,7 @@ Address &Address::operator=(const Address &other)
 	this->service = other.service;
 	this->type = other.type;
 	this->protocol = other.protocol;
+	this->port = other.port;
 	return (*this);
 }
 
@@ -94,7 +105,7 @@ bool Address::isIPv6(void) const
 	return this->domain == AF_INET6;
 }
 
-const std::string &Address::getHost(void) const
+const std::string& Address::getHost(void) const
 {
 	return this->host;
 }
@@ -116,7 +127,9 @@ int Address::getProtocol(void) const { return this->protocol; }
 
 int Address::getFlags(void) const { return this->flags; }
 
-std::ostream &operator<<(std::ostream &os, const Address &addr)
+port_t Address::getPort(void) const { return this->port; }
+
+std::ostream& operator<<(std::ostream &os, const Address &addr)
 {
 	os << addr.toString();
 	return (os);

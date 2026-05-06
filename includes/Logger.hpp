@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/12 17:27:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 00:55:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:35:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@
 # include "Debugging.hpp"
 # include "ansi_sequence.hpp"
 
-# define LOG_TYPE	(INFO, WARNING, ERROR, FATAL, DEBUG)
+# define LOG_TYPE	(DEBUG, INFO, WARNING, ERROR, FATAL)
 ENUM_CLASS(LogLevel, LOG_TYPE, ENUM_BASIC, ENUM_LITERALS(LOG_TYPE, ENUM_BASIC, ENUM_BASIC); public: LogLevel() : _t(INFO) {};);
 
 class LogMessage
@@ -63,6 +63,8 @@ public:
 	# define X(e, ...) static LogMessage	e() {return LogMessage(LogLevel::e);}
 	M_TUPLE_FOREACH(LOG_TYPE, X)
 	# undef X
+
+	friend class LogMessage;
 protected:
 private:
 	static LogLevel			min_level;

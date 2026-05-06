@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Itoa.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/30 13:31:23 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 14:42:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 02:40:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,12 @@
 
 # include <sstream>
 
-std::string itoa(int n);
+template <typename T>
+static inline std::string itoa(T n)
+{
+	std::stringstream ss;
+	ss << n;
+	return ss.str();
+}
 
 #endif // _ITOA_H

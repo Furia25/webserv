@@ -24,7 +24,7 @@
 # include "Utils/Itoa.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
-	: config(config)
+	: config(config), totalRequests(0)
 {
 }
 
@@ -33,8 +33,8 @@ HTTPHandler::~HTTPHandler()
 	for (HashMap<size_t,
 			ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 	{
-		if (it->second.actual_job != NULL)
-			delete it->second.actual_job;
+		if (it->second.actualJob != NULL)
+			delete it->second.actualJob;
 	}
 }
 
@@ -58,7 +58,6 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 		Logger::ERROR() << "No request to create the job At HTTPHandler.";
 		return;
 	}
-	std::cout << HandlerType::toString(client.routeRes.route->handler) << std::endl;
 	switch (client.routeRes.route->handler)
 	{
 		case HandlerType::STATIC :
@@ -134,7 +133,7 @@ void HTTPHandler::onDataReceived(Connection &connection)
 			{
 				client.builder.print();
 				client.request = new Request(client.builder.build());
-				client.routeRes = Router::resolve(this->config, *client.request);
+				client.routeRes = Router::resolve(connection, this->config, *client.request);
 
 				if (!client.routeRes.success)
 				{
@@ -217,10 +216,10 @@ void HTTPHandler::onDisconnection(Connection &connection)
 			delete data.fileWriter;
 			data.fileWriter = NULL;
 		}
-		if	(data.actual_job != NULL)
+		if	(data.actualJob != NULL)
 		{
-			delete data.actual_job;
-			data.actual_job = NULL;
+			delete data.actualJob;
+			data.actualJob = NULL;
 		}
 		this->clientsData.erase(it);
 	}

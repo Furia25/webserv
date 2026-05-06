@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:06:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:10:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ Listener::Listener(const char *host, const char *service)
 	socket.open(SOCK_STREAM, AF_INET);
 	socket.bind(addresses);
 	socket.setIOBlocking(false);
+	socket.setReuseAddr(true);
 	socket.listen(MAX_PENDING_CONNECTION);
 }
 
@@ -38,7 +39,7 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 		{
 			Connection *client_connection = NULL;
 			try {
-				client_connection = new Connection(server, this->getSocket());
+				client_connection = new Connection(server, this->getSocket(), this->getAddress().getPort());
 			}
 			catch (const SocketException& e) {break;}
 			catch (const std::exception& e) {throw;}

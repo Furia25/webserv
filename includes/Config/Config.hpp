@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:12:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 03:03:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,17 +120,17 @@ struct StatusConfig : public RouteConfig
 struct ServerConfig
 {
 	std::string		name;
-	std::string		host;
-	std::string		service;
 	std::string		root;
 	uint64_t		max_body_size;
 
-	RadixTree<RouteConfig *>		routes;
-	HashMap<HTTPCode, std::string>	error_fallbacks;
+	std::vector<std::pair<std::string, port_t> >	bindings;
+	RadixTree<RouteConfig *>						routes;
+	HashMap<HTTPCode, std::string>					error_fallbacks;
 
 	~ServerConfig();
 
 	void	load(toml::Variant& table, Config::Loader& loader);
+	void	loadBindings(toml::Array& bindings_table, Config::Loader& loader);
 	void	loadErrors(toml::Table& errors_table, Config::Loader& loader);
 	void	loadRoutes(toml::Array&	routes_array, Config::Loader& loader);
 };
@@ -162,9 +162,10 @@ struct LoggingConfig
 struct AppConfig
 {
 	AppConfig(const std::string& filename);
-	EngineConfig				engineConfig;
-	LoggingConfig				loggingConfig;
-	RadixTree<ServerConfig *>	servers;
+	EngineConfig								engineConfig;
+	LoggingConfig								loggingConfig;
+	HashMap<port_t, RadixTree<ServerConfig *> >	serversMap;
+	std::vector<ServerConfig *>					servers;
 
 	~AppConfig();
 };

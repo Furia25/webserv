@@ -7,17 +7,21 @@ read_size = 4096
 max_read_limit = 16384
 
 [logging]
-level = "DEBUG"
-log_file = "log.txt"
 tick_interval = 5
 
 # --- Main Website (Port 8080) ---
 [[servers]]
-host = "localhost"
-service = "8080"
 server_name = "test"
 root = "www"
 max_body_size = 150000000
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "8080"
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "4242"
 
 	[servers.errors]
 	404 = "errors/404.html"
@@ -25,9 +29,9 @@ max_body_size = 150000000
 
 	# Static files route
 	[[servers.routes]]
+	handler = "STATIC"
 	path = "/"
 	methods = ["GET", "DELETE", "POST"]
-	handler = "STATIC"
 	index = "index.html"
 	autoindex = true
 
