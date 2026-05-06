@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 18:58:34 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 17:02:57 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,12 +26,6 @@
 # include "HttpTypes.hpp"
 # include "Request.hpp"
 
-
-struct MethodMap 
-{
-	const char* str;
-	Method val;
-};
 
 class RequestBuilder
 {

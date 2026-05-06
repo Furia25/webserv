@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 11:14:12 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 17:05:28 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -197,7 +197,10 @@ Request RequestBuilder::build() const
 	Method m = Method::UNKNOWN;
 	try {
 		m = Method::from(this->method);	
-	} catch (const std::domain_error& e) {}
+	} catch (const std::domain_error& e)
+	{
+		throw
+	}
 	return Request(m, request_path, query_path, protocol, content_length, headers);
 }
 

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 11:07:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 16:57:55 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,8 +50,7 @@ Router::RouteResult Router::resolve(const Connection& connection, const Config::
 			tmpHost = it->second;
 		} catch (const std::exception& e)
 		{
-			res.errorCode = HTTPCode::NOT_FOUND;
-			return (res);
+			throw HTTPException(HTTPCode::NOT_FOUND);
 		}
 	}
 	else

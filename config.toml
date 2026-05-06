@@ -26,6 +26,7 @@ max_body_size = 150000000
 	[servers.errors]
 	404 = "errors/404.html"
 	500 = "errors/500.html"
+	403 = "errors/403.html"
 
 	# Static files route
 	[[servers.routes]]

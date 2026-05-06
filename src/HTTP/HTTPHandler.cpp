@@ -38,7 +38,8 @@ HTTPHandler::~HTTPHandler()
 
 void HTTPHandler::dispatchError(Connection &connection, HTTPCode code)
 {
-	Response::buildErrorResponse(connection, code);
+	const Config::RedirectConfig dummy_route = Config::RedirectConfig(&server_config);
+	dispatchError(connection, *client.request, server_config, dummy_route, client.routeRes.errorCode);
 }
 
 void HTTPHandler::dispatchError(Connection &connection,
@@ -160,7 +161,8 @@ void HTTPHandler::onDataReceived(Connection &connection)
 
 				if (!client.routeRes.success)
 				{
-					dispatchError(connection, client.routeRes.errorCode);
+					
+					
 					return;
 				}
 
