@@ -153,7 +153,7 @@ void HTTPHandler::onDataReceived(Connection &connection)
 						if (!client.fileWriter) client.fileWriter = new FileWriter();
 						{
 							std::stringstream ss;
-							ss << _temp_file_path_ << id;
+							ss << _temp_file_path_ << connection.getHash();
 							client.fileWriter->open(ss.str());
 						}
 

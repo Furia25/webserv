@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:28:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/05 19:43:41 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ void UploadHandler::onExecute()
 
 	if (this->isUpload)
 	{
-		std::string tempPath = _temp_file_path_ + itoa(connection.getClientID());
+		std::string tempPath = _temp_file_path_ + itoa(connection.getHash());
 		if (std::rename(tempPath.c_str(), destination.c_str()) != 0)
 		{
 			cleanTempFile(tempPath);
