@@ -1,0 +1,42 @@
+
+[logging]
+tick_interval = 5
+
+[[servers]]
+server_name = "bureau of odd things"
+root = "www/bureau"
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "8080"
+
+	[servers.errors]
+	404 = "errors/404.html"
+	500 = "errors/500.html"
+	403 = "errors/403.html"
+
+	# Static files route
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/"
+	alias = "/static/"
+	methods = ["GET"]
+	index = "index.html"
+	autoindex = false
+
+	[[servers.routes]]
+	path = "/api"
+	methods = ["GET", "POST"]
+	handler = "CGI"
+	cgi_bin = "webserv"
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/status"
+	methods = ["GET"]
+	handler = "STATUS"
+	show_start_time = true
+	show_server_info = true
+	show_connection_info = true
+	show_request_info = true
+	show_timestamp = true

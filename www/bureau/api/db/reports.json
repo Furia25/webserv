@@ -1,0 +1,74 @@
+[
+  {
+    "id": "RPT-0047",
+    "title": "The Canberra Fish Situation",
+    "description": "Twelve carp in the Questacon fountain have begun spelling words using synchronized fin movements. So far they have spelled 'HELP', 'SOON', and 'MORE BREAD'. Linguists are divided on whether this constitutes a threat or a request.",
+    "priority": "yellow",
+    "stamp": "MONITOR",
+    "tags": ["aquatic", "linguistics", "bread"],
+    "date": "2024-11-03"
+  },
+  {
+    "id": "RPT-0051",
+    "title": "Tuesday Cancellation — Sectors 4–6",
+    "description": "Residents in sectors 4, 5, and 6 report waking on Wednesday with no memory of Tuesday. Calendars confirm the skip. One resident found a casserole in her oven she has no memory of making. It was excellent.",
+    "priority": "red",
+    "stamp": "URGENT",
+    "tags": ["temporal", "missing-day", "casserole"],
+    "date": "2024-10-28"
+  },
+  {
+    "id": "RPT-0052",
+    "title": "Interdimensional Sock Migration",
+    "description": "Seventeen single socks vanished from three separate laundromats in a 48-hour window. A faint humming was reported. One witness described 'a tiny door no larger than a grapefruit' briefly appearing near a dryer vent before sealing itself shut.",
+    "priority": "yellow",
+    "stamp": "ONGOING",
+    "tags": ["dimensional-rift", "textiles", "laundry"],
+    "date": "2024-11-01"
+  },
+  {
+    "id": "RPT-0039",
+    "title": "Dimension 7-B Dial-Up Signal",
+    "description": "Our deep-spectrum array has been receiving a repeating signal from Dimension 7-B. Analysis confirms it is identical to a 56k dial-up handshake from 1998. Whether someone is trying to connect, or has been trying to disconnect for 26 years, remains unclear.",
+    "priority": "green",
+    "stamp": "INFO",
+    "tags": ["signal", "dimensional", "legacy-tech"],
+    "date": "2024-09-14"
+  },
+  {
+    "id": "RPT-0055",
+    "title": "Goose Stands Motionless for 11 Days",
+    "description": "A Canada goose in Parc de la Tête d'Or, Lyon, has not moved in eleven days. It appears perfectly healthy. Veterinary scans reveal an internal structure that 'should not be there.' The goose accepts bread but does not chew it. It stares.",
+    "priority": "red",
+    "stamp": "WATCH",
+    "tags": ["avian", "stationary", "lyon", "unknown-structure"],
+    "date": "2024-11-05"
+  },
+  {
+    "id": "RPT-0043",
+    "title": "The Map That Updates Itself",
+    "description": "A street map of Edinburgh printed in 1987 has been observed adding new streets. The streets do not exist in Edinburgh. Agent Pincroft visited three of them. She came back quieter than before and submitted a 40-page report, which she then redacted entirely herself.",
+    "priority": "red",
+    "stamp": "CLASSIFIED",
+    "tags": ["cartography", "impossible", "edinburgh"],
+    "date": "2024-08-22"
+  },
+  {
+    "id": "RPT-0049",
+    "title": "Vending Machine Dispensing Advice",
+    "description": "A vending machine in the Brisbane airport food court has begun dispensing hand-written notes alongside purchased items. The notes contain eerily accurate personal advice. 'Stop calling him' has been reported six times. The machine was manufactured in 2003.",
+    "priority": "yellow",
+    "stamp": "MONITOR",
+    "tags": ["mechanical", "precognition", "brisbane"],
+    "date": "2024-10-11"
+  },
+  {
+    "id": "RPT-0056",
+    "title": "Library Book Checked Out Since 1974",
+    "description": "Rutherford Public Library is reporting that one copy of 'Advanced Mycology Vol. 3' has been continuously checked out since April 4, 1974. The borrower's card reads 'M. FUNGSWORTH'. No such patron exists in any record. The book is currently three days overdue.",
+    "priority": "green",
+    "stamp": "LOW",
+    "tags": ["library", "temporal", "mycology"],
+    "date": "2024-11-07"
+  }
+]

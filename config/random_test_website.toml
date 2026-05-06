@@ -12,7 +12,7 @@ tick_interval = 5
 # --- Main Website (Port 8080) ---
 [[servers]]
 server_name = "test"
-root = "www"
+root = "www/basic_website"
 max_body_size = 150000000
 
 	[[servers.bindings]]
