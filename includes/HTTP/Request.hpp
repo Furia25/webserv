@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 12:46:53 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 17:38:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ private:
 	std::vector<uint8_t>				body;
 
 public:
+	Request() {};
 	Request(Method m, const std::string& p, const std::string& q, 
 			const std::string& proto, size_t cl, 
 			const HashMap<std::string, std::string>& h);

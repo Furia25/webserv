@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/23 01:21:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 02:52:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 17:57:15 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -402,13 +402,14 @@ private:
 
 	Node	*find_prefix_node(Node *node, const std::string& key, size_t i, std::string& found_key)
 	{
+		Node	*longest_match = NULL;
 		if (node->value.has_value())
 		{
 			found_key = key.substr(0, i);
-			return node;
+			longest_match = node;
 		}
 		if (i == key.size())
-			return NULL;
+			return longest_match;
 
 		for (size_t c = 0; c < node->children.size(); ++c)
 		{
@@ -423,22 +424,24 @@ private:
 					return res;
 			}
 		}
-		return NULL;
+		return longest_match;
 	}
 
 	const Node	*find_prefix_node(const Node *node, const std::string& key, size_t i, std::string& found_key) const
 	{
+		const Node	*longest_match = NULL;
 		if (node->value.has_value())
 		{
 			found_key = key.substr(0, i);
-			return node;
+			longest_match = node;
 		}
 		if (i == key.size())
-			return NULL;
+			return longest_match;
+
 		for (size_t c = 0; c < node->children.size(); ++c)
 		{
-			const Node  *ch = node->children[c];
-			size_t      k = this->common_prefix(ch->label, key, i);
+			Node	*ch = node->children[c];
+			size_t	k = this->common_prefix(ch->label, key, i);
 			if (!k)
 				continue;
 			if (k == ch->label.size())
@@ -448,7 +451,7 @@ private:
 					return res;
 			}
 		}
-		return NULL;
+		return longest_match;
 	}
 
 	bool	_erase(Node *node, const std::string& key, size_t i)

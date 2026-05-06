@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:54:35 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:45:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 17:35:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,8 @@ public:
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
-		const Config::ServerConfig& host_config,
-		const Config::RouteConfig& route_config,
+		const Config::ServerConfig *host_config,
+		const Config::RouteConfig *route_config,
 		const std::string& physical_path,
 		HTTPCode status_code = HTTPCode::INTERNAL_SERVER_ERROR)
 	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), state(INIT) {}

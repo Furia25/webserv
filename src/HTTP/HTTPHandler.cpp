@@ -36,15 +36,14 @@ HTTPHandler::~HTTPHandler()
 	}
 }
 
-void HTTPHandler::dispatchError(Connection &connection, HTTPCode code)
+void HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-	const Config::RedirectConfig dummy_route = Config::RedirectConfig(&server_config);
-	dispatchError(connection, *client.request, server_config, dummy_route, client.routeRes.errorCode);
+	dispatchError(connection, Request(), &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
 }
 
-void HTTPHandler::dispatchError(Connection &connection,
-		const Request &request, const Config::ServerConfig &host_config,
-		const Config::RouteConfig &route_config, HTTPCode error_code)
+void HTTPHandler::dispatchError(Connection& connection,
+		const Request &request, const Config::ServerConfig *host_config,
+		const Config::RouteConfig *route_config, HTTPCode error_code)
 {
 	this->createJob<ErrorHandler>(connection, request, host_config,
 			route_config, "", error_code);
@@ -60,19 +59,19 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 	switch (client.routeRes.route->handler)
 	{
 		case HandlerType::STATIC :
-			this->createJob<StaticHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
+			this->createJob<StaticHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		break;
 		case HandlerType::REDIRECT :
 			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::STATUS :
-			this->createJob<StatusHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath);
+			this->createJob<StatusHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		break;
 		case HandlerType::CGI :
 			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::UPLOAD :
-			this->createJobUpload<UploadHandler>(connection, *client.request, *client.routeRes.host, *client.routeRes.route, client.routeRes.physicalPath, client.isStreaming, HTTPCode::OK);
+			this->createJobUpload<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, client.isStreaming, HTTPCode::OK);
 		break;
 	}
 }
@@ -98,7 +97,7 @@ void	HTTPHandler::ClientData::reset()
 	isStreaming = false;
 }
 
-void	HTTPHandler::checkCompletion(Connection &connection, ClientData &client) 
+void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
 {
 	if (!client.request)
 		return;
@@ -131,21 +130,24 @@ void	HTTPHandler::checkCompletion(Connection &connection, ClientData &client)
 		client.isStreaming = false; 
 	}
 }
-void HTTPHandler::onDataReceived(Connection &connection)
+void HTTPHandler::onDataReceived(Connection& connection)
 {
 	size_t	id = connection.getClientID();
 	size_t	dataSize = connection.getReadBufferSize();
-	if (dataSize == 0) return;
+
+	if (dataSize == 0)
+		return;
 
 	HashMap<size_t, ClientData>::iterator	it = clientsData.find(id);
-	if (it == clientsData.end()) return;
+	if (it == clientsData.end())
+		return;
 
 	ClientData	&client = it->second;
 	
 	if (client.actualJob != NULL && connection.getJob() == NULL)
 		client.reset();
 
-	const uint8_t*	fragment = connection.getReadBufferPtr();
+	const uint8_t	*fragment = connection.getReadBufferPtr();
 
 	try 
 	{
@@ -159,10 +161,14 @@ void HTTPHandler::onDataReceived(Connection &connection)
 				client.request = new Request(client.builder.build());
 				client.routeRes = Router::resolve(connection, this->config, *client.request);
 
+				if (client.request->getMethod() == Method::UNKNOWN)
+				{
+					dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
+					return ;
+				}
 				if (!client.routeRes.success)
 				{
-					
-					
+					dispatchError(connection, client.routeRes.errorCode);
 					return;
 				}
 
@@ -201,7 +207,6 @@ void HTTPHandler::onDataReceived(Connection &connection)
 		} 
 		else
 		{
-
 			if (client.isStreaming)
 				client.fileWriter->writeChunk(fragment, dataSize);
 			else
@@ -219,12 +224,12 @@ void HTTPHandler::onDataReceived(Connection &connection)
 	}
 }
 
-void HTTPHandler::onConnection(Connection &connection)
+void HTTPHandler::onConnection(Connection& connection)
 {
 	this->clientsData.insert(connection.getClientID(), ClientData());
 }
 
-void HTTPHandler::onDisconnection(Connection &connection)
+void HTTPHandler::onDisconnection(Connection& connection)
 {
 	HashMap<size_t, ClientData>::iterator it = this->clientsData.find(connection.getClientID());
 
@@ -235,7 +240,7 @@ void HTTPHandler::onDisconnection(Connection &connection)
 	}
 }
 
-void HTTPHandler::onError(Connection &connection)
+void HTTPHandler::onError(Connection& connection)
 {
 	Logger::ERROR() << "Connection:" << connection << " errored";
 }

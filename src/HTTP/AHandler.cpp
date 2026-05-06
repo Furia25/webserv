@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 03:25:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 17:30:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ bool AHandler::execute()
 	catch (const HTTPException& http_exception)
 	{
 		this->statusCode = http_exception.getStatusCode();
-		this->initError(); // Prépare le passage en mode "Envoi d'erreur"
+		this->initError();
 	}
 	catch (const std::exception& e)
 	{

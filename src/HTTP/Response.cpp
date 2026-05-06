@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 19:55:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 18:00:21 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ void Response::buildErrorResponse(Connection& connection, HTTPCode code)
 	std::stringstream ss;
 	ss << "<html><head><title>Error " << static_cast<int>(code) << "</title></head>" 
 		<< "<body><center><h1>" << static_cast<int>(code) << " : " << HTTPCode::toString(code) << "</h1><hr>"
-		<< "WebServ/1.0 (Defautl Error Page)</center></body></html>";
+		<< SERV_NAME "/" SERV_VERSION " (Default Error Page)</center></body></html>";
 
 	std::string body = ss.str();
 	Response::buildRawResponse(connection, code, MIME::html, body);

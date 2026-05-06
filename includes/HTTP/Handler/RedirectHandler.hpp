@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:31:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 17:35:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,12 @@ public:
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
-		const Config::ServerConfig& host_config,
-		const Config::RouteConfig& route_config,
+		const Config::ServerConfig *host_config,
+		const Config::RouteConfig *route_config,
 		const std::string& physical_path,
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), 
-	redirectConfig(static_cast<const Config::RedirectConfig&>(route_config)) {};
+	redirectConfig(static_cast<const Config::RedirectConfig&>(*route_config)) {};
 
 	void	onExecute();
 private:

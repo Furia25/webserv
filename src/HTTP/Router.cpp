@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 16:57:55 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 18:28:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTP/Router.hpp"
+#include "Utils/Itoa.hpp"
 
 static inline void extract_host(const Request &req, std::string& host)
 {
@@ -41,55 +42,30 @@ Router::RouteResult Router::resolve(const Connection& connection, const Config::
 	extract_host(req, host);
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
 	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
-	Config::ServerConfig *tmpHost;
+	const Config::ServerConfig *tmpHost;
 	if (it == tree.end())
-	{
-		try
-		{
-			it = tree.begin();
-			tmpHost = it->second;
-		} catch (const std::exception& e)
-		{
-			throw HTTPException(HTTPCode::NOT_FOUND);
-		}
-	}
+		tmpHost = &Router::findDefaultServer(connection.getOriginPort(), config);
 	else
 		tmpHost = it->second;
 	res.host = tmpHost;
 
 	/*We have to make better checks c'est pas super ça parce que il faut juste pas qu'on dépasse le fichier disque de la route*/
-	if (req.getPath().find("..") != std::string::npos)
+	if (req.getPath().find("../") != std::string::npos)
 	{
 		res.errorCode = HTTPCode::FORBIDDEN;
 		return (res);
 	}
 
-	std::string currentPath = req.getPath();
-	RadixTree<Config::RouteConfig *>::const_iterator routeIt = tmpHost->routes.end();
+	const std::string& current_path = req.getPath();
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = tmpHost->routes.find_prefix(current_path);
 
-	while (true)
+	if (route_it == tmpHost->routes.end())
 	{
-		routeIt = tmpHost->routes.find(currentPath);
-
-		if (routeIt != tmpHost->routes.end()) 
-			break;
-		if (currentPath == "/" || currentPath.empty()) 
-		{
-			res.errorCode = HTTPCode::NOT_FOUND;
-			return res;
-		}
-		size_t lastSlash = currentPath.find_last_of('/');
-		if (lastSlash == std::string::npos) 
-			currentPath = "/";
-		else if (lastSlash == 0) 
-			currentPath = "/";
-		else
-			currentPath = currentPath.substr(0, lastSlash);
+		res.errorCode = HTTPCode::NOT_FOUND;
+		return (res);
 	}
 
-	res.route = routeIt->second;
-	const std::string &foundRoutePath = routeIt->first;
-
+	res.route = route_it->second;
 	if (res.route->method_allowed[static_cast<size_t>(req.getMethod())] == false)
 	{
 		res.errorCode = HTTPCode::METHOD_NOT_ALLOWED;
@@ -102,15 +78,24 @@ Router::RouteResult Router::resolve(const Connection& connection, const Config::
 		return res;
 	}
 
-	std::string remainder = req.getPath().substr(foundRoutePath.size());
-	if (!remainder.empty() && remainder[0] == '/' && !foundRoutePath.empty() && foundRoutePath[foundRoutePath.size() - 1] == '/')
+	const std::string& found_path = route_it->first;
+	std::string remainder = current_path.substr(found_path.size());
+	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
 		remainder = remainder.substr(1);
 
 	if (!res.route->alias.empty())
 		res.physicalPath = res.host->root + res.route->alias + remainder;
 	else
-		res.physicalPath = res.host->root + foundRoutePath + remainder;
+		res.physicalPath = res.host->root + found_path + remainder;
 
 	res.success = true;
 	return res;
+}
+
+const Config::ServerConfig& Router::findDefaultServer(port_t port, const Config::AppConfig &config)
+{
+	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(port);
+	if (tree.begin() == tree.end())
+		throw std::runtime_error("Unable to find default server for port" + itoa(port));
+	return *tree.begin()->second;
 }

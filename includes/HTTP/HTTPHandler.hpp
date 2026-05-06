@@ -62,23 +62,23 @@ private:
 
 	template <typename T>
 	void	createJob(Connection& connection, const Request& request,
-				const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
 				
 	template <typename T>
 	void	createJobUpload(Connection& connection, const Request& request,
-	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 	const std::string& physical_path, bool isUpload, HTTPCode status_code);
 
-	void	dispatchError(Connection& connection, HTTPCode code);
+	void	dispatchError(Connection& connection, HTTPCode error_code);
 	void	dispatchError(Connection& connection, const Request& request,
-				const Config::ServerConfig& host_config, const Config::RouteConfig& route_config, HTTPCode error_code);
+				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config, HTTPCode error_code);
 
 };
 
 template <typename T>
 inline void HTTPHandler::createJob(Connection& connection, const Request& request,
-	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 	const std::string& physical_path, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());
@@ -104,7 +104,7 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 
 template <typename T>
 inline void HTTPHandler::createJobUpload(Connection& connection, const Request& request,
-	const Config::ServerConfig& host_config, const Config::RouteConfig& route_config,
+	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 	const std::string& physical_path, bool isUpload, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());

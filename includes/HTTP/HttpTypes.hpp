@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 17:57:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/06 18:01:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
 # undef _HANDLERTYPES_
 
 # define _METHODS_ (GET, POST, DELETE, HEAD, PUT, UNKNOWN)
-ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC););
+ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC); public: Method() : _t(UNKNOWN) {});
 # undef _METHODS_
 
 #define _STATUS_CODES_ \
@@ -84,7 +84,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__
 # define X_STRING_CODE(tuple, ...)	_M_TUPLE_ELEM_0 tuple __VA_ARGS__
-# define X_STRING(tuple, ...)	_M_TUPLE_ELEM_1 tuple __VA_ARGS__
+# define X_STRING(tuple, ...)	_M_TUPLE_ELEM_2 tuple __VA_ARGS__
 ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
 	ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING);
 	public: HTTPCode() : _t(NOT_FOUND) {};
