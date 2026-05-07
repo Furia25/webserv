@@ -48,14 +48,21 @@ private:
 		FileWriter*				fileWriter;
 		Router::RouteResult 	routeRes;
 		bool					isStreaming;
+		std::string				destinationPath;
 		IJob					*actualJob;
-		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), actualJob(NULL) {};
+		ClientData(): request(NULL), fileWriter(NULL), isStreaming(false), destinationPath(""), actualJob(NULL) {};
 		void reset();
 	};
 
 	HashMap<size_t, ClientData>	clientsData;
 	const Config::AppConfig&	config;
 	size_t						totalRequests;
+
+	bool					processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
+	bool					initializeBodyReception(Connection& connection, ClientData& client);
+	void					setupStreamDestination(Connection& connection, ClientData& client);
+	void					receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
+
 
 	void 					launchJob(Connection &connection, ClientData &client);
 	void					checkCompletion(Connection& connection, ClientData& clientData);

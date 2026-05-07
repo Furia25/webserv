@@ -32,7 +32,7 @@ max_body_size = 150000000
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
-	alias = "/routes/default"
+	# alias = "/routes/default"
 	methods = ["GET", "DELETE", "POST"]
 	index = "index.html"
 	autoindex = false

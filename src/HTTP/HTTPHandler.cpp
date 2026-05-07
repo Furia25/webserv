@@ -86,6 +86,11 @@ void	HTTPHandler::ClientData::reset()
 	}
 	if (fileWriter) 
 	{
+		if (isStreaming) 
+		{
+			fileWriter->close();
+			std::remove(destinationPath.c_str());
+		}
 		delete fileWriter;
 		fileWriter = NULL;
 	}
@@ -95,6 +100,7 @@ void	HTTPHandler::ClientData::reset()
 		actualJob = NULL;
 	}
 	isStreaming = false;
+	destinationPath = "";
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
@@ -130,88 +136,114 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 		client.isStreaming = false; 
 	}
 }
-void HTTPHandler::onDataReceived(Connection& connection)
-{
-	size_t	id = connection.getClientID();
-	size_t	dataSize = connection.getReadBufferSize();
 
-	if (dataSize == 0)
+void HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size)
+{
+	if (!fragment || size == 0) 
 		return;
 
+	if (client.isStreaming)
+		client.fileWriter->writeChunk(fragment, size);
+	else
+		client.request->appendToBody(fragment, size);
+}
+
+void	HTTPHandler::setupStreamDestination(Connection& connection, ClientData& client)
+{
+	if (!client.fileWriter) 
+		client.fileWriter = new FileWriter();
+
+	std::stringstream pathBuilder;
+
+	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
+	{
+		const Config::UploadConfig& uploadConfig = static_cast<const Config::UploadConfig&>(*client.routeRes.route);
+		std::string fileName = client.request->getPath();
+		size_t pos = fileName.find_last_of('/');
+		if (pos != std::string::npos)
+			fileName = fileName.substr(pos + 1);
+
+		pathBuilder << uploadConfig.upload_store << "/" << fileName << "_" << connection.getHash();
+	} 
+	else 
+		pathBuilder << _temp_file_path_ << connection.getHash();
+
+	client.destinationPath = pathBuilder.str();
+	client.fileWriter->open(client.destinationPath);
+}
+
+bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
+{
+	std::vector<uint8_t> extra = client.builder.getExtraData();
+	client.isStreaming = !client.request->isLessThanOneMO();
+
+	if (client.isStreaming)
+		setupStreamDestination(connection, client);
+	else 
+		client.request->reserveBody(client.request->getContentLength());
+
+	if (!extra.empty()) 
+		receiveBodyChunk(client, extra.data(), extra.size());
+
+	checkCompletion(connection, client);
+	return true;
+}
+
+bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
+{
+	client.builder.feed(fragment, size);
+
+	if (!client.builder.isHeaderParsed())
+		return false;
+
+	client.builder.print();
+	client.request = new Request(client.builder.build());
+	client.routeRes = Router::resolve(connection, this->config, *client.request);
+
+	if (client.request->getMethod() == Method::UNKNOWN)
+	{
+		dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
+		return false;
+	}
+	if (!client.routeRes.success)
+	{
+		dispatchError(connection, client.routeRes.errorCode);
+		return false;
+	}
+	return true;
+}
+
+void	HTTPHandler::onDataReceived(Connection& connection)
+{
+	size_t	id = connection.getClientID();
+    size_t	dataSize = connection.getReadBufferSize();
+
 	HashMap<size_t, ClientData>::iterator	it = clientsData.find(id);
-	if (it == clientsData.end())
+	if (it == clientsData.end() || dataSize < 1)
 		return;
 
 	ClientData	&client = it->second;
-	
+
 	if (client.actualJob != NULL && connection.getJob() == NULL)
 		client.reset();
 
-	const uint8_t	*fragment = connection.getReadBufferPtr();
+	const uint8_t *fragment = connection.getReadBufferPtr();
 
 	try 
 	{
 		if (!client.isStreaming && !client.builder.isHeaderParsed())
 		{
-            client.builder.feed(fragment, dataSize);
-
-			if (client.builder.isHeaderParsed())
+			if (processHeaders(connection, client, fragment, dataSize))
 			{
-				client.builder.print();
-				client.request = new Request(client.builder.build());
-				client.routeRes = Router::resolve(connection, this->config, *client.request);
-
-				if (client.request->getMethod() == Method::UNKNOWN)
-				{
-					dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
-					return ;
-				}
-				if (!client.routeRes.success)
-				{
-					dispatchError(connection, client.routeRes.errorCode);
-					return;
-				}
-
 				if (client.request->getContentLength() > 0)
-				{
-					std::vector<uint8_t> extra = client.builder.getExtraData();
-
-					if (!client.request->isLessThanOneMO())
-					{
-						client.isStreaming = true;
-
-						if (!client.fileWriter) client.fileWriter = new FileWriter();
-						{
-							std::stringstream ss;
-							ss << _temp_file_path_ << connection.getHash();
-							client.fileWriter->open(ss.str());
-						}
-
-						if (!extra.empty())
-							client.fileWriter->writeChunk(extra.data(), extra.size());
-					}
-					else 
-					{
-						client.isStreaming = false;
-						if (!extra.empty())
-						{
-							client.request->reserveBody(client.request->getContentLength());
-							client.request->appendToBody(extra.data(), extra.size());
-						}
-					}
-					checkCompletion(connection, client);
-				}
+					initializeBodyReception(connection, client);
 				else
 					this->launchJob(connection, client);
 			}
-		} 
+		}
 		else
 		{
-			if (client.isStreaming)
-				client.fileWriter->writeChunk(fragment, dataSize);
-			else
-				client.request->appendToBody(fragment, dataSize);
-
+			receiveBodyChunk(client, fragment, dataSize);
 			checkCompletion(connection, client);
 		}
 		connection.consumeReadData(dataSize);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 12:05:14 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/06 20:18:12 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,20 +42,15 @@ void UploadHandler::onExecute()
 
 	if (this->isUpload)
 	{
-		std::string tempPath = _temp_file_path_  +  itoa(connection.getHash());
-		if (std::rename(tempPath.c_str(), destination.c_str()) != 0)
+		struct stat st;
+		if (stat(destination.c_str(), &st) != 0) 
 		{
-			std::ifstream src(tempPath.c_str(), std::ios::binary);
-			std::ofstream dst(destination.c_str(), std::ios::binary);
-			if (!src || !dst)
-			{
-				cleanTempFile(tempPath);
-				throw HTTPException(HTTPCode::BAD_GATEWAY);
-			}
-			dst << src.rdbuf();
-			src.close();
-			dst.close();
-			cleanTempFile(tempPath);
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+		}
+		if (static_cast<size_t>(st.st_size) > request.getContentLength())
+		{
+			std::remove(destination.c_str());
+			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		}
 	}
 	else
@@ -64,7 +59,7 @@ void UploadHandler::onExecute()
 
 		std::ofstream outFile(destination.c_str(), std::ios::binary);
 		if (!outFile)
-			throw HTTPException(HTTPCode::BAD_GATEWAY);
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
 
 		outFile.write(reinterpret_cast<const char *>(body.data()), body.size());
 		outFile.close();
