@@ -38,7 +38,16 @@ HTTPHandler::~HTTPHandler()
 
 void HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-	dispatchError(connection, Request(), &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
+	HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
+	ClientData* client = (it != clientsData.end()) ? &it->second : NULL;
+	
+	if (client && !client->request)
+		client->request = new Request();
+	
+	Request dummyReq;
+	const Request& reqRef = (client && client->request) ? *client->request : dummyReq;
+
+	dispatchError(connection, reqRef, &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
 }
 
 void HTTPHandler::dispatchError(Connection& connection,
@@ -71,7 +80,7 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
 		break;
 		case HandlerType::UPLOAD :
-			this->createJobUpload<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, client.isStreaming, HTTPCode::OK);
+			this->createJob<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
 		break;
 	}
 }
@@ -79,28 +88,16 @@ void HTTPHandler::launchJob(Connection& connection, ClientData& client)
 void	HTTPHandler::ClientData::reset()
 {
 	builder.reset();
-	if (request) 
-	{
-		delete request;
-		request = NULL;
-	}
-	if (fileWriter) 
-	{
-		if (isStreaming) 
-		{
-			fileWriter->close();
-			std::remove(destinationPath.c_str());
-		}
-		delete fileWriter;
-		fileWriter = NULL;
-	}
 	if (actualJob) 
 	{
 		delete actualJob;
 		actualJob = NULL;
 	}
-	isStreaming = false;
-	destinationPath = "";
+	if (request) 
+	{
+		delete request;
+		request = NULL;
+	}
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
@@ -111,11 +108,11 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	size_t requestLength = client.request->getContentLength();
 	size_t bodyLength = 0;
 
-	if (client.isStreaming) 
+	if (client.request->getBody().getIsStreaming()) 
 	{
-		if (!client.fileWriter)
+		if (!client.request->getBody().getFileWriter())
 			return;
-		bodyLength = client.fileWriter->getBytesWritten();
+		bodyLength = client.request->getBody().getFileWriter()->getBytesWritten();
 	}
 	else 
 		bodyLength = client.request->getBodySize();
@@ -128,12 +125,11 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 
 	if (bodyLength == requestLength) 
 	{
-		if (client.isStreaming && client.fileWriter)
-			client.fileWriter->close();
+		if (client.request->getBody().getIsStreaming() && client.request->getBody().getFileWriter())
+			client.request->getBody().getFileWriter()->close();
 
 		this->launchJob(connection, client);
-
-		client.isStreaming = false; 
+		client.request->getBody().setIsStreaming(false); 
 	}
 }
 
@@ -142,18 +138,21 @@ void HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 	if (!fragment || size == 0) 
 		return;
 
-	if (client.isStreaming)
-		client.fileWriter->writeChunk(fragment, size);
+	size_t remaining = client.request->getContentLength() - client.request->getBodySize();
+    size_t toWrite = (size < remaining) ? size : remaining;
+
+	if (client.request->getBody().getIsStreaming())
+		client.request->getBody().getFileWriter()->writeChunk(fragment, toWrite);
 	else
-		client.request->appendToBody(fragment, size);
+		client.request->getBody().feed(fragment, toWrite);
 }
 
-void	HTTPHandler::setupStreamDestination(Connection& connection, ClientData& client)
+bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
 {
-	if (!client.fileWriter) 
-		client.fileWriter = new FileWriter();
+	std::vector<uint8_t>	extra = client.builder.getExtraData();
 
-	std::stringstream pathBuilder;
+	bool	isStreaming = !client.request->isLessThanOneMO();
+	std::string	path = "";
 
 	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
 	{
@@ -162,30 +161,26 @@ void	HTTPHandler::setupStreamDestination(Connection& connection, ClientData& cli
 		size_t pos = fileName.find_last_of('/');
 		if (pos != std::string::npos)
 			fileName = fileName.substr(pos + 1);
-
+		if (fileName.empty())
+			fileName = "uploaded_file";
+		std::stringstream pathBuilder;
 		pathBuilder << uploadConfig.upload_store << "/" << fileName << "_" << connection.getHash();
-	} 
-	else 
+		path = pathBuilder.str();
+	}
+	else if (isStreaming) 
+	{
+		std::stringstream pathBuilder;
 		pathBuilder << _temp_file_path_ << connection.getHash();
-
-	client.destinationPath = pathBuilder.str();
-	client.fileWriter->open(client.destinationPath);
-}
-
-bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
-{
-	std::vector<uint8_t> extra = client.builder.getExtraData();
-	client.isStreaming = !client.request->isLessThanOneMO();
-
-	if (client.isStreaming)
-		setupStreamDestination(connection, client);
-	else 
-		client.request->reserveBody(client.request->getContentLength());
-
+		path = pathBuilder.str();
+	}
+	client.request->initBody(path, isStreaming);
 	if (!extra.empty()) 
-		receiveBodyChunk(client, extra.data(), extra.size());
-
-	checkCompletion(connection, client);
+	{
+		size_t totalExpected = client.request->getContentLength();
+		size_t toProcess = (extra.size() < totalExpected) ? extra.size() : totalExpected;
+		if (toProcess > 0)
+			receiveBodyChunk(client, extra.data(), toProcess);
+	}
 	return true;
 }
 
@@ -215,44 +210,56 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
-	size_t	id = connection.getClientID();
-    size_t	dataSize = connection.getReadBufferSize();
+	size_t id = connection.getClientID();
+	size_t dataSize = connection.getReadBufferSize();
+	const uint8_t *fragment = connection.getReadBufferPtr();
 
-	HashMap<size_t, ClientData>::iterator	it = clientsData.find(id);
-	if (it == clientsData.end() || dataSize < 1)
+	HashMap<size_t, ClientData>::iterator it = clientsData.find(id);
+
+	if (it == clientsData.end() || dataSize == 0)
 		return;
 
-	ClientData	&client = it->second;
-
-	if (client.actualJob != NULL && connection.getJob() == NULL)
-		client.reset();
-
-	const uint8_t *fragment = connection.getReadBufferPtr();
+	ClientData &client = it->second;
 
 	try 
 	{
-		if (!client.isStreaming && !client.builder.isHeaderParsed())
+		if (!client.builder.isHeaderParsed())
 		{
-			if (processHeaders(connection, client, fragment, dataSize))
+			if (!processHeaders(connection, client, fragment, dataSize))
 			{
-				if (client.request->getContentLength() > 0)
-					initializeBodyReception(connection, client);
-				else
-					this->launchJob(connection, client);
+				connection.consumeReadData(dataSize);
+				return;
 			}
+			initializeBodyReception(connection, client);
+			fragment = connection.getReadBufferPtr();
+			dataSize = connection.getReadBufferSize();
 		}
-		else
+
+		if (client.builder.isHeaderParsed() && client.request)
 		{
-			receiveBodyChunk(client, fragment, dataSize);
-			checkCompletion(connection, client);
+			size_t totalExpected = client.request->getContentLength();
+			size_t alreadyReceived = client.request->getBodySize();
+			if (alreadyReceived < totalExpected)
+			{
+				size_t remaining = totalExpected - alreadyReceived;
+				size_t toProcess = (dataSize < remaining) ? dataSize : remaining;
+				if (toProcess > 0)
+				{
+					receiveBodyChunk(client, fragment, toProcess);
+					alreadyReceived += toProcess;
+				}
+			}
+			if (alreadyReceived >= totalExpected)
+				checkCompletion(connection, client);
 		}
 		connection.consumeReadData(dataSize);
 		this->totalRequests++;
 	}
 	catch (const std::exception &e)
 	{
-		Logger::ERROR() << "Exception: " << e.what() << '\n';
+		Logger::ERROR() << "Exception in onDataReceived: " << e.what();
 		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		connection.setClosing();
 	}
 }
 

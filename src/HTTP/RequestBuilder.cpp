@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:32:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/08 18:16:39 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,7 +91,7 @@ size_t RequestBuilder::find_header_end()
 
 size_t RequestBuilder::find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
 {
-	for (size_t i = start; i < max && i < buffer.size() - 1; ++i) {
+	for (size_t i = start; i <= max && i < buffer.size() - 1; ++i) {
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	}
 	return std::string::npos;
@@ -108,10 +108,11 @@ void RequestBuilder::parse_all_headers(const std::vector<uint8_t>& buffer, size_
 		parseRequestLine(first_line);
 		start = end + 2;
 
-		while ((end = find_newline(buffer, start, pos)) != std::string::npos && end > start)
+		while (start < pos && (end = find_newline(buffer, start, pos)) != std::string::npos)
 		{
 			std::string header_line(buffer.begin() + start, buffer.begin() + end);
-			parseHeaderLine(header_line);
+			if (!header_line.empty())
+				parseHeaderLine(header_line);
 			start = end + 2;
 		}
 	}
@@ -150,7 +151,7 @@ void RequestBuilder::parseHeaderLine(std::string &line)
 void RequestBuilder::toLowerCase(std::string &str)
 {
 	for (size_t i = 0; i < str.length(); ++i)
-		str[i] = std::tolower(str[i]);
+		str[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(str[i])));
 }
 
 void RequestBuilder::validateMethod() const
@@ -237,8 +238,23 @@ std::vector<uint8_t> RequestBuilder::getExtraData()
 	return extra;
 }
 
-const bool &RequestBuilder::getCompleteStatus() const { return parsing_is_complete; }
-const bool &RequestBuilder::isHeaderParsed() const { return header_is_parsed; }
-const bool &RequestBuilder::isValidated() const { return is_validated; }
-void RequestBuilder::setValidateStatus(int status) { is_validated = status; }
+const bool &RequestBuilder::getCompleteStatus() const 
+{
+	return parsing_is_complete;
+}
+
+const bool &RequestBuilder::isHeaderParsed() const 
+{
+	return header_is_parsed;
+}
+
+const bool &RequestBuilder::isValidated() const 
+{
+	return is_validated;
+}
+
+void RequestBuilder::setValidateStatus(int status) 
+{
+	is_validated = status;
+}
 

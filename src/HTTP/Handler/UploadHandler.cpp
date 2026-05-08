@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 20:18:12 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/08 18:54:32 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,33 +31,24 @@ void	UploadHandler::cleanTempFile(const std::string& path)
 
 void UploadHandler::onExecute()
 {
-	std::string fileName;
-	size_t pos = request.getPath().find_last_of('/');
-	if (pos != std::string::npos)
-		fileName = request.getPath().substr(pos + 1);
-	else
-		fileName = request.getPath();
-
-	std::string destination = uploadConfig.upload_store + "/" + fileName + "_" + itoa(connection.getHash());
-
-	if (this->isUpload)
+	if (this->request.getBody().getIsStreaming())
 	{
 		struct stat st;
-		if (stat(destination.c_str(), &st) != 0) 
+		if (stat(request.getBody().getFilePath().c_str(), &st) != 0) 
 		{
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
 		}
 		if (static_cast<size_t>(st.st_size) > request.getContentLength())
 		{
-			std::remove(destination.c_str());
+			std::remove(request.getBody().getFilePath().c_str());
 			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		}
 	}
 	else
 	{
-		const std::vector<uint8_t> &body = request.getBody();
+		const std::vector<uint8_t> &body = request.getBody().getMemoryBuffer();
 
-		std::ofstream outFile(destination.c_str(), std::ios::binary);
+		std::ofstream outFile(request.getBody().getFilePath().c_str(), std::ios::binary);
 		if (!outFile)
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
 
@@ -65,6 +56,8 @@ void UploadHandler::onExecute()
 		outFile.close();
 	}
 
+	const_cast<Request&>(request).getBody().setFilePath("");
 	Response::buildEmptyResponse(connection, HTTPCode::CREATED);
+	connection.setClosing();
 	this->setFinished();
 }

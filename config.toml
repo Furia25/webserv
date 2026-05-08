@@ -13,7 +13,7 @@ tick_interval = 5
 [[servers]]
 server_name = "test"
 root = "www"
-max_body_size = 150000000
+max_body_size = 10000000
 
 	[[servers.bindings]]
 	host = "localhost"
@@ -32,8 +32,8 @@ max_body_size = 150000000
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
-	# alias = "/routes/default"
-	methods = ["GET", "DELETE", "POST"]
+	alias = "/routes/default"
+	methods = ["GET", "DELETE"]
 	index = "index.html"
 	autoindex = false
 
@@ -42,7 +42,7 @@ max_body_size = 150000000
 	path = "/upload"
 	methods = ["POST"]
 	handler = "UPLOAD"
-	max_body_size = 150000000
+	max_body_size = 10000000
 	allowed_extensions = []
 	allow_overwrite = false
 	upload_store = "./www/site1/uploads"

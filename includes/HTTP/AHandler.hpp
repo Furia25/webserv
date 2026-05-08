@@ -56,7 +56,7 @@ protected:
 	const HTTPHandler&				handler;
 	bool							fileHeaderSent;
 	Connection&						connection;
-	const Request					request;
+	const Request&					request;
 	const Config::ServerConfig* 	hostConfig;
 	const Config::RouteConfig*		routeConfig;
 	std::string						physicalPath;

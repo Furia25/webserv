@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:38:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/08 17:17:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,40 @@
 # include "HttpTypes.hpp"
 # include "Utils/FileWriter.hpp"
 
+class Body
+{
+private:
+	FileWriter*				fileWriter;
+	bool					isStreaming;
+	size_t					expectedSize;
+	size_t					receivedSize;
+	std::vector<uint8_t>	memoryBuffer;
+	std::string				destinationPath;
+
+public:
+	Body();
+	
+	~Body();
+	
+	void			feed(const uint8_t* data, size_t size);
+	void			init(size_t expected, const std::string& path, bool stream);
+
+	void			finish();
+	void			reset();
+
+	void			setIsStreaming(bool stream);
+	void			setFilePath(const std::string& path);
+
+	bool							isComplete()			const;
+	const std::string&				getFilePath()			const;
+	FileWriter*						getFileWriter()			const;
+	bool							checkOverflow()			const;
+	bool							getIsStreaming()		const;
+	size_t							getReceivedSize()		const;
+	const std::vector<uint8_t>&		getMemoryBuffer()		const;
+	
+};
+
 class Request
 {
 private:
@@ -29,7 +63,7 @@ private:
 	std::string							protocol;
 	size_t								content_length;
 	HashMap<std::string, std::string>	headers;
-	std::vector<uint8_t>				body;
+	Body								body;
 
 public:
 	Request() {};
@@ -38,10 +72,16 @@ public:
 			const HashMap<std::string, std::string>& h);
 	~Request();
 
-	void	appendToBody(const uint8_t* data, size_t size);
-	void	reserveBody(size_t size);
+		
+	void		initBody(const std::string& path, bool stream);
+	void		feedBody(const uint8_t* data, size_t size);
+	void		finishBody();
 	
-	const std::vector<uint8_t>&					getBody()			const;
+	bool		isBodyComplete()	const;
+	bool		checkBodyOverflow() const;
+	
+	Body&										getBody();
+	const Body&									getBody()			const;
 	size_t										getBodySize()		const;
 	size_t										isLessThanOneMO()	const;
 	Method										getMethod() 		const;
