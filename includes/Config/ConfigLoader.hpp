@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:45:49 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 02:34:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/08 22:37:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ public:
 			for (std::vector<std::string>::const_iterator it = child.errors.begin(); it != child.errors.end(); ++it)
 				this->push_error(name, *it);
 			if (!table.as<toml::Table>().empty())
-				this->errors.push_back(name + " -> unexpected properties: " + format_remaining(table));
+				this->push_error(name, "unexpected properties: " + format_remaining(table));
 		}
 		catch (const std::exception& e)
 		{

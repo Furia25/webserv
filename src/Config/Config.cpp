@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 03:41:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/08 22:40:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,6 +174,7 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 
 		std::string handler_str;
 		loader.value(routes_array[index], "handler", handler_str);
+		
 		HandlerType handler = HandlerType::from(handler_str);
 		RouteConfig	*final_route = NULL;
 		switch (handler)
@@ -213,10 +214,11 @@ void Config::RouteConfig::load(toml::Variant& table, Config::Loader& loader)
 	loader.value_or(table, "root", this->root, server_config->root);
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config->max_body_size, 0, UINT64_MAX);
 	this->loadAllowedMethod(table, loader);
+	this->loadCookies(table, loader);
 	this->loadChild(table, loader);
 }
 
-void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader& loader)
+void Config::RouteConfig::loadAllowedMethod(toml::Variant &table, Config::Loader &loader)
 {
 	toml::Array methods;
 	loader.value(table, "methods", methods);
@@ -236,6 +238,53 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 			loader.push_error("methods", ss.str());
 		}
 	}
+}
+
+void Config::RouteConfig::loadCookies(toml::Variant& table, Config::Loader& loader)
+{
+	toml::Variant	cookies = table.take_or("cookies", toml::Variant());
+	if (cookies.isNone())
+		return ;
+	toml::Table&	cookies_table = cookies.as<toml::Table>();
+	size_t			cookie_num = 0;
+	for (toml::Table::iterator it = cookies_table.begin(); it != cookies_table.end(); ++it)
+	{
+		const std::string	cookie_name = "Cookie \"" + it->first + "\"";
+
+		if (it->second.isImplicit() || !it->second.isHeader())
+		{
+			loader.push_error(cookie_name, "Cookies need to be defined as explicit headers for example: [servers.routes.cookies.foo]");
+			continue ;
+		}
+
+		try
+		{
+			Loader			cookie_loader;
+			CookieConfig	cookie_config;
+			toml::Table&	actual_cookie_table = it->second.as<toml::Table>();
+
+			cookie_config.name = it->first;
+			cookie_config.load(it->second, cookie_loader);
+			
+			this->cookies.push_back(cookie_config);
+			for (std::vector<std::string>::const_iterator error_it = cookie_loader.errors.begin(); error_it != cookie_loader.errors.end(); ++it)
+				loader.push_error(cookie_name, *error_it);
+			if (!actual_cookie_table.empty())
+				loader.push_error(cookie_name, "unexpected properties: " + Loader::format_remaining(it->second));
+		} catch (const std::exception& e)
+		{
+			loader.push_error(cookie_name, e.what());
+		}
+		cookie_num++;
+	}
+}
+
+void Config::CookieConfig::load(toml::Variant& table, Config::Loader& loader)
+{
+	loader.value_or<uint64_t>(table, "max_age", this->max_age, 0);
+	loader.value_or<bool>(table, "restrict_path", this->restrict_path, 0);
+	loader.value_or<bool>(table, "restrict_http", this->restrict_http, 0);
+	loader.value_or<std::string>(table, "value", this->value, "");
 }
 
 void Config::StaticConfig::loadChild(toml::Variant& table, Config::Loader& loader)

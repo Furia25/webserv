@@ -1,0 +1,72 @@
+
+[engine]
+max_events = 1024
+max_timeout = 50
+closing_timeout = 30
+read_size = 4096
+max_read_limit = 16384
+
+[logging]
+tick_interval = 5
+
+# --- Main Website (Port 8080) ---
+[[servers]]
+server_name = "test"
+root = "www/basic_website"
+max_body_size = 150000000
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "8080"
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "4242"
+
+	[servers.errors]
+	404 = "errors/404.html"
+	500 = "errors/500.html"
+	403 = "errors/403.html"
+
+	# Static files route
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/"
+	alias = "/routes/default"
+	methods = ["GET", "DELETE", "POST"]
+	index = "index.html"
+	autoindex = false
+
+		[servers.routes.cookies.basic_session_id]
+		[servers.routes.cookies.theme]
+		max_age = 3600000
+		value = "black"
+
+	# File upload route
+	[[servers.routes]]
+	path = "/upload"
+	methods = ["POST"]
+	handler = "UPLOAD"
+	max_body_size = 150000000
+	allowed_extensions = []
+	allow_overwrite = false
+	upload_store = "./www/site1/uploads"
+
+	[[servers.routes]]
+	path = "/caffeine"
+	methods = ["GET"]
+	handler = "STATIC"
+	alias = "/routes/test"
+	index = "index.html"
+	autoindex = true
+
+	[[servers.routes]]
+	path = "/status"
+	methods = ["GET"]
+	handler = "STATUS"
+	show_start_time = true
+	show_server_info = true
+	show_connection_info = true
+	show_request_info = true
+	show_timestamp = true
+

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:34:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/08 22:06:43 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,17 @@ namespace Config
 
 struct ServerConfig;
 
+struct CookieConfig
+{
+	std::string	name;
+	uint64_t	max_age;
+	bool		restrict_path;
+	bool		restrict_http;
+	std::string	value;
+
+	void		load(toml::Variant& table, Config::Loader& loader);
+};
+
 struct RouteConfig
 {
 	HandlerType	handler;
@@ -42,6 +53,8 @@ struct RouteConfig
 	std::string	root;
 	std::string	alias;
 
+	std::vector<CookieConfig>	cookies;
+
 	const ServerConfig	*server_config;
 
 	RouteConfig(const ServerConfig *server_config) : server_config(server_config) {};
@@ -49,6 +62,7 @@ struct RouteConfig
 
 	virtual void		loadChild(toml::Variant& table, Config::Loader& loader) = 0;
 	void				load(toml::Variant& table, Config::Loader& loader);
+	void				loadCookies(toml::Variant& table, Config::Loader& loader);
 	void				loadAllowedMethod(toml::Variant& table, Config::Loader& loader);
 };
 
