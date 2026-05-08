@@ -41,4 +41,6 @@
 *.dwo
 test_*
 
-includes/Utils/HashMapTest.cpp
+*test*
+/obj
+webserv
