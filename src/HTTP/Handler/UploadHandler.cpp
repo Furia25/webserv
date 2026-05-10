@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/08 18:54:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/10 11:15:09 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,17 +29,17 @@ void	UploadHandler::cleanTempFile(const std::string& path)
 	}
 }
 
-void UploadHandler::onExecute()
+void	UploadHandler::onExecute()
 {
+	size_t maxSize = CONFIG_BODY_SIZE;
 	if (this->request.getBody().getIsStreaming())
 	{
 		struct stat st;
 		if (stat(request.getBody().getFilePath().c_str(), &st) != 0) 
-		{
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-		}
-		if (static_cast<size_t>(st.st_size) > request.getContentLength())
+		if (maxSize > 0 && static_cast<size_t>(st.st_size) > maxSize)
 		{
+			Logger::ERROR() << "Upload de-chunked trop gros pour la config : " << st.st_size;
 			std::remove(request.getBody().getFilePath().c_str());
 			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		}
@@ -47,15 +47,14 @@ void UploadHandler::onExecute()
 	else
 	{
 		const std::vector<uint8_t> &body = request.getBody().getMemoryBuffer();
-
+		if (maxSize > 0 && body.size() > maxSize)
+			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		std::ofstream outFile(request.getBody().getFilePath().c_str(), std::ios::binary);
 		if (!outFile)
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-
 		outFile.write(reinterpret_cast<const char *>(body.data()), body.size());
 		outFile.close();
 	}
-
 	const_cast<Request&>(request).getBody().setFilePath("");
 	Response::buildEmptyResponse(connection, HTTPCode::CREATED);
 	connection.setClosing();

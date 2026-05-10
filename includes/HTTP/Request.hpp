@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/08 17:17:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/09 23:12:39 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,12 +64,13 @@ private:
 	size_t								content_length;
 	HashMap<std::string, std::string>	headers;
 	Body								body;
+	bool								is_chunk_encoding;
 
 public:
 	Request() {};
 	Request(Method m, const std::string& p, const std::string& q, 
 			const std::string& proto, size_t cl, 
-			const HashMap<std::string, std::string>& h);
+			const HashMap<std::string, std::string>& h, bool is_encoding);
 	~Request();
 
 		
@@ -80,6 +81,7 @@ public:
 	bool		isBodyComplete()	const;
 	bool		checkBodyOverflow() const;
 	
+	bool										isChunked()			const;
 	Body&										getBody();
 	const Body&									getBody()			const;
 	size_t										getBodySize()		const;

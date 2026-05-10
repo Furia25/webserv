@@ -27,6 +27,7 @@
 
 # define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
 
+
 class HTTPHandler : public IRequestHandler
 {
 public:
@@ -41,13 +42,23 @@ public:
 protected:
 private:
 
+	enum ChunkState
+	{
+		CHUNK_SIZE,
+		CHUNK_DATA,
+		CHUNK_TRAILER,
+		CHUNK_COMPLETE
+	};
 	struct ClientData
 	{
 		RequestBuilder			builder;
 		Request*				request;
 		Router::RouteResult 	routeRes;
 		IJob					*actualJob;
-		ClientData(): request(NULL), actualJob(NULL) {};
+		ChunkState				chunkState;
+		size_t					neededBytes;
+		std::string				sizeBuffer;
+		ClientData(): request(NULL), actualJob(NULL), chunkState(CHUNK_SIZE){};
 		void reset();
 	};
 
@@ -55,6 +66,7 @@ private:
 	const Config::AppConfig&	config;
 	size_t						totalRequests;
 
+	void					processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool					processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool					initializeBodyReception(Connection& connection, ClientData& client);
 	void					receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);

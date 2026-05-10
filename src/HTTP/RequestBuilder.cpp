@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/08 18:16:39 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/09 23:18:00 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 
 RequestBuilder::RequestBuilder() 
-	: parsing_is_complete(false), header_is_parsed(false), is_validated(false), content_length(0)
+	: parsing_is_complete(false), header_is_parsed(false), is_validated(false), is_chunk_encoding(false), content_length(0)
 {
 }
 
@@ -40,6 +40,7 @@ RequestBuilder &RequestBuilder::operator=(const RequestBuilder &other)
 		this->request_path = other.request_path;
 		this->query_path = other.query_path;
 		this->protocol = other.protocol;
+		this->is_chunk_encoding = other.is_chunk_encoding;
 	}
 	return (*this);
 }
@@ -54,6 +55,7 @@ void RequestBuilder::reset()
 	this->parsing_is_complete = false;
 	this->header_is_parsed = false;
 	this->is_validated = true;
+	this->is_chunk_encoding = false;
 	this->content_length = 0;
 	this->headers.clear();
 	this->method.clear();
@@ -133,24 +135,32 @@ void RequestBuilder::parseRequestLine(std::string &line)
 void RequestBuilder::parseHeaderLine(std::string &line)
 {
 	size_t colon_pos = line.find(':');
-	if (colon_pos != std::string::npos) {
+	if (colon_pos != std::string::npos) 
+	{
 		std::string key = line.substr(0, colon_pos);
 		std::string value = line.substr(colon_pos + 1);
 		toLowerCase(key);
 		size_t start = value.find_first_not_of(" \t");
-		if (start != std::string::npos) {
-			value = value.substr(start);
-		}
+		size_t end = value.find_last_not_of(" \t\r\n");
+		if (start != std::string::npos && end != std::string::npos) 
+			value = value.substr(start, end - start + 1);
 		headers.insert(key, value);
-
-		if (key == _HEADER_CONTENT_LENGTH_)
+		if (key == _ENCODING_CHUNK_)
+		{
+			if(value.find("chunk") != std::string::npos)
+			{
+				is_chunk_encoding = true;
+				content_length = 0;
+			}
+		}
+		else if (key == _HEADER_CONTENT_LENGTH_ && !is_chunk_encoding)
 			content_length = std::strtoul(value.c_str(), NULL, 10);
 	}
 }
 
 void RequestBuilder::toLowerCase(std::string &str)
 {
-	for (size_t i = 0; i < str.length(); ++i)
+	for (size_t i = 0; i < str.length(); ++i)	
 		str[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(str[i])));
 }
 
@@ -199,7 +209,7 @@ Request RequestBuilder::build() const
 	try {
 		m = Method::from(this->method);	
 	} catch (const std::domain_error& e) {}
-	return Request(m, request_path, query_path, protocol, content_length, headers);
+	return Request(m, request_path, query_path, protocol, content_length, headers, is_chunk_encoding);
 }
 
 void RequestBuilder::print() const 

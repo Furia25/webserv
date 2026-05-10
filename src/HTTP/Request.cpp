@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/08 17:17:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/09 23:12:27 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,10 +15,10 @@
 #define _IS_ONE_MO_ 1048576
 
 Request::Request(Method m, const std::string& p, const std::string& q, 
-                 const std::string& proto, size_t cl, 
-                 const HashMap<std::string, std::string>& h)
-    : method(m), path(p), query_string(q), protocol(proto), 
-      content_length(cl), headers(h)
+				 const std::string& proto, size_t cl, 
+				 const HashMap<std::string, std::string>& h, bool is_encoding)
+	: method(m), path(p), query_string(q), protocol(proto), 
+	  content_length(cl), headers(h), is_chunk_encoding(is_encoding)
 {
 }
 
@@ -84,6 +84,11 @@ const std::string&	Request::getQueryString() const
 const std::string&	Request::getProtocol() const
 {
     return (protocol);
+}
+
+bool	Request::isChunked() const 
+{
+	return this->is_chunk_encoding;
 }
 
 size_t	Request::getContentLength() const
