@@ -17,7 +17,7 @@
 # include "Server/IRequestHandler.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HTTPHandler.hpp"
-# include "HTTP/RequestBuilder.hpp"
+# include "HTTP/RequestFactory.hpp"
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
@@ -43,7 +43,7 @@ private:
 
 	struct ClientData
 	{
-		RequestBuilder			builder;
+		RequestFactory			builder;
 		Request*				request;
 		FileWriter*				fileWriter;
 		Router::RouteResult 	routeRes;

@@ -21,7 +21,7 @@
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"
-# include "Utils/Itoa.hpp"
+# include "Utils/IntegerUtils.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 	: config(config), totalRequests(0)
@@ -102,7 +102,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	if (!client.request)
 		return;
 
-	size_t requestLength = client.request->getContentLength();
+	size_t requestLength = client.request->content_length;
 	size_t bodyLength = 0;
 
 	if (client.isStreaming) 
@@ -161,7 +161,7 @@ void HTTPHandler::onDataReceived(Connection& connection)
 				client.request = new Request(client.builder.build());
 				client.routeRes = Router::resolve(connection, this->config, *client.request);
 
-				if (client.request->getMethod() == Method::UNKNOWN)
+				if (client.request->method == Method::UNKNOWN)
 				{
 					dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
 					return ;
@@ -172,7 +172,7 @@ void HTTPHandler::onDataReceived(Connection& connection)
 					return;
 				}
 
-				if (client.request->getContentLength() > 0)
+				if (client.request->content_length > 0)
 				{
 					std::vector<uint8_t> extra = client.builder.getExtraData();
 
@@ -195,7 +195,7 @@ void HTTPHandler::onDataReceived(Connection& connection)
 						client.isStreaming = false;
 						if (!extra.empty())
 						{
-							client.request->reserveBody(client.request->getContentLength());
+							client.request->reserveBody(client.request->content_length);
 							client.request->appendToBody(extra.data(), extra.size());
 						}
 					}

@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 12:05:14 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/11 01:43:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Handler/UploadHandler.hpp"
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "Utils/Itoa.hpp"
+# include "Utils/IntegerUtils.hpp"
 # include <stdio.h>
 # include <unistd.h>
 # include <sys/types.h>
@@ -32,17 +32,18 @@ void	UploadHandler::cleanTempFile(const std::string& path)
 void UploadHandler::onExecute()
 {
 	std::string fileName;
-	size_t pos = request.getPath().find_last_of('/');
+	size_t pos = request.path.find_last_of('/');
 	if (pos != std::string::npos)
-		fileName = request.getPath().substr(pos + 1);
+		fileName = request.path.substr(pos + 1);
 	else
-		fileName = request.getPath();
+		fileName = request.path;
 
-	std::string destination = uploadConfig.upload_store + "/" + fileName + "_" + itoa(connection.getHash());
+	std::string destination = uploadConfig.upload_store + "/"
+		+ fileName + "_" + IntegerUtils::itoa(connection.getHash());
 
 	if (this->isUpload)
 	{
-		std::string tempPath = _temp_file_path_  +  itoa(connection.getHash());
+		std::string tempPath = _temp_file_path_ + IntegerUtils::itoa(connection.getHash());
 		if (std::rename(tempPath.c_str(), destination.c_str()) != 0)
 		{
 			std::ifstream src(tempPath.c_str(), std::ios::binary);

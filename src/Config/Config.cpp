@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/10 23:55:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 00:57:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/Config.hpp"
-#include "Utils/Itoa.hpp"
+#include "Utils/IntegerUtils.hpp"
 #include <sstream>
 
 Config::AppConfig::AppConfig(const std::string& path)
@@ -44,7 +44,7 @@ Config::AppConfig::AppConfig(const std::string& path)
 					this->serversMap.insert(port, RadixTree<ServerConfig *>());
 				else if (this->serversMap.at(port).count(host) != 0)
 					throw std::runtime_error("Can't redefine binding in server "
-						+ server_config->name + " for " + host + ":" + itoa(port));
+						+ server_config->name + " for " + host + ":" + IntegerUtils::itoa(port));
 				this->serversMap.at(port).insert(host, server_config);
 			}
 			this->servers.push_back(server_config);

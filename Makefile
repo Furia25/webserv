@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/06 03:34:06 by vdurand          ###   ########.fr        #
+#    Updated: 2026/05/11 00:21:26 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,7 +70,7 @@ SRC_FILES = \
 	Config/TOML/TOMLParser.cpp \
 	Config/TOML/TOMLToken.cpp \
 	Config/TOML/TOMLTokenizer.cpp \
-	HTTP/RequestBuilder.cpp \
+	HTTP/RequestFactory.cpp \
 	HTTP/Request.cpp \
 	HTTP/HTTPHandler.cpp \
 	HTTP/Router.cpp \
