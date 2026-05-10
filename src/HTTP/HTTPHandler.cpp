@@ -236,8 +236,6 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
-	if (client.request->getMethod() == Method::GET || client.request->getMethod() == Method::HEAD)
-		dispatchError(connection, *client.request, client.routeRes.host, client.routeRes.route, HTTPCode::BAD_REQUEST);
 	size_t i = 0;
 	while (i < size)
 	{
@@ -323,6 +321,9 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		{
 			if(client.request->isChunked())
 			{
+				Method m = client.request->getMethod();
+				if (m == Method::GET || m == Method::HEAD)
+					dispatchError(connection, *client.request, client.routeRes.host, client.routeRes.route, HTTPCode::BAD_REQUEST);
 				processChunkedData(connection ,client, fragment, dataSize);
 			}
 			else
