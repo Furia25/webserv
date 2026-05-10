@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:45:49 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/08 22:37:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/10 23:42:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -111,7 +111,7 @@ public:
 			if (target < static_cast<T>(min) || target > static_cast<T>(max))
 			{
 				std::stringstream	ss;
-				ss << "Out of range must be between" << min << " and, " << max;
+				ss << "Out of range must be between " << min << " and, " << max;
 				throw std::out_of_range(ss.str());
 			}
 		}
@@ -126,7 +126,7 @@ public:
 			if (target < static_cast<T>(min) || target > static_cast<T>(max))
 			{
 				std::stringstream	ss;
-				ss << "Out of range must be between" << min << " and, " << max;
+				ss << "Out of range must be between " << min << " and, " << max;
 				throw std::out_of_range(ss.str());
 			}
 		}

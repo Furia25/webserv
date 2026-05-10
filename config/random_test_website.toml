@@ -1,4 +1,3 @@
-
 [engine]
 max_events = 1024
 max_timeout = 50
@@ -9,35 +8,39 @@ max_read_limit = 16384
 [logging]
 tick_interval = 5
 
-# --- Main Website (Port 8080) ---
 [[servers]]
-server_name = "test"
+server_name = "main"
 root = "www/basic_website"
 max_body_size = 150000000
+
+	# Cookie de session sur tout le serveur
+	[servers.cookies.session_id]
+	generate = true
+	generation_length = 32
+	max_age = 86400
+	http_only = true
+	same_site = "LAX"
 
 	[[servers.bindings]]
 	host = "localhost"
 	service = "8080"
-
-	[[servers.bindings]]
-	host = "localhost"
-	service = "4242"
 
 	[servers.errors]
 	404 = "errors/404.html"
 	500 = "errors/500.html"
 	403 = "errors/403.html"
 
-	# Static files route
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
-	alias = "/routes/default"
-	methods = ["GET", "DELETE", "POST"]
+	methods = ["GET", "POST"]
 	index = "index.html"
 	autoindex = false
 
-	# File upload route
+		[servers.routes.cookies.theme]
+		default_value = "dark"
+		max_age = 2592000
+
 	[[servers.routes]]
 	path = "/upload"
 	methods = ["POST"]
@@ -47,13 +50,21 @@ max_body_size = 150000000
 	allow_overwrite = false
 	upload_store = "./www/site1/uploads"
 
+		[servers.routes.cookies.session_id]
+		generate = true
+		generation_length = 32
+		max_age = 3600
+		http_only = true
+		same_site = "STRICT"
+
 	[[servers.routes]]
-	path = "/caffeine"
+	path = "/admin"
 	methods = ["GET"]
 	handler = "STATIC"
-	alias = "/routes/test"
 	index = "index.html"
-	autoindex = true
+	autoindex = false
+
+		[servers.routes.cookies.auth_token]
 
 	[[servers.routes]]
 	path = "/status"
@@ -64,4 +75,3 @@ max_body_size = 150000000
 	show_connection_info = true
 	show_request_info = true
 	show_timestamp = true
-

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/08 22:06:43 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/10 23:54:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 # include "ConfigLoader.hpp"
 # include "Config/toml.hpp"
 
+# include "EnumClass.hpp"
 # include "Utils/RadixTree.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/HashedTimingWheel.hpp"
@@ -34,11 +35,21 @@ struct ServerConfig;
 
 struct CookieConfig
 {
+	# define _SAMESITE_ (LAX, STRICT, NONE)
+	ENUM_CLASS(SameSite, _SAMESITE_, ENUM_BASIC, ENUM_LITERALS(_SAMESITE_, ENUM_BASIC, ENUM_BASIC); public: SameSite() : _t(LAX) {});
+	# undef _SAMESITE_
+
 	std::string	name;
+
 	uint64_t	max_age;
-	bool		restrict_path;
-	bool		restrict_http;
-	std::string	value;
+	bool		http_only;
+	SameSite	same_site;
+
+	bool		generate;
+	size_t		generation_length;
+	std::string	default_value;
+
+	bool		required;
 
 	void		load(toml::Variant& table, Config::Loader& loader);
 };
@@ -53,7 +64,7 @@ struct RouteConfig
 	std::string	root;
 	std::string	alias;
 
-	std::vector<CookieConfig>	cookies;
+	HashMap<std::string, CookieConfig>	cookies;
 
 	const ServerConfig	*server_config;
 
@@ -62,7 +73,6 @@ struct RouteConfig
 
 	virtual void		loadChild(toml::Variant& table, Config::Loader& loader) = 0;
 	void				load(toml::Variant& table, Config::Loader& loader);
-	void				loadCookies(toml::Variant& table, Config::Loader& loader);
 	void				loadAllowedMethod(toml::Variant& table, Config::Loader& loader);
 };
 
@@ -140,6 +150,8 @@ struct ServerConfig
 	std::vector<std::pair<std::string, port_t> >	bindings;
 	RadixTree<RouteConfig *>						routes;
 	HashMap<HTTPCode, std::string>					error_fallbacks;
+
+	HashMap<std::string, CookieConfig>	cookies;
 
 	~ServerConfig();
 
