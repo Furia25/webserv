@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/09 23:12:27 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/11 23:57:49 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,7 +106,7 @@ size_t	Request::isLessThanOneMO() const
     return (this->content_length < _IS_ONE_MO_);
 }
 
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0)
+Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), isFinished(false)
 {
 }
 
@@ -115,6 +115,7 @@ void	Body::init(size_t expected, const std::string& path, bool stream)
 	this->expectedSize = expected;
 	this->isStreaming = stream;
 	this->destinationPath = path;
+	this->isFinished = false;
 
 	if (this->isStreaming)
 	{
@@ -137,9 +138,17 @@ void    Body::feed(const uint8_t* data, size_t size)
 	receivedSize += size;
 }
 
-bool	Body::isComplete() const
+void	Body::setIsFinished(bool status)
 {
-	return this->receivedSize >= this->expectedSize;
+	this->isFinished = status;
+}
+
+bool	Body::isComplete() const 
+{
+	if (this->isStreaming && this->expectedSize == 0)
+        return this->isFinished;
+    
+    return this->receivedSize >= this->expectedSize;
 }
 
 bool	Body::checkOverflow() const
@@ -153,24 +162,22 @@ void	Body::finish()
 		this->fileWriter->close();
 }
 
-void	Body::reset()
+void	Body::reset() 
 {
-	if (this->fileWriter)
+	if (this->fileWriter) 
 	{
-		if (this->receivedSize < this->expectedSize) 
-			std::remove(destinationPath.c_str()); 
+		this->fileWriter->close();
 		delete this->fileWriter;
 		this->fileWriter = NULL;
 	}
-	this->receivedSize = 0;
-	this->isStreaming = false;
-	this->destinationPath = "";
 }
 
 bool	Body::getIsStreaming() const
 {
 	return this->isStreaming;
 }
+
+
 
 const	std::vector<uint8_t>&	Body::getMemoryBuffer() const
 {

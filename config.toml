@@ -33,9 +33,26 @@ max_body_size = 10000000
 	handler = "STATIC"
 	path = "/"
 	alias = "/routes/default"
-	methods = ["GET", "DELETE"]
+	methods = ["GET", "DELETE", "HEAD"]
 	index = "index.html"
 	autoindex = false
+
+	# Static files route
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/index.html"
+	alias = "/routes/default"
+	methods = ["GET", "DELETE", "HEAD"]
+	index = "index.html"
+	autoindex = true
+
+	[[servers.routes]]
+    path = "/uploads"
+    handler = "STATIC"
+    alias = "/site1/uploads"
+    methods = ["GET", "DELETE", "HEAD"]
+	index = "index.html"
+    autoindex = false
 
 	# File upload route
 	[[servers.routes]]
@@ -49,11 +66,11 @@ max_body_size = 10000000
 
 	[[servers.routes]]
 	path = "/caffeine"
-	methods = ["GET"]
-	handler = "STATIC"
+	methods = ["GET", "HEAD"]
+	handler = "REDIRECT"
 	alias = "/routes/test"
-	index = "index.html"
-	autoindex = true
+	location = "https://www.google.com"
+	status = "Moved Permanently"
 
 	[[servers.routes]]
 	path = "/status"

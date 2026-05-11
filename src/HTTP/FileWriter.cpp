@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileWriter.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:30 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 14:29:11 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/11 22:33:47 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,7 @@ size_t FileWriter::writeChunk(const char* data, size_t size)
 		hasError = true;
 		return 0;
 	}
+	fileStream.flush();
 	bytesWrittenTotal += size;
 	return size;
 }
@@ -87,4 +88,9 @@ void FileWriter::abort()
 const std::string& FileWriter::getFilePath()const 
 {
 	return this->filePath;
+}
+
+FileWriter::~FileWriter()
+{
+	this->close();
 }

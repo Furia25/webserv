@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileWriter.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:41 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 14:20:49 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/11 20:15:40 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ class FileWriter
 {
 public:
 	FileWriter(): bytesWrittenTotal(0), hasError(false) {};
-	~FileWriter(){this->close();};
+	~FileWriter();
 	
 	void			open(const std::string& path, bool append = false);
 	size_t			writeChunk(const void* data, size_t size);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 16:32:41 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/11 23:13:04 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,13 @@ void ErrorHandler::onExecute()
 			MIME mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
 
 			Response::buildFileHeaderResponse(connection, statusCode, mime_type, fileSize);
-			this->state = SEND_BODY;
+			if (request.getMethod() == Method::HEAD)
+			{
+				this->state = FINISHED;
+				this->fileReader.close();
+			}
+			else
+				this->state = SEND_BODY;
 		}
 		catch (...)
 		{
@@ -68,7 +74,10 @@ void ErrorHandler::onExecute()
 
 	case SEND_DEFAULT_ERROR:
 	{
-		Response::buildErrorResponse(connection, statusCode);
+		if (request.getMethod() == Method::HEAD)
+			Response::buildEmptyResponse(connection, statusCode);
+		else
+			Response::buildErrorResponse(connection, statusCode);
 		this->state = FINISHED;
 		break;
 	}

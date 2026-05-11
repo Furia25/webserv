@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/09 23:12:39 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/11 20:16:28 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ private:
 	size_t					receivedSize;
 	std::vector<uint8_t>	memoryBuffer;
 	std::string				destinationPath;
+	bool					isFinished;
 
 public:
 	Body();
@@ -41,6 +42,7 @@ public:
 	void			finish();
 	void			reset();
 
+	void 			setIsFinished(bool status);
 	void			setIsStreaming(bool stream);
 	void			setFilePath(const std::string& path);
 

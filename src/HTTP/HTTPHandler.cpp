@@ -74,7 +74,7 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 		case HandlerType::REDIRECT :
 		{
 			this->totalRequests++;
-			// this->createJob<RedirectHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			this->createJob<RedirectHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		}
 		break;
 		case HandlerType::STATUS :
@@ -161,24 +161,22 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 
 void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size)
 {
-	if (!fragment || size == 0) 
-		return;
+	size_t toProcess = size;
 
-	size_t remaining = client.request->getContentLength() - client.request->getBodySize();
-    size_t toWrite = (size < remaining) ? size : remaining;
+	if (!client.request->isChunked())
+	{
+		size_t remaining = client.request->getContentLength() - client.request->getBodySize();
+		toProcess = (size < remaining) ? size : remaining;
+	}
 
-	if (client.request->getBody().getIsStreaming())
-		client.request->getBody().getFileWriter()->writeChunk(fragment, toWrite);
-	else
-		client.request->getBody().feed(fragment, toWrite);
+	if (toProcess > 0)
+		client.request->getBody().feed(fragment, toProcess);
 }
 
 bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
 {
-	std::vector<uint8_t>	extra = client.builder.getExtraData();
-
-	bool	isStreaming = !client.request->isLessThanOneMO();
-	std::string	path = "";
+	bool isStreaming = !client.request->isLessThanOneMO();
+	std::string path = "";
 
 	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
 	{
@@ -200,13 +198,6 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 		path = pathBuilder.str();
 	}
 	client.request->initBody(path, isStreaming);
-	if (!extra.empty()) 
-	{
-		size_t totalExpected = client.request->getContentLength();
-		size_t toProcess = (extra.size() < totalExpected) ? extra.size() : totalExpected;
-		if (toProcess > 0)
-			receiveBodyChunk(client, extra.data(), toProcess);
-	}
 	return true;
 }
 
@@ -261,11 +252,14 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 			}
 			case CHUNK_DATA:
 			{
-				size_t	remainingInFragment = size - i;
-				size_t toWrite = std::min(remainingInFragment, client.neededBytes);
-				receiveBodyChunk(client, fragment + i, toWrite);
-				i += toWrite;
-				client.neededBytes -= toWrite;
+				size_t remainingInFragment = size - i;
+				size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
+				if (toWrite > 0) 
+				{
+					receiveBodyChunk(client, fragment + i, toWrite);
+					i += toWrite;
+					client.neededBytes -= toWrite;
+				}
 				if (client.neededBytes == 0)
 					client.chunkState = CHUNK_TRAILER;
 				break;
@@ -279,6 +273,7 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 			}
 			case CHUNK_COMPLETE:
 			{
+				client.request->getBody().setIsFinished(true);
 				if (fragment[i++] == '\n')
 				{
 					checkCompletion(connection, client);
@@ -293,62 +288,49 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	size_t id = connection.getClientID();
-	size_t dataSize = connection.getReadBufferSize();
-	const uint8_t *fragment = connection.getReadBufferPtr();
-
 	HashMap<size_t, ClientData>::iterator it = clientsData.find(id);
-
-	if (it == clientsData.end() || dataSize == 0)
-		return;
-
-	ClientData &client = it->second;
-
+	if (it == clientsData.end()) return;
+		ClientData &client = it->second;
+	const uint8_t *fragment = connection.getReadBufferPtr();
+	size_t dataSize = connection.getReadBufferSize();
+	if (dataSize == 0) return;
 	try 
 	{
-		if (!client.builder.isHeaderParsed())
+		if (!client.builder.isHeaderParsed()) 
 		{
-			if (!processHeaders(connection, client, fragment, dataSize))
+			if (!processHeaders(connection, client, fragment, dataSize)) 
 			{
 				connection.consumeReadData(dataSize);
 				return;
 			}
 			initializeBodyReception(connection, client);
-			fragment = connection.getReadBufferPtr();
-			dataSize = connection.getReadBufferSize();
-		}
-
-		if (client.builder.isHeaderParsed() && client.request)
-		{
-			if(client.request->isChunked())
+			if (client.request->getHeaders().contain("expect")) 
 			{
-				Method m = client.request->getMethod();
-				if (m == Method::GET || m == Method::HEAD)
-					dispatchError(connection, *client.request, client.routeRes.host, client.routeRes.route, HTTPCode::BAD_REQUEST);
-				processChunkedData(connection ,client, fragment, dataSize);
+				if (client.request->getHeaders().at("expect").find("100-continue") != std::string::npos)
+					connection.sendData("HTTP/1.1 100 Continue\r\n\r\n");
 			}
-			else
+			std::vector<uint8_t> extra = client.builder.getExtraData();
+			if (!extra.empty()) 
 			{
-				size_t totalExpected = client.request->getContentLength();
-				size_t alreadyReceived = client.request->getBodySize();
-				if (alreadyReceived < totalExpected)
-				{
-					size_t remaining = totalExpected - alreadyReceived;
-					size_t toProcess = (dataSize < remaining) ? dataSize : remaining;
-					if (toProcess > 0)
-					{
-						receiveBodyChunk(client, fragment, toProcess);
-						alreadyReceived += toProcess;
-					}
-				}
-				if (alreadyReceived >= totalExpected)
-					checkCompletion(connection, client);
+				if (client.request->isChunked())
+					processChunkedData(connection, client, extra.data(), extra.size());
+				else
+					receiveBodyChunk(client, extra.data(), extra.size());
 			}
+			connection.consumeReadData(dataSize);
+			checkCompletion(connection, client);
+			return;
 		}
+		if (client.request->isChunked())
+			processChunkedData(connection, client, fragment, dataSize);
+		else
+			receiveBodyChunk(client, fragment, dataSize);
+		checkCompletion(connection, client);
 		connection.consumeReadData(dataSize);
 	}
-	catch (const std::exception &e)
+	catch (const std::exception &e) 
 	{
-		Logger::ERROR() << "Exception in onDataReceived: " << e.what();
+		Logger::ERROR() << "Exception: " << e.what();
 		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		connection.setClosing();
 	}

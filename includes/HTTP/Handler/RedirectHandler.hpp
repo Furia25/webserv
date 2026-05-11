@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RedirectHandler.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:35:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 23:25:37 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "Config/Config.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Response.hpp"
+# include "Config/Config.hpp"
 
 class RedirectHandler : public AHandler
 {

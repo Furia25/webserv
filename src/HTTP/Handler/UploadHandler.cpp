@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/10 11:15:09 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/11 22:32:16 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,10 @@ void	UploadHandler::onExecute()
 		outFile.write(reinterpret_cast<const char *>(body.data()), body.size());
 		outFile.close();
 	}
-	const_cast<Request&>(request).getBody().setFilePath("");
 	Response::buildEmptyResponse(connection, HTTPCode::CREATED);
 	connection.setClosing();
 	this->setFinished();
+	Logger::INFO() << "Upload finished : " << request.getBody().getReceivedSize() << " octets written.";
+	Logger::INFO() << "Files saved here : " << request.getBody().getFilePath();
+	const_cast<Request&>(request).getBody().setFilePath("");
 }

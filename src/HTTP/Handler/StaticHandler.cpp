@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 18:27:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 22:44:59 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,12 @@ void StaticHandler::handleAutoindex()
 
 	Response::sendChunkedHeader(this->connection, HTTPCode::OK, MIME::html);
 
+	if (this->request.getMethod() == Method::HEAD)
+	{
+		closedir(dir);
+		this->setFinished();
+		return;
+	}
 	std::string	headerHtml = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><ul>";
 	Response::sendChunk(this->connection, headerHtml);
 
