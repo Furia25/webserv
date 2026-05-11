@@ -33,9 +33,9 @@ max_body_size = 150000000
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
+	alias = "/routes/default"
 	methods = ["GET", "POST"]
 	index = "index.html"
-	autoindex = false
 
 		[servers.routes.cookies.theme]
 		default_value = "dark"
@@ -48,7 +48,7 @@ max_body_size = 150000000
 	max_body_size = 150000000
 	allowed_extensions = []
 	allow_overwrite = false
-	upload_store = "./www/site1/uploads"
+	upload_store = "./www/uploads"
 
 		[servers.routes.cookies.session_id]
 		generate = true

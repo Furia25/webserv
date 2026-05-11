@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 00:57:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 02:38:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void Response::sendChunkedHeader(Connection& connection, HTTPCode code, MIME mim
 	headers += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
 	headers += "Transfer-Encoding: chunked\r\n";
 	headers += "Connection: keep-alive\r\n\r\n";
-    
+
 	connection.sendData(headers);
 }
 

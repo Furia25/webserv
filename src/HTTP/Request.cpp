@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/11 01:37:29 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 02:03:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,11 @@ void	Request::appendToBody(const uint8_t* data, size_t size)
 
 size_t	Request::getBodySize() const { return this->body.size(); }
 
-const Request::Headers&	Request::getHeaders() const { return (headers); }
+const Request::Headers&	Request::getHeaders() const { return headers; }
+Request::Headers&	Request::getHeaders() { return headers; }
+
+const Request::Cookies&	Request::getCookies() const { return cookies; }
+Request::Cookies&	Request::getCookies() { return cookies; }
 
 size_t	Request::isLessThanOneMO() const { return (this->content_length < _IS_ONE_MO_); }
 

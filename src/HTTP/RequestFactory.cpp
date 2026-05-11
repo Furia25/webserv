@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 01:44:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 02:13:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,16 +129,17 @@ void RequestFactory::parseRequestLine(std::string &line)
 void RequestFactory::parseHeaderLine(std::string &line)
 {
 	size_t colon_pos = line.find(':');
-	if (colon_pos != std::string::npos) {
+	if (colon_pos != std::string::npos)
+	{
 		std::string key = line.substr(0, colon_pos);
 		std::string value = line.substr(colon_pos + 1);
 		toLowerCase(key);
 		size_t start = value.find_first_not_of(" \t");
-		if (start != std::string::npos) {
+		if (start != std::string::npos)
 			value = value.substr(start);
-		}
 		headers.insert(key, value);
 	}
+	/*Else is an error ? if we dont find an : in header line i imagine ?*/
 }
 
 void RequestFactory::toLowerCase(std::string &str)
@@ -239,10 +240,36 @@ static void	handleContentLength(Request &request, const std::string& val)
 	}
 }
 
-static void	handleCookie(Request& request, const std::string& val)
+static std::string trim(const std::string& s)
 {
-	(void) request;
-	(void) val;
+	size_t start = s.find_first_not_of(" \t");
+	if (start == std::string::npos) return "";
+	size_t end = s.find_last_not_of(" \t");
+	return s.substr(start, end - start + 1);
+}
+
+static void handleCookie(Request& request, const std::string& val)
+{
+	Request::Cookies&	request_cookies = request.getCookies();
+	size_t				pos = 0;
+
+	while (pos < val.size())
+	{
+		size_t sep = val.find('=', pos);
+		if (sep == std::string::npos)
+			break;
+
+		std::string	key = trim(val.substr(pos, sep - pos));
+		size_t		end = val.find(';', sep);
+		std::string	value = (end == std::string::npos)
+			? trim(val.substr(sep + 1))
+			: trim(val.substr(sep + 1, end - sep - 1));
+
+		if (!key.empty())
+			request_cookies.insert(key, value);
+
+		pos = (end == std::string::npos) ? val.size() : end + 1;
+	}
 }
 
 typedef void (*HeaderHandler)(Request&, const std::string&);

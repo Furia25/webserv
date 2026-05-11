@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 01:46:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 02:03:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,13 +37,17 @@ public:
 	void	appendToBody(const uint8_t* data, size_t size);
 	void	reserveBody(size_t size);
 
-	const std::vector<uint8_t>&					getBody()			const;
-	size_t										getBodySize()		const;
-	size_t										isLessThanOneMO()	const;
-	const Headers&	getHeaders() 		const;
+	const std::vector<uint8_t>&	getBody()			const;
+	size_t						getBodySize()		const;
+	size_t						isLessThanOneMO()	const;
 
-	void	setCookies(const Cookies& cookies);
-	void	setHeaders(const Headers& headers);
+	const Headers&				getHeaders()		const;
+	Headers&					getHeaders();
+	const Cookies&				getCookies()		const;
+	Cookies&					getCookies();
+
+	void						setCookies(const Cookies& cookies);
+	void						setHeaders(const Headers& headers);
 private:
 	Headers					headers;
 	Cookies					cookies;
