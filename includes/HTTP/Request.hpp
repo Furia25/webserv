@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 20:16:28 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 00:42:21 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,11 +41,12 @@ public:
 
 	void			finish();
 	void			reset();
-
+	
 	void 			setIsFinished(bool status);
 	void			setIsStreaming(bool stream);
 	void			setFilePath(const std::string& path);
-
+	
+	bool							isOpen()				const;
 	bool							isComplete()			const;
 	const std::string&				getFilePath()			const;
 	FileWriter*						getFileWriter()			const;

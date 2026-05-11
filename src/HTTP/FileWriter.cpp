@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:30 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 22:33:47 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 00:41:51 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,11 @@ size_t FileWriter::writeChunk(const char* data, size_t size)
 bool FileWriter::getError() const
 {
 	return this->hasError;
+}
+
+bool	FileWriter::isOpen() const
+{
+	return fileStream.is_open();
 }
 
 void FileWriter::close()

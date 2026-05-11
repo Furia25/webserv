@@ -13,7 +13,7 @@ tick_interval = 5
 [[servers]]
 server_name = "test"
 root = "www"
-max_body_size = 10000000
+max_body_size = 100000000
 
 	[[servers.bindings]]
 	host = "localhost"
@@ -59,7 +59,7 @@ max_body_size = 10000000
 	path = "/upload"
 	methods = ["POST"]
 	handler = "UPLOAD"
-	max_body_size = 10000000
+	max_body_size = 100000000
 	allowed_extensions = []
 	allow_overwrite = false
 	upload_store = "./www/site1/uploads"

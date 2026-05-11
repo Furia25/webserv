@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:41 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 20:15:40 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 00:41:34 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,9 +30,10 @@ public:
 	void			close();
 	void			abort();
 
-	size_t				getBytesWritten()	const ;
-	bool				getError()			const ;
-	const std::string&	getFilePath()		const ;
+	size_t				getBytesWritten()	const;
+	bool				getError()			const;
+	const std::string&	getFilePath()		const;
+	bool				isOpen()			const;
 
 private:
 	std::string 		filePath;

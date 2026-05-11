@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/11 23:57:49 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 00:42:14 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,5 +211,14 @@ FileWriter*	Body::getFileWriter()const
 
 Body::~Body()
 {
+	if (isStreaming && !destinationPath.empty())
+	{
+		if (!isFinished)
+		{
+			if (fileWriter->isOpen())
+				fileWriter->close();
+		}
+		std::remove(this->destinationPath.c_str());
+	}
     this->reset();
 }
