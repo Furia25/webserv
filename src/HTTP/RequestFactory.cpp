@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 17:14:24 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 23:26:01 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
+
+#define MAX_HEADER_SIZE 8192
 
 RequestFactory::RequestFactory() 
 	: parsing_is_complete(false), header_is_parsed(false), is_validated(false), is_chunk_encoding(false)
@@ -60,8 +62,9 @@ void RequestFactory::reset()
 
 void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
+	if (!header_is_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
+        throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-	
 	if (!header_is_parsed)
 	{
 		size_t header_end = find_header_end();
@@ -128,6 +131,8 @@ void RequestFactory::parseRequestLine(std::string &line)
 
 void RequestFactory::parseHeaderLine(std::string &line)
 {
+	if (line.empty())
+		return ;
 	size_t colon_pos = line.find(':');
 	if (colon_pos != std::string::npos)
 	{
@@ -139,7 +144,8 @@ void RequestFactory::parseHeaderLine(std::string &line)
 			value = value.substr(start);
 		headers.insert(key, value);
 	}
-	/*Else is an error ? if we dont find an : in header line i imagine ?*/
+	else
+		throw std::invalid_argument("Malformed header line: missing colon");
 }
 
 void RequestFactory::toLowerCase(std::string &str)

@@ -229,7 +229,16 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 
 bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
-	client.builder.feed(fragment, size);
+	try
+	{
+		client.builder.feed(fragment, size);
+	}
+	catch (const std::overflow_error& e)
+	{
+		Logger::ERROR() << "Header DoS Attempt blocked: " << e.what();
+		dispatchError(connection, HTTPCode::HEADER_FIELDS_TOO_LARGE); 
+		return false;
+    }
 
 	if (!client.builder.get_header_parsed())
 		return false;
