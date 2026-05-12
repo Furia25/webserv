@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:42:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 00:05:23 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,23 @@ namespace Router
 		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
 	};
 
+	const Config::ServerConfig* matchServer(const Connection& connection, const Config::AppConfig &config, const Request &request);
+	const Config::RouteConfig*	matchRoute(const Config::ServerConfig* host, const std::string& current_path);
+	void						validateConstraints(const Config::ServerConfig* host, const Config::RouteConfig* route, const Request& request);
+	std::string					Router::buildPhysicalPath(const Config::ServerConfig* host, const Config::RouteConfig* route, const std::string& current_path);
+
 	RouteResult resolve(const Connection& connection, const Config::AppConfig &config, const Request &req);
 	const Config::ServerConfig&	findDefaultServer(port_t port, const Config::AppConfig &config);
+};
+
+class RouterException : public std::exception 
+{
+private:
+	HTTPCode code;
+public:
+	RouterException(HTTPCode code) : code(code) {}
+	virtual ~RouterException() throw() {}
+	HTTPCode getCode() const { return code; }
 };
 
 #endif // _ROUTER_H

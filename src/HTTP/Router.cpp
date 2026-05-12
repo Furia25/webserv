@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 15:07:09 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 00:02:58 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,63 +34,83 @@ static inline void extract_host(const Request &request, std::string& host)
 		host = host.substr(1, host.length() - 2);
 }
 
-# define ROUTER_ERROR(code) do { res.errorCode = code; return (res); } while (0)
-
-/*Il fait trop de chose le pelo zbi*/
-Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
+const Config::ServerConfig* Router::matchServer(const Connection& connection, const Config::AppConfig &config, const Request &request)
 {
-	Router::RouteResult	res;
-	std::string			host;
-
+	std::string	host;
 	extract_host(request, host);
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
 	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
-	const Config::ServerConfig *tmpHost;
 	if (it == tree.end())
-		tmpHost = &Router::findDefaultServer(connection.getOriginPort(), config);
-	else
-		tmpHost = it->second;
-	res.host = tmpHost;
+		return &findDefaultServer(connection.getOriginPort(), config);
+	return it->second;
+}
 
-	/*We have to make better checks c'est pas super ça parce que il faut juste pas qu'on dépasse le fichier disque de la route*/
-	if (request.path.find("../") != std::string::npos)
-		ROUTER_ERROR(HTTPCode::FORBIDDEN);
+const Config::RouteConfig* Router::matchRoute(const Config::ServerConfig* host, const std::string& current_path)
+{
+    RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
+    if (route_it == host->routes.end())
+        throw RouterException(HTTPCode::NOT_FOUND);
+    return route_it->second;
+}
 
-	const std::string& current_path = request.path;
-	RadixTree<Config::RouteConfig *>::const_iterator route_it = tmpHost->routes.find_prefix(current_path);
-	if (route_it == tmpHost->routes.end())
-		ROUTER_ERROR(HTTPCode::NOT_FOUND);
-	res.route = route_it->second;
+void	Router::validateConstraints(const Config::ServerConfig* host, const Config::RouteConfig* route, const Request& request)
+{
+	if (host->max_body_size < request.content_length)
+		throw RouterException(HTTPCode::PAYLOAD_TOO_LARGE);
 
-	/*Check for missing required cookies*/
-	const Request::Cookies	request_cookies = request.getCookies();
-	const HashMap<std::string, Config::CookieConfig>&	route_cookies = res.route->cookies;
+	if (route->method_allowed[static_cast<size_t>(request.method)] == false)
+		throw RouterException(HTTPCode::METHOD_NOT_ALLOWED);
 
-	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = route_cookies.begin();
-			it != route_cookies.end(); ++it)
+	const Request::Cookies request_cookies = request.getCookies();
+	const HashMap<std::string, Config::CookieConfig>& route_cookies = route->cookies;
+
+	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = route_cookies.begin(); it != route_cookies.end(); ++it)
 	{
 		if (it->second.required && !request_cookies.contain(it->first))
-			ROUTER_ERROR(HTTPCode::FORBIDDEN);
+		throw RouterException(HTTPCode::FORBIDDEN);
 	}
+}
 
-	if (res.route->method_allowed[static_cast<size_t>(request.method)] == false)
-		ROUTER_ERROR(HTTPCode::METHOD_NOT_ALLOWED);
-	if (res.host->max_body_size < request.content_length)
-		ROUTER_ERROR(HTTPCode::PAYLOAD_TOO_LARGE);
-
-	/*Route resolving from alias / root*/
+std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Config::RouteConfig* route, const std::string& current_path)
+{
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
 	const std::string& found_path = route_it->first;
 	std::string remainder = current_path.substr(found_path.size());
 	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
-		remainder = remainder.substr(1);
-
-	if (!res.route->alias.empty())
-		res.physicalPath = res.host->root + res.route->alias + remainder;
+        remainder = remainder.substr(1);
+	std::string physicalPath;
+	if (!route->alias.empty())
+		physicalPath = host->root + route->alias + remainder;
 	else
-		res.physicalPath = res.host->root + found_path + remainder;
+		physicalPath = host->root + found_path + remainder;
+	if (physicalPath.find("../") != std::string::npos) 
+		throw RouterException(HTTPCode::FORBIDDEN);
+	return physicalPath;
+}
 
-	res.success = true;
-	return res;
+Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
+{
+    Router::RouteResult res;
+    res.success = false;
+
+    try 
+    {
+        res.host = matchServer(connection, config, request);
+        res.route = matchRoute(res.host, request.path);
+        
+        validateConstraints(res.host, res.route, request);
+        
+        res.physicalPath = buildPhysicalPath(res.host, res.route, request.path);
+        
+        res.success = true;
+    }
+    catch (const RouterException& e)
+    {
+        res.success = false;
+        res.errorCode = e.getCode();
+    }
+
+    return res;
 }
 
 const Config::ServerConfig& Router::findDefaultServer(port_t port, const Config::AppConfig &config)
