@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:34:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 22:17:46 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include "Utils/FileReader.hpp"
 
 class HTTPHandler;
+class Body;
 
 class AHandler : public IJob
 {
@@ -39,6 +40,7 @@ protected:
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
+		Body& body,
 		const Config::ServerConfig *host_config,
 		const Config::RouteConfig *route_config,
 		const std::string& physical_path,
@@ -47,6 +49,7 @@ protected:
 			fileHeaderSent(false),
 			connection(connection),
 			request(request),
+			body(body),
 			hostConfig(host_config),
 			routeConfig(route_config),
 			physicalPath(physical_path),
@@ -57,6 +60,7 @@ protected:
 	bool							fileHeaderSent;
 	Connection&						connection;
 	const Request&					request;
+	Body&							body;
 	const Config::ServerConfig* 	hostConfig;
 	const Config::RouteConfig*		routeConfig;
 	std::string						physicalPath;

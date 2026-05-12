@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 12:28:17 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 17:08:32 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ public:
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
 	void		reset();
-	Request*		build() const;
+	Request		build() const;
 
 	void		print() const;
 

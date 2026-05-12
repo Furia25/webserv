@@ -6,13 +6,12 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/12 14:27:55 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 22:04:30 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Request.hpp"
 
-#define _IS_ONE_MO_ 1048576
 
 Request::Request() : method(Method::GET),
 		path("/"),
@@ -22,56 +21,34 @@ Request::Request() : method(Method::GET),
 		is_chunk_encoding(false)
 {}
 
-Request::Request(Method m, const std::string& p, const std::string& q, 
-				 const std::string& proto, size_t cl, 
-				 const HashMap<std::string, std::string>& h, bool is_encoding)
-	: method(m), path(p), query_string(q), protocol(proto), 
-	  content_length(cl), is_chunk_encoding(is_encoding),  headers(h)
+Request::Request(const Request& other) 
 {
+	this->method = other.method;
+	this->path = other.path;
+	this->query_string = other.query_string;
+	this->protocol = other.protocol;
+	this->headers = other.headers;
+	this->content_length = other.content_length;
+	this->is_chunk_encoding = other.is_chunk_encoding;
+}
+
+Request&	Request::operator=(const Request& other)
+{
+	if (this != &other) 
+	{
+		this->method = other.method;
+		this->path = other.path;
+		this->query_string = other.query_string;
+		this->protocol = other.protocol;
+		this->headers = other.headers;
+		this->content_length = other.content_length;
+		this->is_chunk_encoding = other.is_chunk_encoding;
+	}
+	return *this;
 }
 
 Request::~Request()
 {
-}
-
-void	Request::initBody(const std::string& path, bool stream)
-{
-	body.init(this->content_length, path, stream);
-}
-
-void	Request::feedBody(const uint8_t* data, size_t size)
-{
-	body.feed(data, size);
-}
-
-bool	Request::isBodyComplete() const
-{
-	return this->body.isComplete();
-}
-
-bool	Request::checkBodyOverflow() const
-{
-	return this->body.checkOverflow();
-}
-
-void	Request::finishBody()
-{
-	return this->body.finish();
-}
-
-const Body&	Request::getBody() const
-{
-	return this->body;
-}
-
-Body&	Request::getBody()
-{
-	return this->body;
-}
-
-size_t	Request::getBodySize() const
-{
-    return this->body.getReceivedSize();
 }
 
 Method  Request::getMethod() const
@@ -118,127 +95,3 @@ size_t	Request::getContentLength() const
     return (content_length);
 }
 
-size_t	Request::isLessThanOneMO() const
-{
-    return (this->content_length < _IS_ONE_MO_);
-}
-
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), isFinished(false)
-{
-}
-
-void	Body::init(size_t expected, const std::string& path, bool stream)
-{
-	this->expectedSize = expected;
-	this->isStreaming = stream;
-	this->destinationPath = path;
-	this->isFinished = false;
-
-	if (this->isStreaming)
-	{
-		this->fileWriter = new FileWriter();
-		this->fileWriter->open(this->destinationPath);
-	}
-	else
-		memoryBuffer.reserve(expectedSize);
-}
-
-void    Body::feed(const uint8_t* data, size_t size)
-{
-	if (size == 0)
-		return ;
-    
-	if (this->isStreaming)
-		fileWriter->writeChunk(data, size);
-	else
-		memoryBuffer.insert(memoryBuffer.end(), data, data + size);
-	receivedSize += size;
-}
-
-void	Body::setIsFinished(bool status)
-{
-	this->isFinished = status;
-}
-
-bool	Body::isComplete() const 
-{
-	if (this->isStreaming && this->expectedSize == 0)
-        return this->isFinished;
-    
-    return this->receivedSize >= this->expectedSize;
-}
-
-bool	Body::checkOverflow() const
-{
-	return this->receivedSize > this->expectedSize;
-}
-
-void	Body::finish()
-{
-	if (this->fileWriter)
-		this->fileWriter->close();
-	this->isFinished = true;
-}
-
-void	Body::reset() 
-{
-	if (this->fileWriter) 
-	{
-		if (this->isStreaming)
-		{
-			this->fileWriter->close();
-			delete this->fileWriter;
-		}
-		this->fileWriter = NULL;
-	}
-}
-
-bool	Body::getIsStreaming() const
-{
-	return this->isStreaming;
-}
-
-
-const	std::vector<uint8_t>&	Body::getMemoryBuffer() const
-{
-	return this->memoryBuffer;
-}
-
-const std::string&	Body::getFilePath() const
-{
-	return this->destinationPath;
-}
-
-size_t	Body::getReceivedSize() const
-{
-	return this->receivedSize;
-}
-
-void	Body::setFilePath(const std::string& path)
-{
-	this->destinationPath = path;
-}
-
-void	Body::setIsStreaming(bool stream)
-{
-	this->isStreaming = stream;
-}
-
-FileWriter*	Body::getFileWriter()const 
-{
-	return this->fileWriter;
-}
-
-Body::~Body()
-{
-	if (isStreaming && !destinationPath.empty())
-	{
-		if (fileWriter && !isFinished)
-		{
-			if (fileWriter->isOpen())
-				fileWriter->close();
-			std::remove(this->destinationPath.c_str());
-		}
-	}
-	this->reset();
-}

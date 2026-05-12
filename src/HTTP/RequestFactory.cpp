@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 12:28:10 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 17:14:24 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,29 +283,31 @@ static HandlerMap buildHandlerMap()
 	return m;
 }
 
-Request* RequestFactory::build() const
+Request	RequestFactory::build() const
 {
 	static const HandlerMap handlers = buildHandlerMap();
-	Request* result = new Request(); 
+	Request result;
 	try
 	{
-		result->method = Method::from(this->method);
+		result.method = Method::from(this->method);
 	}
 	catch (const std::domain_error& e)
 	{
-		result->method = Method::UNKNOWN;
+		result.method = Method::UNKNOWN;
 	}
-	result->path			= this->request_path;
-	result->query_string	= this->query_string;
-    result->protocol		= this->protocol;
-	result->setHeaders(this->headers);
+	result.path				= this->request_path;
+	result.query_string		= this->query_string;
+	result.protocol			= this->protocol;
+	result.setHeaders(this->headers);
+
 	const std::string* te = this->getHeader("transfer-encoding");
-	result->is_chunk_encoding = (te && *te == "chunked");
+	result.is_chunk_encoding = (te && *te == "chunked");
+
 	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
 		HandlerMap::const_iterator h = handlers.find(it->first);
 		if (h != handlers.end())
-			(h->second)(*result, it->second);
+			(h->second)(result, it->second);
 	}
 	return result;
 }

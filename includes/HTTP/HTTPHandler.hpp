@@ -24,6 +24,7 @@
 # include "Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
 # include "Server/IJob.hpp"
+# include "HTTP/Body.hpp"
 
 # define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
 
@@ -52,20 +53,21 @@ private:
 	struct ClientData
 	{
 		RequestFactory			builder;
-		Request*				request;
+		Request					request;
+		Body					body;
 		Router::RouteResult 	routeRes;
 		IJob					*actualJob;
 		ChunkState				chunkState;
 		size_t					neededBytes;
 		std::string				sizeBuffer;
-		ClientData(): request(NULL), actualJob(NULL), chunkState(CHUNK_SIZE), neededBytes(0){};
+		ClientData(): actualJob(NULL), chunkState(CHUNK_SIZE), neededBytes(0){};
 		~ClientData() 
 		{ 
-			if (request) 
-				delete request; 
 			if (actualJob) 
-				delete actualJob; 
+				delete actualJob;
 		};
+		ClientData(const ClientData& src);
+		ClientData& operator=(const ClientData& other);
 		void reset();
 	};
 
@@ -83,18 +85,18 @@ private:
 	void					checkCompletion(Connection& connection, ClientData& clientData);
 
 	template <typename T>
-	void	createJob(Connection& connection, const Request& request,
+	void	createJob(Connection& connection, const Request& request, Body& body,
 				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
-	void	dispatchError(Connection& connection, const Request& request,
+	void	dispatchError(Connection& connection, const Request& request, Body& body,
 				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config, HTTPCode error_code);
 
 };
 
 template <typename T>
-inline void HTTPHandler::createJob(Connection& connection, const Request& request,
+inline void HTTPHandler::createJob(Connection& connection, const Request& request, Body& body,
 	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 	const std::string& physical_path, HTTPCode status_code)
 {
@@ -106,14 +108,14 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	}
 	AHandler	*handler = NULL;
 	try {
-		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code);
+		handler = new T(*this, connection, request, body, host_config, route_config, physical_path, status_code);
 		handler->onCreation();
 		client_data.actualJob = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
-		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
+		handler = new ErrorHandler(*this, connection, request, body, host_config, route_config, physical_path, e.getStatusCode());
 		client_data.actualJob = handler;
 	}
 	connection.setJob(handler);
