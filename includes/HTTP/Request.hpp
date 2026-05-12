@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 16:44:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:50:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,42 @@
 # include "HttpTypes.hpp"
 # include "Utils/FileWriter.hpp"
 
-class Body;
+class Body
+{
+private:
+	FileWriter*				fileWriter;
+	bool					isStreaming;
+	size_t					expectedSize;
+	size_t					receivedSize;
+	std::vector<uint8_t>	memoryBuffer;
+	std::string				destinationPath;
+	bool					isFinished;
+
+public:
+	Body();
+	
+	~Body();
+	
+	void			feed(const uint8_t* data, size_t size);
+	void			init(size_t expected, const std::string& path, bool stream);
+
+	void			finish();
+	void			reset();
+	
+	void 			setIsFinished(bool status);
+	void			setIsStreaming(bool stream);
+	void			setFilePath(const std::string& path);
+	
+	bool							isOpen()				const;
+	bool							isComplete()			const;
+	const std::string&				getFilePath()			const;
+	FileWriter*						getFileWriter()			const;
+	bool							checkOverflow()			const;
+	bool							getIsStreaming()		const;
+	size_t							getReceivedSize()		const;
+	const std::vector<uint8_t>&		getMemoryBuffer()		const;
+	
+};
 
 class Request
 {
@@ -62,43 +97,6 @@ private:
 	Headers			headers;
 	Cookies			cookies;
 	Body			body;
-};
-
-class Body
-{
-private:
-	FileWriter*				fileWriter;
-	bool					isStreaming;
-	size_t					expectedSize;
-	size_t					receivedSize;
-	std::vector<uint8_t>	memoryBuffer;
-	std::string				destinationPath;
-	bool					isFinished;
-
-public:
-	Body();
-	
-	~Body();
-	
-	void			feed(const uint8_t* data, size_t size);
-	void			init(size_t expected, const std::string& path, bool stream);
-
-	void			finish();
-	void			reset();
-	
-	void 			setIsFinished(bool status);
-	void			setIsStreaming(bool stream);
-	void			setFilePath(const std::string& path);
-	
-	bool							isOpen()				const;
-	bool							isComplete()			const;
-	const std::string&				getFilePath()			const;
-	FileWriter*						getFileWriter()			const;
-	bool							checkOverflow()			const;
-	bool							getIsStreaming()		const;
-	size_t							getReceivedSize()		const;
-	const std::vector<uint8_t>&		getMemoryBuffer()		const;
-	
 };
 
 #endif
