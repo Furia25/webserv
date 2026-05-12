@@ -21,7 +21,7 @@
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"
-# include "Utils/Itoa.hpp"
+# include "Utils/IntegerUtils.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 	: config(config), totalRequests(0)
@@ -152,10 +152,8 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	if (isRequestFinished) 
 	{
-		if (client.request->getBody().getIsStreaming() && client.request->getBody().getFileWriter())
-			client.request->getBody().getFileWriter()->close();
+		client.request->finishBody();
 		this->launchJob(connection, client);
-		client.request->getBody().setIsStreaming(false); 
 	}
 }
 
@@ -175,6 +173,8 @@ void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 
 bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
 {
+	if (!client.request || !client.routeRes.route)
+		return false;
 	bool isStreaming = !client.request->isLessThanOneMO();
 	std::string path = "";
 
@@ -205,13 +205,38 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 {
 	client.builder.feed(fragment, size);
 
-	if (!client.builder.isHeaderParsed())
+	if (!client.builder.get_header_parsed())
 		return false;
 
+	try 
+	{
+		client.builder.check();
+	}
+	catch (const std::exception& e)
+	{
+		Logger::ERROR() << "Header Validation Failed: " << e.what();
+		dispatchError(connection, HTTPCode::BAD_REQUEST);
+		return false;
+	}
 	client.builder.print();
-	client.request = new Request(client.builder.build());
-	client.routeRes = Router::resolve(connection, this->config, *client.request);
-
+	if (client.request)
+		delete client.request;
+	client.request = client.builder.build();
+	if (!client.request)
+	{
+		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		return false;
+	}
+	try
+	{
+		client.routeRes = Router::resolve(connection, this->config, *client.request);
+	}
+	catch (const std::exception& e)
+	{
+		Logger::ERROR() << "Router Crashed: " << e.what();
+		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		return false;
+	}
 	if (client.request->getMethod() == Method::UNKNOWN)
 	{
 		dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
@@ -296,7 +321,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	if (dataSize == 0) return;
 	try 
 	{
-		if (!client.builder.isHeaderParsed()) 
+		if (!client.builder.get_header_parsed()) 
 		{
 			if (!processHeaders(connection, client, fragment, dataSize)) 
 			{
@@ -330,9 +355,20 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	}
 	catch (const std::exception &e) 
 	{
-		Logger::ERROR() << "Exception: " << e.what();
-		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		Logger::ERROR() << "Exception in onDataReceived: " << e.what();
 		connection.setClosing();
+		static bool is_handling_error = false;
+		if (is_handling_error) 
+			return; 
+		is_handling_error = true;
+		try 
+		{
+			dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
+		} catch (...) 
+		{
+			connection.sendData("HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n");
+		}
+		is_handling_error = false;
 	}
 }
 

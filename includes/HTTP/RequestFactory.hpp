@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RequestBuilder.hpp                                 :+:      :+:    :+:   */
+/*   RequestFactory.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/09 23:18:31 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 12:28:17 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _REQUESTBUILDER_H
-# define _REQUESTBUILDER_H
+#ifndef _RequestFactory_H
+# define _RequestFactory_H
 
 # include <iostream>
 # include <vector>
@@ -28,7 +28,7 @@
 
 #define _ENCODING_CHUNK_ "transfer-encoding"
 
-class RequestBuilder
+class RequestFactory
 {
 private:
 	std::vector<uint8_t>				raw_buffer;
@@ -37,13 +37,12 @@ private:
 	bool								is_validated;
 	bool								is_chunk_encoding;
 
-	size_t								content_length;
-	HashMap<std::string, std::string>	headers;
-	std::string							method;
-	std::string							request_path;
-	std::string							query_path;
-	std::string							protocol;
-	
+	std::string				method;
+	std::string				request_path;
+	std::string				query_string;
+	std::string				protocol;
+
+	Request::Headers		headers;
 
 	size_t	find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
 	size_t	find_header_end();
@@ -57,25 +56,27 @@ private:
 	void	validateHeader();
 	void	invalidPath();
 
+	const std::string *getHeader(const std::string& key) const;
+
 public:
-	RequestBuilder();
-	RequestBuilder(const RequestBuilder &other);
-	RequestBuilder &operator=(const RequestBuilder &other);
-	~RequestBuilder();
+	RequestFactory();
+	RequestFactory(const RequestFactory &other);
+	RequestFactory &operator=(const RequestFactory &other);
+	~RequestFactory();
 
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
 	void		reset();
-	Request		build() const;
+	Request*		build() const;
 
 	void		print() const;
 
 	std::vector<uint8_t>	getExtraData();
 
 	const bool&		getCompleteStatus() 	const;
-	const bool&		isHeaderParsed() 		const;
+	const bool&		get_header_parsed() 	const;
 	const bool&		isValidated() 			const;
 	void			setValidateStatus(int status);
 };
 
-#endif // _REQUESTBUILDER_H
+#endif // _RequestFactory_H

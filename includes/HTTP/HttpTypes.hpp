@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:01:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 01:06:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,10 +24,11 @@
 # include "Utils/Hash.hpp"
 # include "Config/ConfigDefault.hpp"
 
-#define _HTTP_VERSION_ "HTTP/1.1"
+# define HTTP_VERSION "HTTP/1.1"
 
-#define _HEADER_CONTENT_LENGTH_ "content-length"
-#define _HEADER_HOST_ "host"
+# define HEADER_CONTENT_LENGTH "content-length"
+# define HEADER_COOKIE	"cookie"
+# define HEADER_HOST "host"
 
 # define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
 ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
@@ -79,7 +80,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 	(BAD_GATEWAY,				502, Bad Gateway), \
 	(SERVICE_UNAVAILABLE,		503, Service Unavailable), \
 	(GATEWAY_TIMEOUT,			504, Gateway Timeout), \
-	(_HTTP_VERSION__NOT_SUPPORTED,505, HTTP Version Not Supported) \
+	(HTTP_VERSION_NOT_SUPPORTED,505, HTTP Version Not Supported) \
 )
 
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__

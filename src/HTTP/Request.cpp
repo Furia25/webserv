@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/12 00:42:14 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 14:27:55 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,19 @@
 
 #define _IS_ONE_MO_ 1048576
 
+Request::Request() : method(Method::GET),
+		path("/"),
+		query_string(""),
+		protocol(""),
+		content_length(0),
+		is_chunk_encoding(false)
+{}
+
 Request::Request(Method m, const std::string& p, const std::string& q, 
 				 const std::string& proto, size_t cl, 
 				 const HashMap<std::string, std::string>& h, bool is_encoding)
 	: method(m), path(p), query_string(q), protocol(proto), 
-	  content_length(cl), headers(h), is_chunk_encoding(is_encoding)
+	  content_length(cl), is_chunk_encoding(is_encoding),  headers(h)
 {
 }
 
@@ -61,7 +69,7 @@ Body&	Request::getBody()
 	return this->body;
 }
 
-size_t    Request::getBodySize() const
+size_t	Request::getBodySize() const
 {
     return this->body.getReceivedSize();
 }
@@ -76,6 +84,18 @@ const std::string&  Request::getPath() const
     return (path);
 }
 
+void Request::setCookies(const Cookies& cookies) { this->cookies = cookies; }
+void Request::setHeaders(const Headers& headers) { this->headers = headers; }
+
+const Request::Headers&	Request::getHeaders() const 
+{
+	return headers;
+}
+Request::Headers&	Request::getHeaders() 
+{
+	return headers;
+}
+
 const std::string&	Request::getQueryString() const
 {
     return (query_string);
@@ -85,6 +105,8 @@ const std::string&	Request::getProtocol() const
 {
     return (protocol);
 }
+const Request::Cookies&	Request::getCookies() const { return cookies; }
+Request::Cookies&	Request::getCookies() { return cookies; }
 
 bool	Request::isChunked() const 
 {
@@ -94,11 +116,6 @@ bool	Request::isChunked() const
 size_t	Request::getContentLength() const
 {
     return (content_length);
-}
-
-const HashMap<std::string, std::string>&	Request::getHeaders() const
-{
-    return (headers);
 }
 
 size_t	Request::isLessThanOneMO() const
@@ -160,14 +177,18 @@ void	Body::finish()
 {
 	if (this->fileWriter)
 		this->fileWriter->close();
+	this->isFinished = true;
 }
 
 void	Body::reset() 
 {
 	if (this->fileWriter) 
 	{
-		this->fileWriter->close();
-		delete this->fileWriter;
+		if (this->isStreaming)
+		{
+			this->fileWriter->close();
+			delete this->fileWriter;
+		}
 		this->fileWriter = NULL;
 	}
 }
@@ -176,7 +197,6 @@ bool	Body::getIsStreaming() const
 {
 	return this->isStreaming;
 }
-
 
 
 const	std::vector<uint8_t>&	Body::getMemoryBuffer() const
@@ -213,12 +233,12 @@ Body::~Body()
 {
 	if (isStreaming && !destinationPath.empty())
 	{
-		if (!isFinished)
+		if (fileWriter && !isFinished)
 		{
 			if (fileWriter->isOpen())
 				fileWriter->close();
+			std::remove(this->destinationPath.c_str());
 		}
-		std::remove(this->destinationPath.c_str());
 	}
-    this->reset();
+	this->reset();
 }

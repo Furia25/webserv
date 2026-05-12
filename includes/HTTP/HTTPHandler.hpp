@@ -17,7 +17,7 @@
 # include "Server/IRequestHandler.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/HTTPHandler.hpp"
-# include "HTTP/RequestBuilder.hpp"
+# include "HTTP/RequestFactory.hpp"
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
@@ -51,14 +51,21 @@ private:
 	};
 	struct ClientData
 	{
-		RequestBuilder			builder;
+		RequestFactory			builder;
 		Request*				request;
 		Router::RouteResult 	routeRes;
 		IJob					*actualJob;
 		ChunkState				chunkState;
 		size_t					neededBytes;
 		std::string				sizeBuffer;
-		ClientData(): request(NULL), actualJob(NULL), chunkState(CHUNK_SIZE){};
+		ClientData(): request(NULL), actualJob(NULL), chunkState(CHUNK_SIZE), neededBytes(0){};
+		~ClientData() 
+		{ 
+			if (request) 
+				delete request; 
+			if (actualJob) 
+				delete actualJob; 
+		};
 		void reset();
 	};
 
@@ -79,11 +86,6 @@ private:
 	void	createJob(Connection& connection, const Request& request,
 				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
 				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
-				
-	template <typename T>
-	void	createJobUpload(Connection& connection, const Request& request,
-	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-	const std::string& physical_path, bool isUpload, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
 	void	dispatchError(Connection& connection, const Request& request,

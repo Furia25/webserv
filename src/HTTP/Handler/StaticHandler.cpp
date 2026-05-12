@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 22:44:59 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 10:43:43 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void StaticHandler::onCreation()
 		if (!this->staticConfig.index.empty() && FileSystem::exists(index_file))
 			this->physicalPath = index_file;
 	}
-	switch (this->request.getMethod())
+	switch (this->request.method)
 	{
 	case Method::GET:
 	case Method::HEAD:
@@ -79,7 +79,7 @@ void	StaticHandler::handleDelete()
 
 void StaticHandler::handleAutoindex()
 {
-	std::string	path = this->request.getPath();
+	std::string	path = this->request.path;
 	DIR *dir = opendir(this->physicalPath.c_str());
 	if (!dir)
 		throw HTTPException(HTTPCode::FORBIDDEN);
@@ -120,7 +120,7 @@ void StaticHandler::onExecute()
 	{
 	case INIT:
 	{
-		if (this->request.getMethod() == Method::DELETE)
+		if (this->request.method == Method::DELETE)
 		{
 			this->handleDelete();
 			state = FINISHED;
@@ -151,7 +151,7 @@ void StaticHandler::onExecute()
 		std::string ext = FileSystem::getExtension(physicalPath);
 		Response::buildFileHeaderResponse(connection, statusCode, mime_type, fileSize);
 		
-		if (request.getMethod() == Method::HEAD)
+		if (request.method == Method::HEAD)
 		{
 			this->fileReader.close();
 			state = FINISHED;

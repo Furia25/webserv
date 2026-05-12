@@ -6,7 +6,7 @@
 #    By: antoine <antoine@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/11 23:22:17 by antoine          ###   ########.fr        #
+#    Updated: 2026/05/12 10:40:50 by antoine          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,7 +70,7 @@ SRC_FILES = \
 	Config/TOML/TOMLParser.cpp \
 	Config/TOML/TOMLToken.cpp \
 	Config/TOML/TOMLTokenizer.cpp \
-	HTTP/RequestBuilder.cpp \
+	HTTP/RequestFactory.cpp \
 	HTTP/Request.cpp \
 	HTTP/HTTPHandler.cpp \
 	HTTP/Router.cpp \

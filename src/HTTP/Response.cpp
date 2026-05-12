@@ -6,17 +6,17 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:00:21 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/11 02:38:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Response.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "Utils/Itoa.hpp"
+# include "Utils/IntegerUtils.hpp"
 
 static inline std::string buildStatusLine(HTTPCode code)
 {
-	return "HTTP/1.1 " + itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
+	return "HTTP/1.1 " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
 }
 
 void Response::buildErrorResponse(Connection& connection, HTTPCode code)
@@ -34,7 +34,7 @@ void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime
 {
 	std::string response = buildStatusLine(code);
 	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + itoa(body.size()) + "\r\n";
+	response += "Content-Length: " + IntegerUtils::itoa(body.size()) + "\r\n";
 	response += "Connection: close\r\n\r\n";
 	response += body;
 	
@@ -47,7 +47,7 @@ void Response::sendChunkedHeader(Connection& connection, HTTPCode code, MIME mim
 	headers += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
 	headers += "Transfer-Encoding: chunked\r\n";
 	headers += "Connection: keep-alive\r\n\r\n";
-    
+
 	connection.sendData(headers);
 }
 
@@ -81,7 +81,7 @@ void Response::buildFileHeaderResponse(Connection& connection, HTTPCode code, MI
 {
 	std::string response = buildStatusLine(code);
 	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + itoa(fileSize) + "\r\n";
+	response += "Content-Length: " + IntegerUtils::itoa(fileSize) + "\r\n";
 	response += "Connection: close\r\n\r\n";
 	
 	connection.sendData(response);

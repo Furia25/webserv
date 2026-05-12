@@ -1,0 +1,77 @@
+[engine]
+max_events = 1024
+max_timeout = 50
+closing_timeout = 30
+read_size = 4096
+max_read_limit = 16384
+
+[logging]
+tick_interval = 5
+
+[[servers]]
+server_name = "main"
+root = "www/basic_website"
+max_body_size = 150000000
+
+	# Cookie de session sur tout le serveur
+	[servers.cookies.session_id]
+	generate = true
+	generation_length = 32
+	max_age = 86400
+	http_only = true
+	same_site = "LAX"
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "8080"
+
+	[servers.errors]
+	404 = "errors/404.html"
+	500 = "errors/500.html"
+	403 = "errors/403.html"
+
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/"
+	methods = ["GET", "POST"]
+	index = "index.html"
+    autoindex = false
+
+		[servers.routes.cookies.theme]
+		default_value = "dark"
+		max_age = 2592000
+
+	[[servers.routes]]
+	path = "/upload"
+	methods = ["POST"]
+	handler = "UPLOAD"
+	max_body_size = 100000000
+	allowed_extensions = []
+	allow_overwrite = false
+	upload_store = "./www/site1/uploads"
+
+		[servers.routes.cookies.session_id]
+		generate = true
+		generation_length = 32
+		max_age = 3600
+		http_only = true
+		same_site = "STRICT"
+
+	[[servers.routes]]
+	path = "/admin"
+	methods = ["GET"]
+	handler = "STATIC"
+	index = "index.html"
+	autoindex = false
+
+		[servers.routes.cookies.auth_token]
+
+	[[servers.routes]]
+	path = "/status"
+	methods = ["GET"]
+	handler = "STATUS"
+	show_start_time = true
+	show_server_info = true
+	show_connection_info = true
+	show_request_info = true
+	show_timestamp = true

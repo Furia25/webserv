@@ -6,14 +6,14 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 22:32:16 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 10:44:05 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Handler/UploadHandler.hpp"
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/HttpTypes.hpp"
-# include "Utils/Itoa.hpp"
+# include "Utils/IntegerUtils.hpp"
 # include <stdio.h>
 # include <unistd.h>
 # include <sys/types.h>
