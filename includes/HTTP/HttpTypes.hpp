@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 01:06:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:41:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@
 # define HEADER_CONTENT_LENGTH "content-length"
 # define HEADER_COOKIE	"cookie"
 # define HEADER_HOST "host"
+# define HEADER_TRANSFER_ENCODING	"transfer-encoding"
 
 # define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
 ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,

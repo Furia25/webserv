@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 12:28:10 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:46:44 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include "Utils/IntegerUtils.hpp"
 
 RequestFactory::RequestFactory() 
-	: parsing_is_complete(false), header_is_parsed(false), is_validated(false), is_chunk_encoding(false)
+	: is_parsing_complete(false), is_header_parsed(false), is_validated(false), is_chunk_encoding(false)
 {
 }
 
@@ -31,8 +31,8 @@ RequestFactory &RequestFactory::operator=(const RequestFactory &other)
 	if (this != &other)
 	{
 		this->raw_buffer = other.raw_buffer;
-		this->parsing_is_complete = other.parsing_is_complete;
-		this->header_is_parsed = other.header_is_parsed;
+		this->is_parsing_complete = other.is_parsing_complete;
+		this->is_header_parsed = other.is_header_parsed;
 		this->is_validated = other.is_validated;
 		this->headers = other.headers;
 		this->method = other.method;
@@ -48,8 +48,8 @@ RequestFactory::~RequestFactory() {}
 void RequestFactory::reset()
 {
 	this->raw_buffer.clear();
-	this->parsing_is_complete = false;
-	this->header_is_parsed = false;
+	this->is_parsing_complete = false;
+	this->is_header_parsed = false;
 	this->is_validated = true;
 	this->headers.clear();
 	this->method.clear();
@@ -62,13 +62,13 @@ void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
 	
-	if (!header_is_parsed)
+	if (!is_header_parsed)
 	{
 		size_t header_end = find_header_end();
 		if (header_end != std::string::npos)
 		{
 			parse_all_headers(raw_buffer, header_end);
-			header_is_parsed = true;
+			is_header_parsed = true;
 		}
 	}
 
@@ -168,7 +168,7 @@ void RequestFactory::validatePath()
 
 void RequestFactory::validateHeader()
 {
-	HashMap<std::string, std::string>::iterator it = headers.find(HEADER_HOST);
+	Request::Headers::iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
@@ -219,9 +219,12 @@ std::vector<uint8_t> RequestFactory::getExtraData()
 	return extra;
 }
 
-const bool &RequestFactory::getCompleteStatus() const { return parsing_is_complete; }
-const bool &RequestFactory::get_header_parsed() const { return header_is_parsed; }
-const bool &RequestFactory::isValidated() const { return is_validated; }
+const bool& RequestFactory::getCompleteStatus() const { return is_parsing_complete; }
+
+const bool& RequestFactory::get_header_parsed() const { return is_header_parsed; }
+
+const bool& RequestFactory::isValidated() const { return is_validated; }
+
 void RequestFactory::setValidateStatus(int status) { is_validated = status; }
 
 const std::string *RequestFactory::getHeader(const std::string& key) const
@@ -230,7 +233,7 @@ const std::string *RequestFactory::getHeader(const std::string& key) const
 	return it != this->headers.end() ? &it->second : NULL;
 }
 
-static void	handleContentLength(Request &request, const std::string& val)
+static void	handleContentLength(Request& request, const std::string& val)
 {
 	try { request.content_length = IntegerUtils::strtoul_safe(val); }
 	catch (...)
@@ -238,6 +241,11 @@ static void	handleContentLength(Request &request, const std::string& val)
 		request.content_length = 0;
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 	}
+}
+
+static void handleTransferEncoding(Request& request, const std::string& val)
+{
+	request.is_chunk_encoding = val == "chunked";
 }
 
 static std::string trim(const std::string& s)
@@ -280,6 +288,7 @@ static HandlerMap buildHandlerMap()
 	HandlerMap m;
 	m.insert(HEADER_CONTENT_LENGTH, &handleContentLength);
 	m.insert(HEADER_COOKIE, &handleCookie);
+	m.insert(HEADER_TRANSFER_ENCODING, &handleTransferEncoding);
 	return m;
 }
 
@@ -287,20 +296,16 @@ Request* RequestFactory::build() const
 {
 	static const HandlerMap handlers = buildHandlerMap();
 	Request* result = new Request(); 
-	try
-	{
-		result->method = Method::from(this->method);
-	}
+
+	try { result->method = Method::from(this->method);}
 	catch (const std::domain_error& e)
-	{
-		result->method = Method::UNKNOWN;
-	}
+	{ result->method = Method::UNKNOWN; }
+
 	result->path			= this->request_path;
 	result->query_string	= this->query_string;
-    result->protocol		= this->protocol;
+	result->protocol		= this->protocol;
 	result->setHeaders(this->headers);
-	const std::string* te = this->getHeader("transfer-encoding");
-	result->is_chunk_encoding = (te && *te == "chunked");
+	
 	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
 		HandlerMap::const_iterator h = handlers.find(it->first);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/12 14:27:55 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:47:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,18 +21,6 @@ Request::Request() : method(Method::GET),
 		content_length(0),
 		is_chunk_encoding(false)
 {}
-
-Request::Request(Method m, const std::string& p, const std::string& q, 
-				 const std::string& proto, size_t cl, 
-				 const HashMap<std::string, std::string>& h, bool is_encoding)
-	: method(m), path(p), query_string(q), protocol(proto), 
-	  content_length(cl), is_chunk_encoding(is_encoding),  headers(h)
-{
-}
-
-Request::~Request()
-{
-}
 
 void	Request::initBody(const std::string& path, bool stream)
 {
@@ -71,17 +59,7 @@ Body&	Request::getBody()
 
 size_t	Request::getBodySize() const
 {
-    return this->body.getReceivedSize();
-}
-
-Method  Request::getMethod() const
-{
-    return (method);
-}
-
-const std::string&  Request::getPath() const
-{
-    return (path);
+	return this->body.getReceivedSize();
 }
 
 void Request::setCookies(const Cookies& cookies) { this->cookies = cookies; }
@@ -91,20 +69,12 @@ const Request::Headers&	Request::getHeaders() const
 {
 	return headers;
 }
+
 Request::Headers&	Request::getHeaders() 
 {
 	return headers;
 }
 
-const std::string&	Request::getQueryString() const
-{
-    return (query_string);
-}
-
-const std::string&	Request::getProtocol() const
-{
-    return (protocol);
-}
 const Request::Cookies&	Request::getCookies() const { return cookies; }
 Request::Cookies&	Request::getCookies() { return cookies; }
 
@@ -113,19 +83,12 @@ bool	Request::isChunked() const
 	return this->is_chunk_encoding;
 }
 
-size_t	Request::getContentLength() const
-{
-    return (content_length);
-}
-
 size_t	Request::isLessThanOneMO() const
 {
-    return (this->content_length < _IS_ONE_MO_);
+	return (this->content_length < _IS_ONE_MO_);
 }
 
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), isFinished(false)
-{
-}
+Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), isFinished(false) {}
 
 void	Body::init(size_t expected, const std::string& path, bool stream)
 {
@@ -147,7 +110,7 @@ void    Body::feed(const uint8_t* data, size_t size)
 {
 	if (size == 0)
 		return ;
-    
+	
 	if (this->isStreaming)
 		fileWriter->writeChunk(data, size);
 	else
@@ -163,9 +126,9 @@ void	Body::setIsFinished(bool status)
 bool	Body::isComplete() const 
 {
 	if (this->isStreaming && this->expectedSize == 0)
-        return this->isFinished;
-    
-    return this->receivedSize >= this->expectedSize;
+		return this->isFinished;
+	
+	return this->receivedSize >= this->expectedSize;
 }
 
 bool	Body::checkOverflow() const

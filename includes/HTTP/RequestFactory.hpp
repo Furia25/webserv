@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 12:28:17 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:37:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,11 @@
 class RequestFactory
 {
 private:
-	std::vector<uint8_t>				raw_buffer;
-	bool								parsing_is_complete;
-	bool								header_is_parsed;
-	bool								is_validated;
-	bool								is_chunk_encoding;
+	std::vector<uint8_t>	raw_buffer;
+	bool					is_parsing_complete;
+	bool					is_header_parsed;
+	bool					is_validated;
+	bool					is_chunk_encoding;
 
 	std::string				method;
 	std::string				request_path;
@@ -67,7 +67,7 @@ public:
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
 	void		reset();
-	Request*		build() const;
+	Request*	build() const;
 
 	void		print() const;
 

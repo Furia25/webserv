@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 10:43:43 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:37:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ void StaticHandler::handleAutoindex()
 
 	Response::sendChunkedHeader(this->connection, HTTPCode::OK, MIME::html);
 
-	if (this->request.getMethod() == Method::HEAD)
+	if (this->request.method == Method::HEAD)
 	{
 		closedir(dir);
 		this->setFinished();

@@ -127,7 +127,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	else
 	{
-		size_t requestLength = client.request->getContentLength();
+		size_t requestLength = client.request->.content_length;
 		if (bodyLength > requestLength)
 		{
 			dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
@@ -149,7 +149,7 @@ void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 
 	if (!client.request->isChunked())
 	{
-		size_t remaining = client.request->getContentLength() - client.request->getBodySize();
+		size_t remaining = client.request->.content_length - client.request->getBodySize();
 		toProcess = (size < remaining) ? size : remaining;
 	}
 
@@ -167,7 +167,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
 	{
 		const Config::UploadConfig& uploadConfig = static_cast<const Config::UploadConfig&>(*client.routeRes.route);
-		std::string fileName = client.request->getPath();
+		std::string fileName = client.request->.path;
 		size_t pos = fileName.find_last_of('/');
 		if (pos != std::string::npos)
 			fileName = fileName.substr(pos + 1);
@@ -223,7 +223,7 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		return false;
 	}
-	if (client.request->getMethod() == Method::UNKNOWN)
+	if (client.request->.method == Method::UNKNOWN)
 	{
 		dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
 		return false;

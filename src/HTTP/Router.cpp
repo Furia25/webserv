@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 15:07:09 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:35:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static inline void extract_host(const Request &request, std::string& host)
 {
 	host = "";
 
-	HashMap<std::string, std::string>::const_iterator it = request.getHeaders().find("host");
+	Request::Headers::const_iterator it = request.getHeaders().find("host");
 	if (it == request.getHeaders().end())
 		return;
 

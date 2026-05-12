@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:42:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:27:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,8 @@ namespace Router
 		const Config::ServerConfig	*host;
 		const Config::RouteConfig	*route;
 		std::string					physicalPath;
+		std::string					physicalPath;
+		std::string					pathRemainder;
 		HTTPCode					errorCode;
 		bool						success;
 
