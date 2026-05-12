@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 22:03:28 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 00:30:09 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include "EnumClass.hpp"
 # include "Utils/HashMap.hpp"
 # include "HttpTypes.hpp"
-# include "Utils/FileWriter.hpp"
+# include "Utils/HTTP/FileWriter.hpp"
 
 class Request
 {

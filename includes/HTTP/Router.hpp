@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 00:05:23 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 00:30:39 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include "HTTP/Request.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "Server/Connection.hpp"
+# include "HTTP/URIUtils.hpp"
 
 namespace Router 
 {

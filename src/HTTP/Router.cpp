@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 00:02:58 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 00:32:02 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,19 +73,22 @@ void	Router::validateConstraints(const Config::ServerConfig* host, const Config:
 
 std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Config::RouteConfig* route, const std::string& current_path)
 {
-	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
+	std::string decoded_path = decodeURI(current_path);
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(decoded_path);
 	const std::string& found_path = route_it->first;
-	std::string remainder = current_path.substr(found_path.size());
+	std::string remainder = decoded_path.substr(found_path.size());
 	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
-        remainder = remainder.substr(1);
+		remainder = remainder.substr(1);
 	std::string physicalPath;
 	if (!route->alias.empty())
 		physicalPath = host->root + route->alias + remainder;
 	else
 		physicalPath = host->root + found_path + remainder;
-	if (physicalPath.find("../") != std::string::npos) 
-		throw RouterException(HTTPCode::FORBIDDEN);
-	return physicalPath;
+	std::string finalPath = normalizePath(physicalPath);
+	std::string rootJail = normalizePath(host->root); 
+	if (finalPath.find(rootJail) != 0) 
+		throw RouterException(HTTPCode::FORBIDDEN); 
+	return finalPath;
 }
 
 Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
