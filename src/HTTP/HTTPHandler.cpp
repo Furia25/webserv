@@ -63,37 +63,23 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 		Logger::ERROR() << "No request to create the job At HTTPHandler.";
 		return;
 	}
+	this->totalRequests++;
 	switch (client.routeRes.route->handler)
 	{
-		case HandlerType::STATIC :
-		{
-			this->totalRequests++;
-			this->createJob<StaticHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::STATIC :
+		this->createJob<StaticHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		break;
-		case HandlerType::REDIRECT :
-		{
-			this->totalRequests++;
-			this->createJob<RedirectHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::REDIRECT :
+		this->createJob<RedirectHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		break;
-		case HandlerType::STATUS :
-		{
-			this->totalRequests++;
-			this->createJob<StatusHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::STATUS :
+		this->createJob<StatusHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
 		break;
-		case HandlerType::CGI :
-		{
-			this->totalRequests++;
-			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
-		}
-		break;
-		case HandlerType::UPLOAD :
-		{
-			this->totalRequests++;
-			this->createJob<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
-		}
+	case HandlerType::CGI :
+		this->createJob<CGIHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+	break;
+	case HandlerType::UPLOAD :
+		this->createJob<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
 		break;
 	}
 }
