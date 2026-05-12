@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 16:37:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:46:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,7 @@ public:
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
 	void		reset();
-	Request*	build() const;
+	Request		build() const;
 
 	void		print() const;
 

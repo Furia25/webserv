@@ -33,32 +33,30 @@ HTTPHandler::~HTTPHandler()
 	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 		it->second.reset();
 }
-
-void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
+void    HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-	HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
-	ClientData* client = (it != clientsData.end()) ? &it->second : NULL;
-	
-	if (client && !client->request)
-		client->request = new Request();
-	
-	Request dummyReq;
-	const Request& reqRef = (client && client->request) ? *client->request : dummyReq;
-
-	dispatchError(connection, reqRef, &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
+    HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
+    
+    if (it != clientsData.end())
+        dispatchError(connection, it->second.request, it->second.body, &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
+    else
+    {
+        Request dummyReq;
+        dispatchError(connection, dummyReq, it->second.body ,&Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
+    }
 }
 
 void	HTTPHandler::dispatchError(Connection& connection,
-		const Request &request, const Config::ServerConfig *host_config,
+		const Request &request, Body& body, const Config::ServerConfig *host_config,
 		const Config::RouteConfig *route_config, HTTPCode error_code)
 {
-	this->createJob<ErrorHandler>(connection, request, host_config,
+	this->createJob<ErrorHandler>(connection, request, body, host_config,
 			route_config, "", error_code);
 }
 
 void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 {
-	if (!client.request)
+	if (!client.builder.get_header_parsed())
 	{
 		Logger::ERROR() << "No request to create the job At HTTPHandler.";
 		return;
@@ -66,52 +64,95 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 	this->totalRequests++;
 	switch (client.routeRes.route->handler)
 	{
-	case HandlerType::STATIC :
-		this->createJob<StaticHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		case HandlerType::STATIC :
+		{
+			this->totalRequests++;
+			this->createJob<StaticHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		}
 		break;
-	case HandlerType::REDIRECT :
-		this->createJob<RedirectHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		case HandlerType::REDIRECT :
+		{
+			this->totalRequests++;
+			this->createJob<RedirectHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		}
 		break;
-	case HandlerType::STATUS :
-		this->createJob<StatusHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		case HandlerType::STATUS :
+		{
+			this->totalRequests++;
+			this->createJob<StatusHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
+		}
 		break;
-	case HandlerType::CGI :
-		this->createJob<CGIHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-	break;
-	case HandlerType::UPLOAD :
-		this->createJob<UploadHandler>(connection, *client.request, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
+		case HandlerType::CGI :
+		{
+			this->totalRequests++;
+			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+		}
+		break;
+		case HandlerType::UPLOAD :
+		{
+			this->totalRequests++;
+			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
+		}
 		break;
 	}
 }
 
-void	HTTPHandler::ClientData::reset()
+HTTPHandler::ClientData::ClientData(const ClientData& other) 
 {
-	builder.reset();
-	if (actualJob) 
+	this->builder = other.builder;
+	this->request = other.request;
+	this->routeRes = other.routeRes;
+	this->chunkState = other.chunkState;
+	this->neededBytes = other.neededBytes;
+	this->sizeBuffer = other.sizeBuffer;
+	this->body = other.body;
+	this->actualJob = other.actualJob;
+	const_cast<ClientData&>(other).actualJob = NULL;
+}
+
+HTTPHandler::ClientData& HTTPHandler::ClientData::operator=(const ClientData& other) 
+{
+	if (this != &other) 
 	{
-		delete actualJob;
-		actualJob = NULL;
+		if (this->actualJob) 
+			delete this->actualJob;
+		this->builder = other.builder;
+		this->request = other.request;
+		this->routeRes = other.routeRes;
+		this->chunkState = other.chunkState;
+		this->neededBytes = other.neededBytes;
+		this->sizeBuffer = other.sizeBuffer;
+		this->body = other.body;
+		this->actualJob = other.actualJob;
+		const_cast<ClientData&>(other).actualJob = NULL;
 	}
-	if (request) 
-	{
-		delete request;
-		request = NULL;
-	}
+	return *this;
+}
+
+void    HTTPHandler::ClientData::reset()
+{
+    builder.reset();
+    if (actualJob) 
+    {
+        delete actualJob;
+        actualJob = NULL;
+    }
+    request = Request();
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
 {
-	if (!client.request || !client.routeRes.route)
+	if (!client.routeRes.route)
 		return;
 	size_t bodyLength = 0;
-	if (client.request->getBody().getIsStreaming()) 
+	if (client.body.getIsStreaming()) 
 	{
-		if (!client.request->getBody().getFileWriter())
+		if (!client.body.getFileWriter())
 			return;
-		bodyLength = client.request->getBody().getFileWriter()->getBytesWritten();
+		bodyLength = client.body.getFileWriter()->getBytesWritten();
 	}
 	else 
-		bodyLength = client.request->getBodySize();
+		bodyLength = client.body.getSize();
 	size_t limit = CONFIG_BODY_SIZE;
 	if (limit > 0 && bodyLength > limit)
 	{
@@ -120,14 +161,14 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 		return;
 	}
 	bool isRequestFinished = false;
-	if (client.request->isChunked())
+	if (client.request.isChunked())
 	{
 		if (client.chunkState == CHUNK_COMPLETE)
 			isRequestFinished = true;
 	}
 	else
 	{
-		size_t requestLength = client.request->.content_length;
+		size_t requestLength = client.request.getContentLength();
 		if (bodyLength > requestLength)
 		{
 			dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
@@ -138,7 +179,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	if (isRequestFinished) 
 	{
-		client.request->finishBody();
+		client.body.finish();
 		this->launchJob(connection, client);
 	}
 }
@@ -147,27 +188,27 @@ void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 {
 	size_t toProcess = size;
 
-	if (!client.request->isChunked())
+	if (!client.request.isChunked())
 	{
-		size_t remaining = client.request->.content_length - client.request->getBodySize();
+		size_t remaining = client.request.getContentLength() - client.body.getSize();
 		toProcess = (size < remaining) ? size : remaining;
 	}
 
 	if (toProcess > 0)
-		client.request->getBody().feed(fragment, toProcess);
+		client.body.feed(fragment, toProcess);
 }
 
 bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
 {
-	if (!client.request || !client.routeRes.route)
+	if (!client.routeRes.route)
 		return false;
-	bool isStreaming = !client.request->isLessThanOneMO();
+	bool isStreaming = !client.body.isLessThanOneMO();
 	std::string path = "";
 
 	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
 	{
 		const Config::UploadConfig& uploadConfig = static_cast<const Config::UploadConfig&>(*client.routeRes.route);
-		std::string fileName = client.request->.path;
+		std::string fileName = client.request.getPath();
 		size_t pos = fileName.find_last_of('/');
 		if (pos != std::string::npos)
 			fileName = fileName.substr(pos + 1);
@@ -183,13 +224,22 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 		pathBuilder << _temp_file_path_ << connection.getHash();
 		path = pathBuilder.str();
 	}
-	client.request->initBody(path, isStreaming);
+	client.body.init(client.request.getContentLength(), path, isStreaming);
 	return true;
 }
 
 bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
-	client.builder.feed(fragment, size);
+	try
+	{
+		client.builder.feed(fragment, size);
+	}
+	catch (const std::overflow_error& e)
+	{
+		Logger::ERROR() << "Header DoS Attempt blocked: " << e.what();
+		dispatchError(connection, HTTPCode::HEADER_FIELDS_TOO_LARGE); 
+		return false;
+    }
 
 	if (!client.builder.get_header_parsed())
 		return false;
@@ -205,17 +255,10 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		return false;
 	}
 	client.builder.print();
-	if (client.request)
-		delete client.request;
 	client.request = client.builder.build();
-	if (!client.request)
-	{
-		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-		return false;
-	}
 	try
 	{
-		client.routeRes = Router::resolve(connection, this->config, *client.request);
+		client.routeRes = Router::resolve(connection, this->config, client.request);
 	}
 	catch (const std::exception& e)
 	{
@@ -223,7 +266,7 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		return false;
 	}
-	if (client.request->.method == Method::UNKNOWN)
+	if (client.request.getMethod() == Method::UNKNOWN)
 	{
 		dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
 		return false;
@@ -284,7 +327,7 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 			}
 			case CHUNK_COMPLETE:
 			{
-				client.request->getBody().setIsFinished(true);
+				client.body.setIsFinished(true);
 				if (fragment[i++] == '\n')
 				{
 					checkCompletion(connection, client);
@@ -307,7 +350,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	if (dataSize == 0) return;
 	try 
 	{
-		if (!client.builder.get_header_parsed()) 
+		if (!client.builder.get_header_parsed())
 		{
 			if (!processHeaders(connection, client, fragment, dataSize)) 
 			{
@@ -315,15 +358,15 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 				return;
 			}
 			initializeBodyReception(connection, client);
-			if (client.request->getHeaders().contain("expect")) 
+			if (client.request.getHeaders().contain("expect")) 
 			{
-				if (client.request->getHeaders().at("expect").find("100-continue") != std::string::npos)
+				if (client.request.getHeaders().at("expect").find("100-continue") != std::string::npos)
 					connection.sendData("HTTP/1.1 100 Continue\r\n\r\n");
 			}
 			std::vector<uint8_t> extra = client.builder.getExtraData();
 			if (!extra.empty()) 
 			{
-				if (client.request->isChunked())
+				if (client.request.isChunked())
 					processChunkedData(connection, client, extra.data(), extra.size());
 				else
 					receiveBodyChunk(client, extra.data(), extra.size());
@@ -332,7 +375,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			checkCompletion(connection, client);
 			return;
 		}
-		if (client.request->isChunked())
+		if (client.request.isChunked())
 			processChunkedData(connection, client, fragment, dataSize);
 		else
 			receiveBodyChunk(client, fragment, dataSize);

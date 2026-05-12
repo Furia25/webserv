@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 16:46:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:45:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
+
+#define MAX_HEADER_SIZE 8192
 
 RequestFactory::RequestFactory() 
 	: is_parsing_complete(false), is_header_parsed(false), is_validated(false), is_chunk_encoding(false)
@@ -60,9 +62,10 @@ void RequestFactory::reset()
 
 void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
+	if (!header_is_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
+        throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-	
-	if (!is_header_parsed)
+	if (!header_is_parsed)
 	{
 		size_t header_end = find_header_end();
 		if (header_end != std::string::npos)
@@ -128,6 +131,8 @@ void RequestFactory::parseRequestLine(std::string &line)
 
 void RequestFactory::parseHeaderLine(std::string &line)
 {
+	if (line.empty())
+		return ;
 	size_t colon_pos = line.find(':');
 	if (colon_pos != std::string::npos)
 	{
@@ -139,7 +144,8 @@ void RequestFactory::parseHeaderLine(std::string &line)
 			value = value.substr(start);
 		headers.insert(key, value);
 	}
-	/*Else is an error ? if we dont find an : in header line i imagine ?*/
+	else
+		throw std::invalid_argument("Malformed header line: missing colon");
 }
 
 void RequestFactory::toLowerCase(std::string &str)
@@ -292,25 +298,31 @@ static HandlerMap buildHandlerMap()
 	return m;
 }
 
-Request* RequestFactory::build() const
+Request	RequestFactory::build() const
 {
 	static const HandlerMap handlers = buildHandlerMap();
-	Request* result = new Request(); 
-
-	try { result->method = Method::from(this->method);}
+	Request result;
+	try
+	{
+		result.method = Method::from(this->method);
+	}
 	catch (const std::domain_error& e)
-	{ result->method = Method::UNKNOWN; }
+	{
+		result.method = Method::UNKNOWN;
+	}
+	result.path				= this->request_path;
+	result.query_string		= this->query_string;
+	result.protocol			= this->protocol;
+	result.setHeaders(this->headers);
 
-	result->path			= this->request_path;
-	result->query_string	= this->query_string;
-	result->protocol		= this->protocol;
-	result->setHeaders(this->headers);
-	
+	const std::string* te = this->getHeader("transfer-encoding");
+	result.is_chunk_encoding = (te && *te == "chunked");
+
 	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
 		HandlerMap::const_iterator h = handlers.find(it->first);
 		if (h != handlers.end())
-			(h->second)(*result, it->second);
+			(h->second)(result, it->second);
 	}
 	return result;
 }
