@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/11 00:57:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:19:21 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -353,8 +353,8 @@ void Config::RedirectConfig::loadChild(toml::Variant& table, Config::Loader& loa
 
 void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
-	loader.value(table, "cgi_bin", this->bin);
-	loader.value_or(table, "interpreter", this->interpreter, std::string(""));
+	loader.value_or(table, "default_bin", this->default_bin, std::string(""));
+	loader.value_or(table, "interpreters", this->interpreters, toml::Table());
 	loader.value_limited(table, "cgi_timeout", this->timeout, 0, 360);
 
 	toml::Table temp_env;
