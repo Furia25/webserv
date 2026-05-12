@@ -6,12 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:35:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/12 16:15:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CGIHANDLER_H
 # define _CGIHANDLER_H
+
+# include <vector>
 
 # include "Config/Config.hpp"
 # include "HTTP/AHandler.hpp"
@@ -31,9 +33,15 @@ public:
 	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), 
 	CGIConfig(static_cast<const Config::CGIConfig&>(*route_config)) {};
 
+	void	onCreation();
 	void	onExecute();
+	void	initEnvironment();
+	void	setEnv(const std::string& key, const std::string& value);
+
 private:
 	const Config::CGIConfig&	CGIConfig;
+
+	std::vector<const char *>	env;
 };
 
 
