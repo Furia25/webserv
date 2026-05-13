@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/13 01:55:53 by vdurand          ###   ########.fr        #
+#    Updated: 2026/05/13 02:19:05 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -82,8 +82,8 @@ SRC_FILES = \
 	HTTP/Handler/RedirectHandler.cpp \
 	HTTP/Body.cpp \
 	HTTP/Response.cpp \
-	HTTP/FileReader.cpp \
-	HTTP/FileWriter.cpp \
+	HTTP/Utils/FileReader.cpp \
+	HTTP/Utils/FileWriter.cpp \
 	Logger.cpp \
 	main.cpp
 

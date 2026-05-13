@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RedirectHandler.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/11 23:19:27 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/11 23:46:39 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:29:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,9 @@ void	RedirectHandler::onExecute()
 	std::string destination = conf->redirect_location;
     HTTPCode finalCode = conf->status;
 
+	/*TODO*/
 	std::stringstream ss;
-	ss << "HTTP/1.1 " << static_cast<int>(finalCode) << " " << HTTPCode::toString(finalCode) << "\r\n";
+	ss << HTTP_VERSION " " << static_cast<int>(finalCode) << " " << HTTPCode::toString(finalCode) << "\r\n";
 	ss << "Location: " << destination << "\r\n";
 	ss << "Content-Length: 0\r\n";
 	ss << "Connection: close\r\n\r\n";

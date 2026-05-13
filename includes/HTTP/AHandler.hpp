@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:56:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 # include "Server/Connection.hpp"
 # include "HTTP/Response.hpp"
 # include "Server/IJob.hpp"
-# include "Utils/HTTP/FileReader.hpp"
+# include "HTTP/Utils/FileReader.hpp"
 
 class HTTPHandler;
 class Body;

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:30:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:09:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ bool AHandler::execute()
 {
 	if (this->finished)
 		return false;
-
 	try
 	{
 		this->onExecute();

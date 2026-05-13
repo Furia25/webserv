@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 11:34:48 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/13 02:25:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,22 +39,25 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
 	{
 		if (events & EPOLLERR)
-			this->server.getHandler().onError(*this);
+			this->server.getHandler().onError(*this, events);
 		this->setDeletable();
 		return ;
 	}
-	if (this->state == CLOSING && this->write_buffer.size() == 0
-		&& this->read_buffer.size() == 0)
-		this->setDeletable();
+
+	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
+		this->setClosing();
+
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{
 		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.max_timeout);
 		this->handleRead();
 		server.getHandler().onDataReceived(*this);
 	}
+
 	if (events & EPOLLOUT && this->state != DELETABLE)
 	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.closing_timeout);
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->actualJob != NULL ?
+			this->engineConfig.max_timeout : this->engineConfig.closing_timeout);
 		if (this->actualJob != NULL)
 		{
 			if (!this->actualJob->execute())

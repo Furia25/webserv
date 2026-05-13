@@ -21,7 +21,7 @@
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
-# include "Utils/HTTP/FileWriter.hpp"
+# include "HTTP/Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
 # include "Server/IJob.hpp"
 # include "HTTP/Body.hpp"
@@ -37,7 +37,7 @@ public:
 	void		onDataReceived(Connection& connection);
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
-	void		onError(Connection& connection);
+	void		onError(Connection& connection, uint32_t error_event);
 
 	size_t		getTotalRequests(void) const { return this->totalRequests; };
 protected:

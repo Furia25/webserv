@@ -6,14 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:04:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/RequestFactory.hpp"
 # include <algorithm>
 # include "HTTP/HttpTypes.hpp"
-# include "Utils/HTTP/FileWriter.hpp"
+# include "HTTP/Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
 
 RequestFactory::RequestFactory() 

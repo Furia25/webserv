@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:03:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include "EnumClass.hpp"
 # include "Utils/HashMap.hpp"
 # include "HttpTypes.hpp"
-# include "Utils/HTTP/FileWriter.hpp"
+# include "HTTP/Utils/FileWriter.hpp"
 
 class Request
 {

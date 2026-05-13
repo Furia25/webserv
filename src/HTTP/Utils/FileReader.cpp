@@ -6,11 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:56:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:08:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Utils/HTTP/FileReader.hpp"
+# include "HTTP/Utils/FileReader.hpp"
 # include "Utils/FileSystem.hpp"
 # include "HTTP/HttpTypes.hpp"
 
@@ -66,6 +66,7 @@ void FileReader::close()
 {
 	fileStream.close();
 }
+
 bool FileReader::hasFinished() const
 {
 	return this->isEOF;

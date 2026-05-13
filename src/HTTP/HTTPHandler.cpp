@@ -287,7 +287,7 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 	{
 		switch (client.chunkState)
 		{
-			case CHUNK_SIZE:
+		case CHUNK_SIZE:
 			{
 				char c = fragment[i++];
 				if (c == '\r')
@@ -305,7 +305,7 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 					client.sizeBuffer += c;
 				break;
 			}
-			case CHUNK_DATA:
+		case CHUNK_DATA:
 			{
 				size_t remainingInFragment = size - i;
 				size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
@@ -319,14 +319,14 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 					client.chunkState = CHUNK_TRAILER;
 				break;
 			}
-			case CHUNK_TRAILER:
+		case CHUNK_TRAILER:
 			{
 				char c = fragment[i++];
 				if ( c == '\n')
 					client.chunkState = CHUNK_SIZE;
 				break;
 			}
-			case CHUNK_COMPLETE:
+		case CHUNK_COMPLETE:
 			{
 				client.body.setIsFinished(true);
 				if (fragment[i++] == '\n')
@@ -344,11 +344,15 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	size_t id = connection.getClientID();
 	HashMap<size_t, ClientData>::iterator it = clientsData.find(id);
-	if (it == clientsData.end()) return;
-		ClientData &client = it->second;
-	const uint8_t *fragment = connection.getReadBufferPtr();
-	size_t dataSize = connection.getReadBufferSize();
-	if (dataSize == 0) return;
+	if (it == clientsData.end())
+		return;
+
+	ClientData		&client = it->second;
+	const uint8_t	*fragment = connection.getReadBufferPtr();
+	size_t			dataSize = connection.getReadBufferSize();
+
+	if (dataSize == 0)
+		return;
 	try 
 	{
 		if (!client.builder.get_header_parsed())
@@ -361,6 +365,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			initializeBodyReception(connection, client);
 			if (client.request.getHeaders().contain("expect")) 
 			{
+				/*ca aussi c'est dégeux double access et hardcore de la réponse*/
 				if (client.request.getHeaders().at("expect").find("100-continue") != std::string::npos)
 					connection.sendData("HTTP/1.1 100 Continue\r\n\r\n");
 			}
@@ -396,6 +401,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		} catch (...) 
 		{
+			/*Ca c'est dégeux*/
 			connection.sendData("HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n");
 		}
 		is_handling_error = false;
@@ -418,7 +424,8 @@ void HTTPHandler::onDisconnection(Connection& connection)
 	}
 }
 
-void HTTPHandler::onError(Connection& connection)
+void HTTPHandler::onError(Connection& connection, uint32_t error_event)
 {
-	Logger::ERROR() << "Connection:" << connection << " errored";
+	if (!(error_event & EPOLLRDHUP || error_event & EPOLLHUP))
+		Logger::ERROR() << "Connection:" << connection << " errored";
 }

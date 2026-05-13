@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/12 16:16:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:14:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,5 +50,5 @@ void CGIHandler::initEnvironment()
 
 void CGIHandler::onCreation()
 {
-	if (FileSystem::exists(this->physicalPath))
+
 }

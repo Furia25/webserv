@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 02:38:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:30:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 
 static inline std::string buildStatusLine(HTTPCode code)
 {
-	return "HTTP/1.1 " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
+	return HTTP_VERSION " " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
 }
 
 void Response::buildErrorResponse(Connection& connection, HTTPCode code)
@@ -35,7 +35,9 @@ void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime
 	std::string response = buildStatusLine(code);
 	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
 	response += "Content-Length: " + IntegerUtils::itoa(body.size()) + "\r\n";
-	response += "Connection: close\r\n\r\n";
+	/*Beaucoup de soucis vienne de la on peux pas choisir si a l'avance on
+	keep alive ou on close c'est un handshake par rapport a la requete j'ai mis keep alive pour le hardcore pour l'instant*/
+	response += "Connection: keep-alive\r\n\r\n";
 	response += body;
 	
 	connection.sendData(response);
@@ -82,7 +84,7 @@ void Response::buildFileHeaderResponse(Connection& connection, HTTPCode code, MI
 	std::string response = buildStatusLine(code);
 	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
 	response += "Content-Length: " + IntegerUtils::itoa(fileSize) + "\r\n";
-	response += "Connection: close\r\n\r\n";
+	response += "Connection: keep-alive\r\n\r\n";
 	
 	connection.sendData(response);
 }
