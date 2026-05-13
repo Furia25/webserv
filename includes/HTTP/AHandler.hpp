@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:39:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,29 +41,23 @@ protected:
 		Connection& connection,
 		const Request& request,
 		Body& body,
-		const Config::ServerConfig *host_config,
-		const Config::RouteConfig *route_config,
-		const std::string& physical_path,
+		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK) :
 			handler(handler),
-			fileHeaderSent(false),
 			connection(connection),
 			request(request),
 			body(body),
-			hostConfig(host_config),
-			routeConfig(route_config),
-			physicalPath(physical_path),
+			routeResult(route_result),
+			fileHeaderSent(false),
 			finished(false),
 			statusCode(status_code) {};
 
 	const HTTPHandler&				handler;
-	bool							fileHeaderSent;
 	Connection&						connection;
 	const Request&					request;
 	Body&							body;
-	const Config::ServerConfig* 	hostConfig;
-	const Config::RouteConfig*		routeConfig;
-	std::string						physicalPath;
+	const Router::RouteResult&		routeResult;
+	bool							fileHeaderSent;
 	bool							finished;
 	HTTPCode						statusCode;
 

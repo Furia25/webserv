@@ -86,19 +86,17 @@ private:
 
 	template <typename T>
 	void	createJob(Connection& connection, const Request& request, Body& body,
-				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
+				const Router::RouteResult& route_result, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
 	void	dispatchError(Connection& connection, const Request& request, Body& body,
-				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config, HTTPCode error_code);
+				const Router::RouteResult& route_result, HTTPCode error_code);
 
 };
 
 template <typename T>
 inline void HTTPHandler::createJob(Connection& connection, const Request& request, Body& body,
-	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-	const std::string& physical_path, HTTPCode status_code)
+	const Router::RouteResult& route_result, HTTPCode status_code)
 {
 	ClientData& client_data = this->clientsData.at(connection.getClientID());
 	if (client_data.actualJob != NULL)
@@ -108,14 +106,14 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	}
 	AHandler	*handler = NULL;
 	try {
-		handler = new T(*this, connection, request, body, host_config, route_config, physical_path, status_code);
+		handler = new T(*this, connection, request, body, route_result, status_code);
 		handler->onCreation();
 		client_data.actualJob = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
-		handler = new ErrorHandler(*this, connection, request, body, host_config, route_config, physical_path, e.getStatusCode());
+		handler = new ErrorHandler(*this, connection, request, body, route_result, e.getStatusCode());
 		client_data.actualJob = handler;
 	}
 	connection.setJob(handler);

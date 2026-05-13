@@ -33,25 +33,25 @@ HTTPHandler::~HTTPHandler()
 	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 		it->second.reset();
 }
-void    HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
+void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-    HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
-    
-    if (it != clientsData.end())
-        dispatchError(connection, it->second.request, it->second.body, &Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
-    else
-    {
-        Request dummyReq;
-        dispatchError(connection, dummyReq, it->second.body ,&Router::findDefaultServer(connection.getOriginPort(), this->config), NULL, code);
-    }
+	Router::RouteResult	dummy_results;
+	dummy_results.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
+	HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
+	
+	if (it != clientsData.end())
+		dispatchError(connection, it->second.request, it->second.body, dummy_results, code);
+	else
+	{
+		Request dummyReq;
+		dispatchError(connection, dummyReq, it->second.body, dummy_results, code);
+	}
 }
 
 void	HTTPHandler::dispatchError(Connection& connection,
-		const Request &request, Body& body, const Config::ServerConfig *host_config,
-		const Config::RouteConfig *route_config, HTTPCode error_code)
+		const Request &request, Body& body, const Router::RouteResult& route_result, HTTPCode error_code)
 {
-	this->createJob<ErrorHandler>(connection, request, body, host_config,
-			route_config, "", error_code);
+	this->createJob<ErrorHandler>(connection, request, body, route_result, error_code);
 }
 
 void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
@@ -64,35 +64,20 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 	this->totalRequests++;
 	switch (client.routeRes.route->handler)
 	{
-		case HandlerType::STATIC :
-		{
-			this->totalRequests++;
-			this->createJob<StaticHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::STATIC :
+			this->createJob<StaticHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
-		case HandlerType::REDIRECT :
-		{
-			this->totalRequests++;
-			this->createJob<RedirectHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::REDIRECT :
+			this->createJob<RedirectHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
-		case HandlerType::STATUS :
-		{
-			this->totalRequests++;
-			this->createJob<StatusHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath);
-		}
+	case HandlerType::STATUS :
+			this->createJob<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
-		case HandlerType::CGI :
-		{
-			this->totalRequests++;
+	case HandlerType::CGI :
 			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
-		}
 		break;
-		case HandlerType::UPLOAD :
-		{
-			this->totalRequests++;
-			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes.host, client.routeRes.route, client.routeRes.physicalPath, HTTPCode::OK);
-		}
+	case HandlerType::UPLOAD :
+			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	}
 }
@@ -131,13 +116,13 @@ HTTPHandler::ClientData& HTTPHandler::ClientData::operator=(const ClientData& ot
 
 void    HTTPHandler::ClientData::reset()
 {
-    builder.reset();
-    if (actualJob) 
-    {
-        delete actualJob;
-        actualJob = NULL;
-    }
-    request = Request();
+	builder.reset();
+	if (actualJob) 
+	{
+		delete actualJob;
+		actualJob = NULL;
+	}
+	request = Request();
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
@@ -240,7 +225,7 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		Logger::ERROR() << "Header DoS Attempt blocked: " << e.what();
 		dispatchError(connection, HTTPCode::HEADER_FIELDS_TOO_LARGE); 
 		return false;
-    }
+	}
 
 	if (!client.builder.get_header_parsed())
 		return false;
