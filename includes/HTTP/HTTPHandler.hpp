@@ -50,6 +50,7 @@ private:
 		CHUNK_TRAILER,
 		CHUNK_COMPLETE
 	};
+
 	struct ClientData
 	{
 		RequestFactory			builder;
@@ -60,6 +61,7 @@ private:
 		ChunkState				chunkState;
 		size_t					neededBytes;
 		std::string				sizeBuffer;
+
 		ClientData(): actualJob(NULL), chunkState(CHUNK_SIZE), neededBytes(0){};
 		~ClientData() 
 		{ 
@@ -108,14 +110,13 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	try {
 		handler = new T(*this, connection, request, body, route_result, status_code);
 		handler->onCreation();
-		client_data.actualJob = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		delete handler;
 		handler = new ErrorHandler(*this, connection, request, body, route_result, e.getStatusCode());
-		client_data.actualJob = handler;
 	}
+	client_data.actualJob = handler;
 	connection.setJob(handler);
 }
 

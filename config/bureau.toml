@@ -28,7 +28,7 @@ root = "www/bureau"
 	path = "/api"
 	methods = ["GET", "POST"]
 	handler = "CGI"
-	cgi_bin = "webserv"
+	default_bin = "webserv"
 	cgi_timeout = 10
 
 	[[servers.routes]]

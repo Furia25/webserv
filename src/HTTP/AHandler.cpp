@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/13 02:09:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 03:06:28 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,14 +69,14 @@ bool AHandler::execute()
 
 void AHandler::initError()
 {
-	HashMap<HTTPCode, std::string>::const_iterator it = hostConfig->error_fallbacks.find(this->statusCode);
-	if (it != hostConfig->error_fallbacks.end())
+	HashMap<HTTPCode, std::string>::const_iterator it = routeResult.host->error_fallbacks.find(this->statusCode);
+	if (it != routeResult.host->error_fallbacks.end())
 	{
 		std::string error_path = it->second;
 		if (error_path.length() > 0 && error_path[0] != '/')
-			error_path = hostConfig->root + "/" + error_path;
+			error_path = routeResult.host->root + "/" + error_path;
 		else
-			error_path = hostConfig->root + error_path;
+			error_path = routeResult.host->root + error_path;
 
 		if (FileSystem::exists(error_path) && FileSystem::isFile(error_path) && FileSystem::isReadable(error_path))
 		{

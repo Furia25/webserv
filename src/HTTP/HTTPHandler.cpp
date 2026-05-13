@@ -33,6 +33,7 @@ HTTPHandler::~HTTPHandler()
 	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
 		it->second.reset();
 }
+
 void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	Router::RouteResult	dummy_results;
@@ -92,6 +93,7 @@ HTTPHandler::ClientData::ClientData(const ClientData& other)
 	this->sizeBuffer = other.sizeBuffer;
 	this->body = other.body;
 	this->actualJob = other.actualJob;
+	/*Horrible ça*/
 	const_cast<ClientData&>(other).actualJob = NULL;
 }
 
@@ -116,13 +118,16 @@ HTTPHandler::ClientData& HTTPHandler::ClientData::operator=(const ClientData& ot
 
 void    HTTPHandler::ClientData::reset()
 {
-	builder.reset();
-	if (actualJob) 
+	if (this->actualJob)
 	{
-		delete actualJob;
-		actualJob = NULL;
+		delete this->actualJob;
+		this->actualJob = NULL;
 	}
-	request = Request();
+	this->builder.reset();
+	this->body.reset();
+	this->request = Request();
+	this->chunkState = CHUNK_SIZE;
+	this->neededBytes = 0;
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
@@ -138,18 +143,18 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	else 
 		bodyLength = client.body.getSize();
-	size_t limit = CONFIG_BODY_SIZE;
+	size_t limit = client.routeRes.route->max_body_size;
 	if (limit > 0 && bodyLength > limit)
 	{
 		Logger::ERROR() << "Payload too large: " << bodyLength << " bytes (limit: " << limit << ")";
 		dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
 		return;
 	}
-	bool isRequestFinished = false;
+	bool is_request_finished = false;
 	if (client.request.is_chunked)
 	{
 		if (client.chunkState == CHUNK_COMPLETE)
-			isRequestFinished = true;
+			is_request_finished = true;
 	}
 	else
 	{
@@ -160,9 +165,9 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 			return;
 		}
 		if (bodyLength == requestLength) 
-			isRequestFinished = true;
+			is_request_finished = true;
 	}
-	if (isRequestFinished) 
+	if (is_request_finished) 
 	{
 		client.body.finish();
 		this->launchJob(connection, client);
@@ -216,10 +221,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 
 bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
-	try
-	{
-		client.builder.feed(fragment, size);
-	}
+	try { client.builder.feed(fragment, size); }
 	catch (const std::overflow_error& e)
 	{
 		Logger::ERROR() << "Header DoS Attempt blocked: " << e.what();
@@ -335,6 +337,14 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	ClientData		&client = it->second;
 	const uint8_t	*fragment = connection.getReadBufferPtr();
 	size_t			dataSize = connection.getReadBufferSize();
+
+	/*C'est juste un test pour reset le client quand on reçois des donées alors qu'on a deja parser c'est a changé*/
+	if (client.actualJob != NULL || client.builder.getCompleteStatus())
+	{
+		client.reset();
+		connection.setJob(NULL);
+	}
+		
 
 	if (dataSize == 0)
 		return;

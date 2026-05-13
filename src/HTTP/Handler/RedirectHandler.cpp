@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/11 23:19:27 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/13 02:29:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:55:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,8 @@
 
 void	RedirectHandler::onExecute()
 {
-	const Config::RedirectConfig* conf = static_cast<const Config::RedirectConfig*>(routeConfig);
-
-	std::string destination = conf->redirect_location;
-    HTTPCode finalCode = conf->status;
+	std::string destination = this->redirectConfig.redirect_location;
+    HTTPCode finalCode = this->redirectConfig.status;
 
 	/*TODO*/
 	std::stringstream ss;

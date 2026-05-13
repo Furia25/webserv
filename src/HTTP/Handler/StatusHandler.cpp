@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 18:57:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 19:04:49 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:58:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void StatusHandler::onExecute()
 		
 		ss.str(""); ss.clear();
 		ss << "\"server\": {\n"
-			<< "	\"name\": \"" << this->hostConfig->name << "\",\n"
+			<< "	\"name\": \"" << this->routeResult.host->name << "\",\n"
 			<< "	\"version\": \"" SERV_VERSION "\",\n"
 			<< "	\"uptime_seconds\": " << uptime << "\n"
 			<< "}";

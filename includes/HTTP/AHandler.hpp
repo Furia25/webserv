@@ -6,13 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:39:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:57:44 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # ifndef _IHANDLER_H
 # define _IHANDLER_H
 
+# include "HTTP/Router.hpp"
 # include "HTTP/HttpTypes.hpp"
 # include "HTTP/Request.hpp"
 # include "Config/Config.hpp"
@@ -50,7 +51,8 @@ protected:
 			routeResult(route_result),
 			fileHeaderSent(false),
 			finished(false),
-			statusCode(status_code) {};
+			statusCode(status_code),
+			physicalPath(route_result.physicalPath) {};
 
 	const HTTPHandler&				handler;
 	Connection&						connection;
@@ -60,6 +62,8 @@ protected:
 	bool							fileHeaderSent;
 	bool							finished;
 	HTTPCode						statusCode;
+
+	std::string						physicalPath;
 
 private:
 	void	initError();

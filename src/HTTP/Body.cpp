@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Body.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/12 22:42:21 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 03:37:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ void    Body::feed(const uint8_t* data, size_t size)
 {
 	if (size == 0)
 		return ;
-    
+	
 	if (this->isStreaming)
 		fileWriter->writeChunk(data, size);
 	else
@@ -80,19 +80,19 @@ void	Body::setIsFinished(bool status)
 bool	Body::isComplete() const 
 {
 	if (this->isStreaming && this->expectedSize == 0)
-        return this->isFinished;
-    
-    return this->receivedSize >= this->expectedSize;
+		return this->isFinished;
+	
+	return this->receivedSize >= this->expectedSize;
 }
 
 bool    Body::isLessThanOneMO()const
 {
-    return this->expectedSize < _IS_ONE_MO_;
+	return this->expectedSize < _IS_ONE_MO_;
 }
 
 size_t  Body::getSize()const 
 {
-    return this->receivedSize;
+	return this->receivedSize;
 }
 
 bool	Body::checkOverflow() const

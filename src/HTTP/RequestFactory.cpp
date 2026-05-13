@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 03:42:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,17 +65,17 @@ void RequestFactory::feed(const uint8_t *fragment, size_t length)
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
 	if (!is_header_parsed)
 	{
-		size_t header_end = find_header_end();
+		size_t header_end = findHeaderEnd();
 		if (header_end != std::string::npos)
 		{
-			parse_all_headers(raw_buffer, header_end);
+			parseAllHeaders(raw_buffer, header_end);
 			is_header_parsed = true;
 		}
 	}
 
 }
 
-size_t RequestFactory::find_header_end()
+size_t RequestFactory::findHeaderEnd()
 {
 	if (raw_buffer.size() < 4) return std::string::npos;
 	for (size_t i = 0; i <= raw_buffer.size() - 4; ++i)
@@ -87,17 +87,17 @@ size_t RequestFactory::find_header_end()
 	return std::string::npos;
 }
 
-size_t RequestFactory::find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
+size_t RequestFactory::findNewline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
 {
 	for (size_t i = start; i < max && i < buffer.size() - 1; ++i)
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	return std::string::npos;
 }
 
-void RequestFactory::parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos)
+void RequestFactory::parseAllHeaders(const std::vector<uint8_t>& buffer, size_t pos)
 {
 	size_t start = 0;
-	size_t end = find_newline(buffer, start, pos);
+	size_t end = findNewline(buffer, start, pos);
 	
 	if (end != std::string::npos)
 	{
@@ -105,7 +105,7 @@ void RequestFactory::parse_all_headers(const std::vector<uint8_t>& buffer, size_
 		parseRequestLine(first_line);
 		start = end + 2;
 
-		while ((end = find_newline(buffer, start, pos)) != std::string::npos && end > start)
+		while ((end = findNewline(buffer, start, pos)) != std::string::npos && end > start)
 		{
 			std::string header_line(buffer.begin() + start, buffer.begin() + end);
 			parseHeaderLine(header_line);
@@ -207,7 +207,7 @@ void RequestFactory::print() const
 
 std::vector<uint8_t> RequestFactory::getExtraData()
 {
-	size_t header_end = find_header_end();
+	size_t header_end = findHeaderEnd();
 
 	if	(header_end == std::string::npos)
 		return std::vector<uint8_t>();

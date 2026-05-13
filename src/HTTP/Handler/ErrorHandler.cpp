@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:58:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:58:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,10 +20,10 @@ void ErrorHandler::onExecute()
 	{
 	case INIT:
 	{
-		if (hostConfig->error_fallbacks.contain(statusCode))
+		if (this->routeResult.host->error_fallbacks.contain(statusCode))
 		{
-			std::string errorFile = hostConfig->error_fallbacks.at(statusCode);
-			physicalPath = hostConfig->root + "/" + errorFile;
+			std::string errorFile = this->routeResult.host->error_fallbacks.at(statusCode);
+			physicalPath = this->routeResult.host->root + "/" + errorFile;
 		}
 		if (!physicalPath.empty() && FileSystem::exists(physicalPath) && FileSystem::isFile(physicalPath))
 			this->state = SEND_HEADERS;

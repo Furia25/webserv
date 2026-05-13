@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:03:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 03:42:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,9 @@ private:
 
 	Request::Headers		headers;
 
-	size_t	find_newline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
-	size_t	find_header_end();
-	void	parse_all_headers(const std::vector<uint8_t>& buffer, size_t pos);
+	size_t	findNewline(const std::vector<uint8_t>& buffer, size_t start, size_t max);
+	size_t	findHeaderEnd();
+	void	parseAllHeaders(const std::vector<uint8_t>& buffer, size_t pos);
 	void	parseRequestLine(std::string &line);
 	void	parseHeaderLine(std::string &line);
 	void	toLowerCase(std::string &str);
