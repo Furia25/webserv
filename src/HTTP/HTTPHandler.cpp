@@ -161,14 +161,14 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 		return;
 	}
 	bool isRequestFinished = false;
-	if (client.request.isChunked())
+	if (client.request.is_chunked)
 	{
 		if (client.chunkState == CHUNK_COMPLETE)
 			isRequestFinished = true;
 	}
 	else
 	{
-		size_t requestLength = client.request.getContentLength();
+		size_t requestLength = client.request.content_length;
 		if (bodyLength > requestLength)
 		{
 			dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
@@ -188,9 +188,9 @@ void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 {
 	size_t toProcess = size;
 
-	if (!client.request.isChunked())
+	if (!client.request.is_chunked)
 	{
-		size_t remaining = client.request.getContentLength() - client.body.getSize();
+		size_t remaining = client.request.content_length - client.body.getSize();
 		toProcess = (size < remaining) ? size : remaining;
 	}
 
@@ -208,8 +208,9 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
 	{
 		const Config::UploadConfig& uploadConfig = static_cast<const Config::UploadConfig&>(*client.routeRes.route);
-		std::string fileName = client.request.getPath();
-		size_t pos = fileName.find_last_of('/');
+		std::string	fileName = client.request.path;
+		size_t		pos = fileName.find_last_of('/');
+
 		if (pos != std::string::npos)
 			fileName = fileName.substr(pos + 1);
 		if (fileName.empty())
@@ -224,7 +225,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 		pathBuilder << _temp_file_path_ << connection.getHash();
 		path = pathBuilder.str();
 	}
-	client.body.init(client.request.getContentLength(), path, isStreaming);
+	client.body.init(client.request.content_length, path, isStreaming);
 	return true;
 }
 
@@ -266,7 +267,7 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
 		return false;
 	}
-	if (client.request.getMethod() == Method::UNKNOWN)
+	if (client.request.method == Method::UNKNOWN)
 	{
 		dispatchError(connection, HTTPCode::NOT_IMPLEMENTED);
 		return false;
@@ -366,7 +367,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			std::vector<uint8_t> extra = client.builder.getExtraData();
 			if (!extra.empty()) 
 			{
-				if (client.request.isChunked())
+				if (client.request.is_chunked)
 					processChunkedData(connection, client, extra.data(), extra.size());
 				else
 					receiveBodyChunk(client, extra.data(), extra.size());
@@ -375,7 +376,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			checkCompletion(connection, client);
 			return;
 		}
-		if (client.request.isChunked())
+		if (client.request.is_chunked)
 			processChunkedData(connection, client, fragment, dataSize);
 		else
 			receiveBodyChunk(client, fragment, dataSize);

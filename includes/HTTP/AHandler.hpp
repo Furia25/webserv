@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 22:17:46 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:56:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 # include "Server/Connection.hpp"
 # include "HTTP/Response.hpp"
 # include "Server/IJob.hpp"
-# include "Utils/FileReader.hpp"
+# include "Utils/HTTP/FileReader.hpp"
 
 class HTTPHandler;
 class Body;

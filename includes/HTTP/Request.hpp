@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:45:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:03:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,17 +28,13 @@ public:
 	std::string		query_string;
 	std::string		protocol;
 	size_t			content_length;
-	bool			is_chunk_encoding;
+	bool			is_chunked;
+	bool			keep_alive;
+
+	Request();
 
 	typedef HashMap<std::string, std::string> Cookies;
 	typedef HashMap<std::string, std::string> Headers;
-
-	Request();
-	Request(const Request& other);
-	Request& operator=(const Request& other);
-	~Request();
-
-	bool				isChunked()			const;
 
 	const Headers&		getHeaders()		const;
 	const Cookies&		getCookies()		const;

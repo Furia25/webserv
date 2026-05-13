@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 00:32:02 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:52:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ static inline void extract_host(const Request &request, std::string& host)
 		host = host.substr(1, host.length() - 2);
 }
 
-const Config::ServerConfig* Router::matchServer(const Connection& connection, const Config::AppConfig &config, const Request &request)
+const Config::ServerConfig	*Router::matchServer(const Connection& connection, const Config::AppConfig &config, const Request &request)
 {
 	std::string	host;
 	extract_host(request, host);
@@ -45,12 +45,12 @@ const Config::ServerConfig* Router::matchServer(const Connection& connection, co
 	return it->second;
 }
 
-const Config::RouteConfig* Router::matchRoute(const Config::ServerConfig* host, const std::string& current_path)
+const Config::RouteConfig	*Router::matchRoute(const Config::ServerConfig* host, const std::string& current_path)
 {
-    RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
-    if (route_it == host->routes.end())
-        throw RouterException(HTTPCode::NOT_FOUND);
-    return route_it->second;
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
+	if (route_it == host->routes.end())
+		throw RouterException(HTTPCode::NOT_FOUND);
+	return route_it->second;
 }
 
 void	Router::validateConstraints(const Config::ServerConfig* host, const Config::RouteConfig* route, const Request& request)
@@ -73,7 +73,7 @@ void	Router::validateConstraints(const Config::ServerConfig* host, const Config:
 
 std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Config::RouteConfig* route, const std::string& current_path)
 {
-	std::string decoded_path = decodeURI(current_path);
+	std::string decoded_path = URIUtils::decodeURI(current_path);
 	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(decoded_path);
 	const std::string& found_path = route_it->first;
 	std::string remainder = decoded_path.substr(found_path.size());
@@ -84,8 +84,8 @@ std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Co
 		physicalPath = host->root + route->alias + remainder;
 	else
 		physicalPath = host->root + found_path + remainder;
-	std::string finalPath = normalizePath(physicalPath);
-	std::string rootJail = normalizePath(host->root); 
+	std::string finalPath = URIUtils::normalizePath(physicalPath);
+	std::string rootJail = URIUtils::normalizePath(host->root); 
 	if (finalPath.find(rootJail) != 0) 
 		throw RouterException(HTTPCode::FORBIDDEN); 
 	return finalPath;
@@ -93,27 +93,27 @@ std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Co
 
 Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
 {
-    Router::RouteResult res;
-    res.success = false;
+	Router::RouteResult res;
+	res.success = false;
 
-    try 
-    {
-        res.host = matchServer(connection, config, request);
-        res.route = matchRoute(res.host, request.path);
-        
-        validateConstraints(res.host, res.route, request);
-        
-        res.physicalPath = buildPhysicalPath(res.host, res.route, request.path);
-        
-        res.success = true;
-    }
-    catch (const RouterException& e)
-    {
-        res.success = false;
-        res.errorCode = e.getCode();
-    }
+	try 
+	{
+		res.host = matchServer(connection, config, request);
+		res.route = matchRoute(res.host, request.path);
+		
+		validateConstraints(res.host, res.route, request);
+		
+		res.physicalPath = buildPhysicalPath(res.host, res.route, request.path);
+		
+		res.success = true;
+	}
+	catch (const RouterException& e)
+	{
+		res.success = false;
+		res.errorCode = e.getCode();
+	}
 
-    return res;
+	return res;
 }
 
 const Config::ServerConfig& Router::findDefaultServer(port_t port, const Config::AppConfig &config)

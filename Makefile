@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antoine <antoine@student.42.fr>            +#+  +:+       +#+         #
+#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/13 00:31:55 by antoine          ###   ########.fr        #
+#    Updated: 2026/05/13 01:55:53 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -81,7 +81,6 @@ SRC_FILES = \
 	HTTP/Handler/StatusHandler.cpp \
 	HTTP/Handler/RedirectHandler.cpp \
 	HTTP/Body.cpp \
-	HTTP/URIUtils.cpp \
 	HTTP/Response.cpp \
 	HTTP/FileReader.cpp \
 	HTTP/FileWriter.cpp \

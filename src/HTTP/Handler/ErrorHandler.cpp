@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 16:34:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:58:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ void ErrorHandler::onExecute()
 			MIME mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
 
 			Response::buildFileHeaderResponse(connection, statusCode, mime_type, fileSize);
-			if (request..method == Method::HEAD)
+			if (request.method == Method::HEAD)
 			{
 				this->state = FINISHED;
 				this->fileReader.close();
@@ -74,7 +74,7 @@ void ErrorHandler::onExecute()
 
 	case SEND_DEFAULT_ERROR:
 	{
-		if (request..method == Method::HEAD)
+		if (request.method == Method::HEAD)
 			Response::buildEmptyResponse(connection, statusCode);
 		else
 			Response::buildErrorResponse(connection, statusCode);

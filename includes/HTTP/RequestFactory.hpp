@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:46:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:03:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _RequestFactory_H
-# define _RequestFactory_H
+#ifndef _REQUESTFACTORY_H
+# define _REQUESTFACTORY_H
 
 # include <iostream>
 # include <vector>
@@ -23,10 +23,8 @@
 # include <cstdlib>
 
 # include "Utils/HashMap.hpp"
-# include "HttpTypes.hpp"
-# include "Request.hpp"
-
-#define _ENCODING_CHUNK_ "transfer-encoding"
+# include "HTTP/HttpTypes.hpp"
+# include "HTTP/Request.hpp"
 
 class RequestFactory
 {
@@ -35,7 +33,7 @@ private:
 	bool					is_parsing_complete;
 	bool					is_header_parsed;
 	bool					is_validated;
-	bool					is_chunk_encoding;
+	bool					is_chunked;
 
 	std::string				method;
 	std::string				request_path;
@@ -79,4 +77,4 @@ public:
 	void			setValidateStatus(int status);
 };
 
-#endif // _RequestFactory_H
+#endif // _REQUESTFACTORY_H

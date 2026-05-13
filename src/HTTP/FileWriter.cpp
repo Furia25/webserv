@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   FileWriter.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:30 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 00:41:51 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/13 01:55:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Utils/FileWriter.hpp"
+# include "Utils/HTTP/FileWriter.hpp"
 # include "HTTP/HttpTypes.hpp"
 
 void FileWriter::open(const std::string& path, bool append)

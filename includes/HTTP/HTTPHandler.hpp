@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# ifndef _HTTPHandler_H
-# define _HTTPHandler_H
+# ifndef _HTTPHANDLER_H
+# define _HTTPHANDLER_H
 
 # include "Config/ConfigDefault.hpp"
 # include "Server/IRequestHandler.hpp"
@@ -21,7 +21,7 @@
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
-# include "Utils/FileWriter.hpp"
+# include "Utils/HTTP/FileWriter.hpp"
 # include "HTTP/Router.hpp"
 # include "Server/IJob.hpp"
 # include "HTTP/Body.hpp"
@@ -121,4 +121,4 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	connection.setJob(handler);
 }
 
-#endif // _HTTPHandler_H
+#endif // _HTTPHANDLER_H

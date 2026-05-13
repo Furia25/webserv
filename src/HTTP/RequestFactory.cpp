@@ -6,20 +6,18 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:45:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/13 02:04:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/RequestFactory.hpp"
 # include <algorithm>
 # include "HTTP/HttpTypes.hpp"
-# include "Utils/FileWriter.hpp"
+# include "Utils/HTTP/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-#define MAX_HEADER_SIZE 8192
-
 RequestFactory::RequestFactory() 
-	: is_parsing_complete(false), is_header_parsed(false), is_validated(false), is_chunk_encoding(false)
+	: is_parsing_complete(false), is_header_parsed(false), is_validated(false), is_chunked(false)
 {
 }
 
@@ -62,10 +60,10 @@ void RequestFactory::reset()
 
 void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
-	if (!header_is_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
+	if (!is_header_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
         throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
-	if (!header_is_parsed)
+	if (!is_header_parsed)
 	{
 		size_t header_end = find_header_end();
 		if (header_end != std::string::npos)
@@ -251,7 +249,12 @@ static void	handleContentLength(Request& request, const std::string& val)
 
 static void handleTransferEncoding(Request& request, const std::string& val)
 {
-	request.is_chunk_encoding = val == "chunked";
+	request.is_chunked = val == "chunked";
+}
+
+static void handleConnection(Request& request, const std::string& val)
+{
+	request.keep_alive = val == "keep-alive";
 }
 
 static std::string trim(const std::string& s)
@@ -295,6 +298,7 @@ static HandlerMap buildHandlerMap()
 	m.insert(HEADER_CONTENT_LENGTH, &handleContentLength);
 	m.insert(HEADER_COOKIE, &handleCookie);
 	m.insert(HEADER_TRANSFER_ENCODING, &handleTransferEncoding);
+	m.insert(HEADER_CONNECTION, &handleConnection);
 	return m;
 }
 
@@ -302,21 +306,17 @@ Request	RequestFactory::build() const
 {
 	static const HandlerMap handlers = buildHandlerMap();
 	Request result;
-	try
-	{
-		result.method = Method::from(this->method);
-	}
+
+	try { result.method = Method::from(this->method); }
 	catch (const std::domain_error& e)
 	{
 		result.method = Method::UNKNOWN;
 	}
+
 	result.path				= this->request_path;
 	result.query_string		= this->query_string;
 	result.protocol			= this->protocol;
 	result.setHeaders(this->headers);
-
-	const std::string* te = this->getHeader("transfer-encoding");
-	result.is_chunk_encoding = (te && *te == "chunked");
 
 	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
