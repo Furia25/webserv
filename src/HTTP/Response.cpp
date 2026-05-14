@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:30:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 17:06:45 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,82 +14,88 @@
 # include "HTTP/HttpTypes.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-static inline std::string buildStatusLine(HTTPCode code)
+Response::Response(HTTPCode code) : statusCode(code)
 {
-	return HTTP_VERSION " " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
+		this->setHeader("Server", SERV_NAME "/" SERV_VERSION);
 }
 
-void Response::buildErrorResponse(Connection& connection, HTTPCode code)
-{
-	std::stringstream ss;
-	ss << "<html><head><title>Error " << static_cast<int>(code) << "</title></head>" 
-		<< "<body><center><h1>" << static_cast<int>(code) << " : " << HTTPCode::toString(code) << "</h1><hr>"
-		<< SERV_NAME "/" SERV_VERSION " (Default Error Page)</center></body></html>";
+Response::~Response()
+{}
 
-	std::string body = ss.str();
-	Response::buildRawResponse(connection, code, MIME::html, body);
+void Response::setStatusCode(HTTPCode code)
+{
+	this->statusCode = code;
 }
 
-void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime_type, const std::string& body)
+void Response::setHeader(const std::string& key, const std::string& value)
 {
-	std::string response = buildStatusLine(code);
-	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + IntegerUtils::itoa(body.size()) + "\r\n";
-	/*Beaucoup de soucis vienne de la on peux pas choisir si a l'avance on
-	keep alive ou on close c'est un handshake par rapport a la requete j'ai mis keep alive pour le hardcore pour l'instant*/
-	response += "Connection: keep-alive\r\n\r\n";
-	response += body;
+	this->headers.insert(key, value);
+}
+
+void Response::setBody(const std::string& body)
+{
+	this->body = body;
+	this->setContentLength(body.size());
+}
+
+void Response::setKeepAlive(bool keepAlive)
+{
+	if (keepAlive)
+		this->setHeader("Connection", "keep-alive");
+	else
+		this->setHeader("Connection", "close");
+}
+
+void Response::setContentType(MIME mime_type)
+{
+	this->setHeader("Content-Type", MIME::toString(mime_type));
+}
+
+void Response::setContentLength(size_t length)
+{
+	this->setHeader("Content-Length", IntegerUtils::itoa(length));
+}
+
+std::string	Response::buildStatusLine() const
+{
+	return "HTTP/1.1 " + IntegerUtils::itoa(this->statusCode) + " " + HTTPCode::toString(this->statusCode) + "\r\n";
+}
+
+std::string Response::build() const
+{
+	return this->buildHeadersOnly() + this->body;
+}
+
+void	Response::addCookies(const std::string& cookie)
+{
+	this->cookies.push_back(cookie);
+}
+
+std::string Response::buildHeadersOnly() const
+{
+	std::string result = this->buildStatusLine();
 	
-	connection.sendData(response);
+	for (HashMap<std::string, std::string>::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
+		result += it->first + ": " + it->second + "\r\n";
+
+	for (size_t i = 0; i < this->cookies.size(); ++i) 
+		result += "Set-Cookie: " + this->cookies[i] + "\r\n";
+		
+	result += "\r\n";
+	
+	return result;
 }
 
-void Response::sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type)
+std::string Response::sendChunk(const std::string& body)
 {
-	std::string headers = buildStatusLine(code);
-	headers += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	headers += "Transfer-Encoding: chunked\r\n";
-	headers += "Connection: keep-alive\r\n\r\n";
-
-	connection.sendData(headers);
-}
-
-void Response::sendChunk(Connection& connection, const std::string& body)
-{
-	if (body.empty()) 
-		return;
-
 	std::stringstream ss;
 	ss << std::hex << body.size();
 
 	std::string chunk = ss.str() + "\r\n" + body + "\r\n";
-	connection.sendData(chunk);
+	return chunk;
 }
 
-void Response::sendEndChunks(Connection& connection)
+std::string Response::sendEndChunks()
 {
-	std::string end = "0\r\n\r\n";
-	connection.sendData(end);
-}
-
-void Response::buildEmptyResponse(Connection& connection, HTTPCode code)
-{
-	std::string response = buildStatusLine(code);
-	response += "Connection: close\r\n\r\n";
-	
-	connection.sendData(response);
-}
-
-void Response::buildFileHeaderResponse(Connection& connection, HTTPCode code, MIME mime_type, size_t fileSize)
-{
-	std::string response = buildStatusLine(code);
-	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + IntegerUtils::itoa(fileSize) + "\r\n";
-	response += "Connection: keep-alive\r\n\r\n";
-	
-	connection.sendData(response);
-}
-
-void Response::sendBodyChunk(Connection& connection, const uint8_t* data, size_t len)
-{
-	connection.sendData(data, len);
+	return std::string("0\r\n\r\n");
 }

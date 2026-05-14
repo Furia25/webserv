@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/11 02:37:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 17:07:56 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,25 +15,36 @@
 
 # include "Server/Connection.hpp"
 # include "HTTP/HttpTypes.hpp"
+# include "Utils/HashMap.hpp"
+# include "HTTP/HttpTypes.hpp"
 
 class Response
 {
+private:
+	HTTPCode							statusCode;
+	std::string							body;
+	HashMap<std::string, std::string>	headers;
+	std::vector<std::string>			cookies;
+
+	std::string	buildStatusLine() const;
+    
 public:
-    static void buildErrorResponse(Connection& connection, HTTPCode code);
+	Response(HTTPCode code = HTTPCode::OK);
+	~Response();
+    
+	void	setStatusCode(HTTPCode code);
+	void	setBody(const std::string &body);
+	void	setHeader(const std::string &key, const std::string &value);
+	void	setKeepAlive(bool keepAlive);
+    void	setContentType(MIME mime_type);
+    void	setContentLength(size_t length);
+	void	addCookies(const std::string& cookie);
 
-    static void buildRawResponse(Connection& connection, HTTPCode code, MIME mime_type, const std::string& body);
-
-    static void buildEmptyResponse(Connection& connection, HTTPCode code);
-    
-    static void buildFileHeaderResponse(Connection& connection, HTTPCode code, MIME mime_type, size_t fileSize);
-    
-    static void sendEndChunks(Connection& connection);
-    
-    static void sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type);
-
-    static void sendChunk(Connection& connection, const std::string& body);
-    
-    static void sendBodyChunk(Connection& connection, const uint8_t* data, size_t len);
+	std::string build() const;
+	std::string buildHeadersOnly() const;
+	
+	std::string	sendChunk(const std::string& body);
+	std::string	sendEndChunks();
 };
 
 #endif // _RESPONSE_H

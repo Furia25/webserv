@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 16:53:46 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ public:
 	const Cookies&		getCookies()		const;
 	Cookies&			getCookies();
 	Headers&			getHeaders();
+	bool				wantsKeepAlive()	const;
 
 	void				setCookies(const Cookies& cookies);
 	void				setHeaders(const Headers& headers);

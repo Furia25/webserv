@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 16:37:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 17:10:32 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,12 @@ void StaticHandler::handleAutoindex()
 	if (!dir)
 		throw HTTPException(HTTPCode::FORBIDDEN);
 
-	Response::sendChunkedHeader(this->connection, HTTPCode::OK, MIME::html);
+	Response res(HTTPCode::OK);
+	res.setContentType(MIME::html);
+	res.setHeader("Transfer-Encoding", "chunked");
+	res.setKeepAlive(this->request.wantsKeepAlive());
+
+	this->connection.sendData(res.buildHeadersOnly());
 
 	if (this->request.method == Method::HEAD)
 	{
@@ -93,7 +98,7 @@ void StaticHandler::handleAutoindex()
 		return;
 	}
 	std::string	headerHtml = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><ul>";
-	Response::sendChunk(this->connection, headerHtml);
+	this->connection.sendData(res.sendChunk(headerHtml));
 
 	struct dirent *ent;
 	while ((ent = readdir(dir)) != NULL)
@@ -104,12 +109,12 @@ void StaticHandler::handleAutoindex()
 		std::string sep = (path.empty() || path[path.length() - 1] == '/') ? "" : "/";
 		std::string body = "<li><a href=\"" + path + sep + name + "\">" + name + "</a></li>";
 
-		Response::sendChunk(this->connection, body);
+		this->connection.sendData(res.sendChunk(body));
 	}
 	closedir(dir);
 
-	Response::sendChunk(this->connection, "</ul><hr></body></html>");
-	Response::sendEndChunks(this->connection);
+	this->connection.sendData(res.sendChunk("</ul><hr></body></html>"));
+	this->connection.sendData(res.sendEndChunks());
 
 	this->setFinished();
 }

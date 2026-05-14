@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/13 02:00:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 16:58:55 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,21 @@ void Request::setHeaders(const Headers& headers) { this->headers = headers; }
 const Request::Headers&	Request::getHeaders() const 
 {
 	return headers;
+}
+
+bool	Request::wantsKeepAlive()const
+{
+	if (this->headers.contain("connection"))
+	{
+		std::string value = this->headers.at("connection");
+		if (value.find("close") != std::string::npos)
+			return false;
+		if (value.find("keep-alive") != std::string::npos)
+			return true;
+	}
+	if (this->protocol == "HTTP/1.1")
+		return true;
+	return false;
 }
 
 Request::Headers&	Request::getHeaders() 
