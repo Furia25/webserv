@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/13 02:25:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:25:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,6 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		this->setDeletable();
 		return ;
 	}
-
-	if (this->state == CLOSING && this->write_buffer.size() == 0 && this->read_buffer.size() == 0)
-		this->setClosing();
 
 	if (events & EPOLLIN && this->state == CONNECTED)
 	{

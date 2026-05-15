@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 18:57:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 04:11:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:59:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,4 +85,5 @@ void StatusHandler::onCreation()
 		.sendContentLength(json.size())
 		.sendBody(json)
 		.sendEnd();
+	this->setFinished();
 }

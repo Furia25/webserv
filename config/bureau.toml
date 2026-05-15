@@ -26,8 +26,10 @@ root = "www/bureau"
 
 	[[servers.routes]]
 	handler = "REDIRECT"
-	path = "/oldapi"
+	path = "/redirectionhihi"
 	methods = ["GET"]
+	location = "/"
+	status = "303"
 
 	[[servers.routes]]
 	path = "/api"

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 04:18:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:20:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,10 +45,13 @@ Response& Response::setChunked()
 	return (*this);
 }
 
-Response& Response::sendDefaults(const Request& request, const Config::RouteConfig& route_config)
+Response& Response::sendDefaults(const Request& request, const Config::RouteConfig& route_config, bool force_close)
 {
 	this->sendHeader("Server", SERV_NAME "/" SERV_VERSION);
-	this->sendKeepAlive(request.keep_alive);
+	if (force_close)
+		this->sendKeepAlive(false);
+	else
+		this->sendKeepAlive(request.keep_alive);
 	this->sendCookies(request.getCookies(), route_config.cookies);
 	return (*this);
 }

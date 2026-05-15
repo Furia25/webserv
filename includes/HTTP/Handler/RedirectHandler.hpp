@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 04:21:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:01:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,7 @@ public:
 	: AHandler(handler, connection, request, body, route_result, status_code), 
 	redirectConfig(static_cast<const Config::RedirectConfig&>(*route_result.route)) {};
 
-	void	onExecute() {};
-	void	onCreation();
+	void	onExecute();
 private:
 	const Config::RedirectConfig&	redirectConfig;
 };

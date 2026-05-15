@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 03:47:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:30:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,11 @@ void	UploadHandler::onExecute()
 		outFile.write(reinterpret_cast<const char *>(bod.data()), bod.size());
 		outFile.close();
 	}
-	response.sendStatusLine(HTTPCode::CREATED).sendEnd();
-	connection.setClosing();
+	response
+		.sendStatusLine(HTTPCode::CREATED)
+		.sendDefaults(this->request, *this->routeResult.route)
+		.sendContentLength(0)
+		.sendEnd();
 	this->setFinished();
 	Logger::DEBUG() << "Upload finished : " << body.getReceivedSize() << " octets written.";
 	Logger::DEBUG() << "Files saved here : " << body.getFilePath();
