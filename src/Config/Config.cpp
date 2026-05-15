@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 04:55:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 06:03:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,7 +276,10 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant &table, Config::Loader
 
 void Config::CookieConfig::load(toml::Variant& table, Config::Loader& loader)
 {
-	loader.value_limited_or<uint64_t>(table, "max_age", this->max_age, 0, 0, 34560000);
+	if (table.as<toml::Table>().contain("max_age"))
+		loader.value_limited<int64_t>(table, "max_age", this->max_age, 0, 34560000);
+	else
+		this->max_age = -1;
 
 	std::string	temp_samesite;
 	loader.value_or<std::string>(table, "same_site", temp_samesite, "");

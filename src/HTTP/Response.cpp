@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 05:20:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 06:00:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,11 +77,67 @@ Response& Response::sendContentLength(size_t length)
 	return (*this);
 }
 
+std::string	cookie_generate(size_t length)
+{
+	static const char charset[] =
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789";
+	static const size_t charset_size = sizeof(charset) - 1;
+
+	std::string result;
+	result.reserve(length);
+
+	int fd = open("/dev/urandom", O_RDONLY);
+	if (fd == -1)
+		throw std::runtime_error("cookie_generate: cannot open /dev/urandom");
+
+	unsigned char buf[length];
+	ssize_t n = read(fd, buf, length);
+	close(fd);
+
+	if (n == -1 || n != static_cast<ssize_t>(length))
+		throw std::runtime_error("cookie_generate: read failed");
+
+	for (size_t i = 0; i < length; ++i)
+		result += charset[buf[i] % charset_size];
+
+	return result;
+}
+
 Response& Response::sendCookies(const Cookies& cookies, const HashMap<std::string,
 			Config::CookieConfig>& cookies_config)
 {
-	(void) cookies;
-	(void) cookies_config;
+	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = cookies_config.begin();
+			it != cookies_config.end(); ++it)
+	{
+		if (cookies.contain(it->first))
+			continue ;
+		const Config::CookieConfig&	config = it->second;
+		if (config.required)
+			continue ;
+		std::string	value = config.default_value;
+		if (config.generate)
+			value += cookie_generate(config.generation_length);
+		std::string	cookie_str = it->first + "=" + value;
+		if (config.http_only)
+			cookie_str += "; HttpOnly";
+		switch (config.same_site)
+		{
+		case Config::CookieConfig::SameSite::LAX:
+			cookie_str += "; SameSite=Lax";
+			break;
+		case Config::CookieConfig::SameSite::STRICT:
+			cookie_str += "; SameSite=Strict";
+			break;
+		case Config::CookieConfig::SameSite::NONE:
+			cookie_str += "; SameSite=None";
+			break;
+		}
+		if (config.max_age != -1)
+			cookie_str += "; Max-Age=" + IntegerUtils::itoa(config.max_age);
+		this->sendHeader("Set-Cookie", cookie_str);
+	}
 	return (*this);
 }
 

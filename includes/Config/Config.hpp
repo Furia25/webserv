@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:54:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,7 @@ struct CookieConfig
 
 	std::string	name;
 
-	uint64_t	max_age;
+	int64_t		max_age;
 	bool		http_only;
 	SameSite	same_site;
 
