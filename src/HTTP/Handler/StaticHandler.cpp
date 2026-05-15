@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:33:21 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:00:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,14 +18,15 @@
 
 void StaticHandler::onCreation()
 {
-	if (FileSystem::isDirectory(physicalPath))
-	{
-		std::string separator = (physicalPath.empty() || physicalPath[physicalPath.length() - 1] == '/') ? "" : "/";
-		std::string index_file = physicalPath + separator + this->staticConfig.index;
+	const std::string separator = (physicalPath.empty() || physicalPath[physicalPath.length() - 1] == '/') ? "" : "/";
 
+	if (this->physicalPath == this->routeResult.basePath)
+	{
+		std::string index_file = physicalPath + separator + this->staticConfig.index;
 		if (!this->staticConfig.index.empty() && FileSystem::exists(index_file))
 			this->physicalPath = index_file;
 	}
+
 	switch (this->request.method)
 	{
 	case Method::GET:

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/14 22:04:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:57:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,35 +34,37 @@ static inline void extract_host(const Request &request, std::string& host)
 		host = host.substr(1, host.length() - 2);
 }
 
-const Config::ServerConfig	*Router::matchServer(const Connection& connection, const Config::AppConfig &config, const Request &request)
+static inline void match_server(Router::RouteResult& result, const Connection& connection,
+		const Config::AppConfig &config, const Request &request)
 {
 	std::string	host;
 	extract_host(request, host);
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
 	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
 	if (it == tree.end())
-		return &findDefaultServer(connection.getOriginPort(), config);
-	return it->second;
+		result.host = &Router::findDefaultServer(connection.getOriginPort(), config);
+	else
+		result.host = it->second;
 }
 
-const Config::RouteConfig	*Router::matchRoute(const Config::ServerConfig* host, const std::string& current_path)
+static inline void match_route(Router::RouteResult& result, const std::string& current_path)
 {
-	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
-	if (route_it == host->routes.end())
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = result.host->routes.find_prefix(current_path);
+	if (route_it == result.host->routes.end())
 		throw RouterException(HTTPCode::NOT_FOUND);
-	return route_it->second;
+	result.route = route_it->second;
 }
 
-void	Router::validateConstraints(const Config::ServerConfig* host, const Config::RouteConfig* route, const Request& request)
+static inline void	validate_constraints(Router::RouteResult& result, const Request& request)
 {
-	if (host->max_body_size < request.content_length)
+	if (result.host->max_body_size < request.content_length)
 		throw RouterException(HTTPCode::PAYLOAD_TOO_LARGE);
 
-	if (route->method_allowed[static_cast<size_t>(request.method)] == false)
+	if (result.route->method_allowed[static_cast<size_t>(request.method)] == false)
 		throw RouterException(HTTPCode::METHOD_NOT_ALLOWED);
 
 	const Cookies request_cookies = request.getCookies();
-	const HashMap<std::string, Config::CookieConfig>& route_cookies = route->cookies;
+	const HashMap<std::string, Config::CookieConfig>& route_cookies = result.route->cookies;
 
 	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = route_cookies.begin(); it != route_cookies.end(); ++it)
 	{
@@ -71,40 +73,47 @@ void	Router::validateConstraints(const Config::ServerConfig* host, const Config:
 	}
 }
 
-std::string	Router::buildPhysicalPath(const Config::ServerConfig* host, const Config::RouteConfig* route, const std::string& current_path)
+static inline void	build_physical_path(Router::RouteResult& result, const std::string& current_path)
 {
-	std::string decoded_path = URIUtils::decodeURI(current_path);
+	const Config::ServerConfig	*host = result.host;
+	const Config::RouteConfig	*route = result.route;
+	std::string					decoded_path = URIUtils::decodeURI(current_path);
+
 	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(decoded_path);
-	const std::string& found_path = route_it->first;
-	std::string remainder = decoded_path.substr(found_path.size());
+	const std::string&	found_path = route_it->first;
+	std::string			remainder = decoded_path.substr(found_path.size());
+
 	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
 		remainder = remainder.substr(1);
-	std::string physicalPath;
+
+	std::string physical_base_path;
 	if (!route->alias.empty())
-		physicalPath = host->root + route->alias + remainder;
+		physical_base_path = host->root + route->alias;
 	else
-		physicalPath = host->root + found_path + remainder;
-	std::string finalPath = URIUtils::normalizePath(physicalPath);
-	std::string rootJail = URIUtils::normalizePath(host->root); 
-	if (finalPath.find(rootJail) != 0) 
-		throw RouterException(HTTPCode::FORBIDDEN); 
-	return finalPath;
+		physical_base_path = host->root + found_path;
+
+	std::string final_base_path = URIUtils::normalizePath(physical_base_path);
+	std::string root_jail = URIUtils::normalizePath(host->root); 
+	if (final_base_path.find(root_jail) != 0) 
+		throw RouterException(HTTPCode::FORBIDDEN);
+	result.basePath = final_base_path;
+	result.pathRemainder = remainder;
 }
 
 Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
 {
 	Router::RouteResult res;
+
 	res.success = false;
 
 	try 
 	{
-		res.host = matchServer(connection, config, request);
-		res.route = matchRoute(res.host, request.path);
-		
-		validateConstraints(res.host, res.route, request);
-		
-		res.physicalPath = buildPhysicalPath(res.host, res.route, request.path);
-		
+		match_server(res, connection, config, request);
+		match_route(res, request.path);
+
+		validate_constraints(res, request);
+		build_physical_path(res, request.path);
+
 		res.success = true;
 	}
 	catch (const RouterException& e)

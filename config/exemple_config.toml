@@ -73,7 +73,7 @@ max_body_size = 150000000
 	handler = "CGI"
 	default_bin = "webserv"
 	cgi_timeout = 10
-	interpreters = {py = "python3", php = "php-cgi"}
+	interpreters = {py = "python3", php = "php-cgi", default = "./"}
 
 	[[servers.routes]]
 	path = "/status"

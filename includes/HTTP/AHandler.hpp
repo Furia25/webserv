@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:27:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:40:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ protected:
 			fileHeaderSent(false),
 			finished(false),
 			statusCode(status_code),
-			physicalPath(route_result.physicalPath),
+			physicalPath(route_result.basePath + route_result.pathRemainder),
 			response(connection), state(INIT), errored(false), first(true) {};
 
 	const HTTPHandler&				handler;
