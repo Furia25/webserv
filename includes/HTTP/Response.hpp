@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 05:20:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:32:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,13 +36,15 @@ public:
 	Response&	sendStatusLine(HTTPCode code);
 	Response&	setChunked();
 	Response&	sendDefaults(const Request& request,
-					const Config::RouteConfig& route_config, bool force_close = false);
+					const Config::RouteConfig *route_config, bool force_close = false);
 	Response&	sendKeepAlive(bool keep_alive);
 	Response&	sendContentType(MIME mime_type);
 	Response&	sendContentLength(size_t length);
 	Response&	sendHeader(const std::string& key, const std::string& value);
 	Response&	sendCookies(const Cookies& cookies,
 					const HashMap<std::string, Config::CookieConfig>& cookies_config);
+	Response&	sendCookie(const std::string& key, const std::string& value,
+					bool http_only = false, Cookie::SameSite same_site = Cookie::SameSite::LAX, int64_t max_age = -1);
 
 	void		sendEnd();
 

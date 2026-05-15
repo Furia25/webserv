@@ -38,6 +38,7 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	Router::RouteResult	dummy_results;
 	dummy_results.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
+	//dummy_results.route = dummy_results.host->routes.begin()->second;
 	HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
 	
 	if (it != clientsData.end())

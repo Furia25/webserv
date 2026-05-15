@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 06:00:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:32:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,14 +45,15 @@ Response& Response::setChunked()
 	return (*this);
 }
 
-Response& Response::sendDefaults(const Request& request, const Config::RouteConfig& route_config, bool force_close)
+Response& Response::sendDefaults(const Request& request, const Config::RouteConfig *route_config, bool force_close)
 {
 	this->sendHeader("Server", SERV_NAME "/" SERV_VERSION);
 	if (force_close)
 		this->sendKeepAlive(false);
 	else
 		this->sendKeepAlive(request.keep_alive);
-	this->sendCookies(request.getCookies(), route_config.cookies);
+	if (route_config != NULL)
+		this->sendCookies(request.getCookies(), route_config->cookies);
 	return (*this);
 }
 
@@ -105,6 +106,30 @@ std::string	cookie_generate(size_t length)
 	return result;
 }
 
+Response& Response::sendCookie(const std::string& key, const std::string& value,
+			bool http_only, Cookie::SameSite same_site, int64_t max_age)
+{
+	std::string	cookie_str = key + "=" + value;
+	if (http_only)
+		cookie_str += "; HttpOnly";
+	switch (same_site)
+	{
+	case Cookie::SameSite::LAX:
+		cookie_str += "; SameSite=Lax";
+		break;
+	case Cookie::SameSite::STRICT:
+		cookie_str += "; SameSite=Strict";
+		break;
+	case Cookie::SameSite::NONE:
+		cookie_str += "; SameSite=None";
+		break;
+	}
+	if (max_age > -1)
+		cookie_str += "; Max-Age=" + IntegerUtils::itoa(max_age);
+	this->sendHeader("Set-Cookie", cookie_str);
+	return (*this);
+}
+
 Response& Response::sendCookies(const Cookies& cookies, const HashMap<std::string,
 			Config::CookieConfig>& cookies_config)
 {
@@ -119,24 +144,7 @@ Response& Response::sendCookies(const Cookies& cookies, const HashMap<std::strin
 		std::string	value = config.default_value;
 		if (config.generate)
 			value += cookie_generate(config.generation_length);
-		std::string	cookie_str = it->first + "=" + value;
-		if (config.http_only)
-			cookie_str += "; HttpOnly";
-		switch (config.same_site)
-		{
-		case Config::CookieConfig::SameSite::LAX:
-			cookie_str += "; SameSite=Lax";
-			break;
-		case Config::CookieConfig::SameSite::STRICT:
-			cookie_str += "; SameSite=Strict";
-			break;
-		case Config::CookieConfig::SameSite::NONE:
-			cookie_str += "; SameSite=None";
-			break;
-		}
-		if (config.max_age != -1)
-			cookie_str += "; Max-Age=" + IntegerUtils::itoa(config.max_age);
-		this->sendHeader("Set-Cookie", cookie_str);
+		this->sendCookie(it->first, value, config.http_only, config.same_site, config.max_age);
 	}
 	return (*this);
 }

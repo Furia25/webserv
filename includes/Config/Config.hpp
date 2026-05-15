@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 05:54:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:02:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,19 +35,15 @@ struct ServerConfig;
 
 struct CookieConfig
 {
-	# define _SAMESITE_ (LAX, STRICT, NONE)
-	ENUM_CLASS(SameSite, _SAMESITE_, ENUM_BASIC, ENUM_LITERALS(_SAMESITE_, ENUM_BASIC, ENUM_BASIC); public: SameSite() : _t(LAX) {});
-	# undef _SAMESITE_
+	std::string			name;
 
-	std::string	name;
+	int64_t				max_age;
+	bool				http_only;
+	Cookie::SameSite	same_site;
 
-	int64_t		max_age;
-	bool		http_only;
-	SameSite	same_site;
-
-	bool		generate;
-	size_t		generation_length;
-	std::string	default_value;
+	bool				generate;
+	size_t				generation_length;
+	std::string			default_value;
 
 	bool		required;
 

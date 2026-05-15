@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 05:30:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:33:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	UploadHandler::onExecute()
 	}
 	response
 		.sendStatusLine(HTTPCode::CREATED)
-		.sendDefaults(this->request, *this->routeResult.route)
+		.sendDefaults(this->request, this->routeResult.route)
 		.sendContentLength(0)
 		.sendEnd();
 	this->setFinished();

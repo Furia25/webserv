@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 03:48:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:33:21 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,7 +86,7 @@ void StaticHandler::handleAutoindex()
 	{
 		response.sendStatusLine(HTTPCode::OK)
 			.sendContentType(MIME::html)
-			.sendDefaults(this->request, *this->routeResult.route)
+			.sendDefaults(this->request, this->routeResult.route)
 			.setChunked();
 
 		if (this->request.method == Method::HEAD)
@@ -157,7 +157,7 @@ void StaticHandler::onExecute()
 		std::string	extension = FileSystem::getExtension(physicalPath);
 		MIME		mime_type = MIME::from_extension(extension);
 		response.sendStatusLine(statusCode)
-			.sendDefaults(this->request, *this->routeResult.route)
+			.sendDefaults(this->request, this->routeResult.route)
 			.sendContentType(mime_type)
 			.sendContentLength(fileSize);
 

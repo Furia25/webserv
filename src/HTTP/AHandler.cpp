@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 05:31:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:33:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ void AHandler::handleError()
 		size_t	fileSize = this->fileReader.getFileSize();
 		MIME 	mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
 		response.sendStatusLine(statusCode)
-				.sendDefaults(this->request, *this->routeResult.route)
+				.sendDefaults(this->request, NULL)
 				.sendContentType(mime_type)
 				.sendContentLength(fileSize);
 		if (request.method == Method::HEAD)
@@ -140,7 +140,7 @@ void AHandler::handleError()
 	case SEND_DEFAULT_ERROR:
 	{
 		response.sendStatusLine(statusCode)
-				.sendDefaults(this->request, *this->routeResult.route);
+				.sendDefaults(this->request, NULL);
 		if (request.method != Method::HEAD)
 			this->sendFullDefaultError();
 		this->state = FINISHED;

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 04:40:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:01:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,5 +146,12 @@ struct Hash<HTTPCode>
 
 typedef HashMap<std::string, std::string> Cookies;
 typedef HashMap<std::string, std::string> Headers;
+
+namespace Cookie
+{
+	# define _SAMESITE_ (LAX, STRICT, NONE)
+	ENUM_CLASS(SameSite, _SAMESITE_, ENUM_BASIC, ENUM_LITERALS(_SAMESITE_, ENUM_BASIC, ENUM_BASIC); public: SameSite() : _t(LAX) {});
+	# undef _SAMESITE_
+} // namespace Cookie
 
 #endif // _HTTPTYPES_H
