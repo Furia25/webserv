@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/27 15:03:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 15:07:37 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <iostream>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <dirent.h>
 
 namespace FileSystem
 {
@@ -64,6 +65,20 @@ namespace FileSystem
 		if (pos != std::string::npos)
 			return path.substr(pos + 1);
 		return "";
+	}
+	
+	static inline size_t	getDirectorySize(const std::string& path)
+	{
+	size_t	count = 0;
+	DIR		*dir = opendir(path.c_str());
+	if (dir)
+	{
+		struct	dirent *ent;
+		while((ent = readdir(dir)) != NULL)
+			count++;
+		closedir(dir);
+	}
+	return count;
 	}
 };
 

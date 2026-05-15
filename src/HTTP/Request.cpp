@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/15 02:50:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 16:22:36 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,8 @@ Request::Request() : method(Method::GET),
 		query_string(""),
 		protocol(""),
 		content_length(0),
-		is_chunked(false)
+		is_chunked(false),
+		keep_alive(false)
 {}
 
 void Request::setCookies(const Cookies& cookies) { this->cookies = cookies; }

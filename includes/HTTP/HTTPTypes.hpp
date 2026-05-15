@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 04:40:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 14:58:12 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 #define _STATUS_CODES_ \
 (\
 	/*	2xx Success	*/ \
+	(CONTINUE,					100, Continue), \
 	(OK,						200, OK), \
 	(CREATED,					201, Created), \
 	(ACCEPTED,					202, Accepted), \
