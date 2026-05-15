@@ -17,7 +17,7 @@
 # include "HTTP/Handler/StaticHandler.hpp"
 # include "HTTP/Handler/StatusHandler.hpp"
 # include "HTTP/Handler/UploadHandler.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"

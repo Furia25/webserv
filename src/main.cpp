@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/08 21:12:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include "Server/TCPServer.hpp"
 #include "HeaderParam.hpp"
 #include "Logger.hpp"
-#include "HTTP/HttpTypes.hpp"
+#include "HTTP/HTTPTypes.hpp"
 #include "HTTP/HTTPHandler.hpp"
 #include "Utils/FileSystem.hpp"
 

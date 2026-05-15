@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 # include "Server/AddressResolver.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/Request.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Server/Connection.hpp"
 # include "HTTP/Utils/URIUtils.hpp"
 

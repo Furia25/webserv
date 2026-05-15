@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 01:52:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 22:04:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ static inline void extract_host(const Request &request, std::string& host)
 {
 	host = "";
 
-	Request::Headers::const_iterator it = request.getHeaders().find("host");
+	Headers::const_iterator it = request.getHeaders().find("host");
 	if (it == request.getHeaders().end())
 		return;
 
@@ -61,7 +61,7 @@ void	Router::validateConstraints(const Config::ServerConfig* host, const Config:
 	if (route->method_allowed[static_cast<size_t>(request.method)] == false)
 		throw RouterException(HTTPCode::METHOD_NOT_ALLOWED);
 
-	const Request::Cookies request_cookies = request.getCookies();
+	const Cookies request_cookies = request.getCookies();
 	const HashMap<std::string, Config::CookieConfig>& route_cookies = route->cookies;
 
 	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = route_cookies.begin(); it != route_cookies.end(); ++it)

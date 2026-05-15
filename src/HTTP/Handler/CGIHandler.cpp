@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/13 02:14:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/14 22:04:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,9 @@ static inline std::string	to_env_key(const std::string& header)
 	return key;
 }
 
-static inline std::string	*get_header(const Request::Headers& header, const std::string& key)
+static inline std::string	*get_header(const Headers& header, const std::string& key)
 {
-	Request::Headers::const_iterator	it = header.find(key);
+	Headers::const_iterator	it = header.find(key);
 	return it != header.end() ? &it->second : NULL;
 }
 
@@ -38,7 +38,7 @@ void	CGIHandler::setEnv(const std::string& key, const std::string& value)
 
 void CGIHandler::initEnvironment()
 {
-	const Request::Headers&	header = this->request.getHeaders();
+	const Headers&	header = this->request.getHeaders();
 
 	this->setEnv("REQUEST_METHOD", Method::toString(this->request.method));
 	this->setEnv("QUERY_STRING", this->request.query_string);

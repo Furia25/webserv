@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpTypes.hpp                                      :+:      :+:    :+:   */
+/*   HTTPTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:04:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:40:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,10 @@
 
 # include "EnumClass.hpp"
 # include "MIME.hpp"
+# include "Utils/HashMap.hpp"
 # include "Utils/Hash.hpp"
 # include "Config/ConfigDefault.hpp"
+# include "Utils/IntegerUtils.hpp"
 
 # define HTTP_VERSION "HTTP/1.1"
 
@@ -31,6 +33,8 @@
 # define HEADER_HOST "host"
 # define HEADER_TRANSFER_ENCODING	"transfer-encoding"
 # define HEADER_CONNECTION	"connection"
+
+# define HTTP_NEWLINE	"\r\n"
 
 # define MAX_HEADER_SIZE 8192
 
@@ -94,6 +98,17 @@ ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
 	ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING);
 	public: HTTPCode() : _t(NOT_FOUND) {};
 	static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };
+	static HTTPCode	fromLiteral(const std::string& str)
+	{
+		HTTPCode code = HTTPCode::NOT_FOUND;
+		try { code = HTTPCode::from(str); }
+		catch (const std::domain_error&)
+		{
+			size_t integer = IntegerUtils::strtoul_safe(str.c_str(), 10);
+			code = static_cast<HTTPCode::E>(integer);
+		}
+		return code;
+	};
 );
 # undef X
 # undef X_STRING_CODE
@@ -128,5 +143,8 @@ struct Hash<HTTPCode>
 {
 	size_t operator()(HTTPCode key) const { return hash_int(key); }
 };
+
+typedef HashMap<std::string, std::string> Cookies;
+typedef HashMap<std::string, std::string> Headers;
 
 #endif // _HTTPTYPES_H

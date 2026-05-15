@@ -14,6 +14,8 @@
 # define _INTEGER_UTILS_H
 
 # include <sstream>
+# include <errno.h>
+# include <cstdlib>
 
 namespace IntegerUtils
 {
@@ -21,24 +23,24 @@ namespace IntegerUtils
 	static inline unsigned long strtoul_safe(const char *str, int base = 10)
 	{
 		if (str == NULL)
-		throw std::invalid_argument("empty string");
+			throw std::invalid_argument("empty string");
 		const char	*ptr = str;
 		
 		while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r' || *ptr == '\v' || *ptr == '\f')
-		++ptr;
+			++ptr;
 		if (*ptr == '\0')
-		throw std::invalid_argument("whitespace-only string");
+			throw std::invalid_argument("whitespace-only string");
 		if (*ptr == '-')
-		throw std::invalid_argument("negative value not allowed for unsigned: \"" + std::string(str) + "\"");
+			throw std::invalid_argument("negative value not allowed for unsigned: \"" + std::string(str) + "\"");
 		
 		char			*end;
 		unsigned long	result = std::strtoul(ptr, &end, base);
 		errno = 0;
 		
 		if (errno == ERANGE)
-		throw std::out_of_range("value out of unsigned long range: \"" + std::string(str) + "\"");
+			throw std::out_of_range("value out of unsigned long range: \"" + std::string(str) + "\"");
 		if (end == ptr || *end != '\0')
-		throw std::invalid_argument("invalid characters in \"" + std::string(str) + "\"");
+			throw std::invalid_argument("invalid characters in \"" + std::string(str) + "\"");
 		return result;
 	}
 	

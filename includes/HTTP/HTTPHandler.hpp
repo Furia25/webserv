@@ -109,7 +109,6 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 	AHandler	*handler = NULL;
 	try {
 		handler = new T(*this, connection, request, body, route_result, status_code);
-		handler->onCreation();
 	}
 	catch (const HTTPException& e)
 	{

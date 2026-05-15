@@ -25,6 +25,11 @@ root = "www/bureau"
 	autoindex = false
 
 	[[servers.routes]]
+	handler = "REDIRECT"
+	path = "/oldapi"
+	methods = ["GET"]
+
+	[[servers.routes]]
 	path = "/api"
 	methods = ["GET", "POST"]
 	handler = "CGI"

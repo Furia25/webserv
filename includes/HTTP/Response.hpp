@@ -3,48 +3,52 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/14 17:07:56 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:18:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _RESPONSE_H
 # define _RESPONSE_H
 
+# include "HTTP/Body.hpp"
 # include "Server/Connection.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/HashMap.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "Config/Config.hpp"
+# include "Request.hpp"
 
 class Response
 {
 private:
-	HTTPCode							statusCode;
-	std::string							body;
-	HashMap<std::string, std::string>	headers;
-	std::vector<std::string>			cookies;
+	enum State	{STATUS, HEADER, BODY, END};
 
-	std::string	buildStatusLine() const;
-    
+	Connection&	connection;
+	enum State	state;
+	bool		is_chunked;
+
 public:
-	Response(HTTPCode code = HTTPCode::OK);
-	~Response();
-    
-	void	setStatusCode(HTTPCode code);
-	void	setBody(const std::string &body);
-	void	setHeader(const std::string &key, const std::string &value);
-	void	setKeepAlive(bool keepAlive);
-    void	setContentType(MIME mime_type);
-    void	setContentLength(size_t length);
-	void	addCookies(const std::string& cookie);
+	Response(Connection& connection);
+	Response(Connection& connection, HTTPCode code);
 
-	std::string build() const;
-	std::string buildHeadersOnly() const;
-	
-	std::string	sendChunk(const std::string& body);
-	std::string	sendEndChunks();
+	Response&	sendStatusLine(HTTPCode code);
+	Response&	setChunked();
+	Response&	sendDefaults(const Request& request, const Config::RouteConfig& route_config);
+	Response&	sendKeepAlive(bool keep_alive);
+	Response&	sendContentType(MIME mime_type);
+	Response&	sendContentLength(size_t length);
+	Response&	sendHeader(const std::string& key, const std::string& value);
+	Response&	sendCookies(const Cookies& cookies,
+					const HashMap<std::string, Config::CookieConfig>& cookies_config);
+
+	void		sendEnd();
+
+	Response&	sendBody(const std::string& body);
+	Response&	sendBody(const uint8_t *body, size_t length);
+	Response&	sendChunk(const std::string& body);
+	Response&	sendChunk(const uint8_t *body, size_t length);
 };
 
 #endif // _RESPONSE_H

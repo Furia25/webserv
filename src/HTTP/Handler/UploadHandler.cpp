@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/12 22:24:23 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 03:47:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Handler/UploadHandler.hpp"
 # include "HTTP/HTTPHandler.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/IntegerUtils.hpp"
 # include <stdio.h>
 # include <unistd.h>
@@ -31,15 +31,16 @@ void	UploadHandler::cleanTempFile(const std::string& path)
 
 void	UploadHandler::onExecute()
 {
-	size_t maxSize = CONFIG_BODY_SIZE;
+	//this->uploadConfig.allow_overwrite a gerer
+	//this->uploadConfig.allowed_extensions a gerer aussi
 	if (body.getIsStreaming())
 	{
 		struct stat st;
 		if (stat(body.getFilePath().c_str(), &st) != 0) 
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-		if (maxSize > 0 && static_cast<size_t>(st.st_size) > maxSize)
+		if (this->uploadConfig.max_body_size > 0 && static_cast<size_t>(st.st_size) > this->uploadConfig.max_body_size)
 		{
-			Logger::ERROR() << "Upload de-chunked trop gros pour la config : " << st.st_size;
+			Logger::ERROR() << "Upload de-chunked too big for config : " << st.st_size;
 			std::remove(body.getFilePath().c_str());
 			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		}
@@ -47,7 +48,7 @@ void	UploadHandler::onExecute()
 	else
 	{
 		const std::vector<uint8_t> &bod = this->body.getMemoryBuffer();
-		if (maxSize > 0 && bod.size() > maxSize)
+		if (this->uploadConfig.max_body_size > 0 && bod.size() > this->uploadConfig.max_body_size)
 			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
 		std::ofstream outFile(body.getFilePath().c_str(), std::ios::binary);
 		if (!outFile)
@@ -55,10 +56,10 @@ void	UploadHandler::onExecute()
 		outFile.write(reinterpret_cast<const char *>(bod.data()), bod.size());
 		outFile.close();
 	}
-	Response::buildEmptyResponse(connection, HTTPCode::CREATED);
+	response.sendStatusLine(HTTPCode::CREATED).sendEnd();
 	connection.setClosing();
 	this->setFinished();
-	Logger::INFO() << "Upload finished : " << body.getReceivedSize() << " octets written.";
-	Logger::INFO() << "Files saved here : " << body.getFilePath();
+	Logger::DEBUG() << "Upload finished : " << body.getReceivedSize() << " octets written.";
+	Logger::DEBUG() << "Files saved here : " << body.getFilePath();
 	body.setFilePath("");
 }

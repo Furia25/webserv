@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 02:57:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:27:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define _IHANDLER_H
 
 # include "HTTP/Router.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Request.hpp"
 # include "Config/Config.hpp"
 # include "Server/Connection.hpp"
@@ -30,11 +30,14 @@ class AHandler : public IJob
 public:
 	virtual ~AHandler() {};
 	bool	execute();
+
 	virtual void onExecute() = 0;
 	virtual void onCreation() {};
 
-	void	setFinished() { this->finished = true; };
+	void	setFinished() { this->finished = true;};
 	bool	isFinished() const { return this->finished; };
+
+	void	sendFullDefaultError();
 
 protected:
 	AHandler(
@@ -52,7 +55,8 @@ protected:
 			fileHeaderSent(false),
 			finished(false),
 			statusCode(status_code),
-			physicalPath(route_result.physicalPath) {};
+			physicalPath(route_result.physicalPath),
+			response(connection), state(INIT), errored(false), first(true) {};
 
 	const HTTPHandler&				handler;
 	Connection&						connection;
@@ -62,10 +66,25 @@ protected:
 	bool							fileHeaderSent;
 	bool							finished;
 	HTTPCode						statusCode;
-
 	std::string						physicalPath;
+	Response						response;
 
 private:
+	enum State
+	{
+		INIT,
+		SEND_HEADERS,
+		SEND_BODY,
+		SEND_DEFAULT_ERROR,
+		FINISHED
+	};
+
+	FileReader	fileReader;
+	State		state;
+	bool		errored;
+	bool		first;
+
+	void	handleError();
 	void	initError();
 };
 

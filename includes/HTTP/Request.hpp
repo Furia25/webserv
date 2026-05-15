@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/14 16:53:46 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 02:50:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include <vector>
 # include "EnumClass.hpp"
 # include "Utils/HashMap.hpp"
-# include "HttpTypes.hpp"
+# include "HTTPTypes.hpp"
 # include "HTTP/Utils/FileWriter.hpp"
 
 class Request
@@ -33,14 +33,10 @@ public:
 
 	Request();
 
-	typedef HashMap<std::string, std::string> Cookies;
-	typedef HashMap<std::string, std::string> Headers;
-
 	const Headers&		getHeaders()		const;
 	const Cookies&		getCookies()		const;
 	Cookies&			getCookies();
 	Headers&			getHeaders();
-	bool				wantsKeepAlive()	const;
 
 	void				setCookies(const Cookies& cookies);
 	void				setHeaders(const Headers& headers);

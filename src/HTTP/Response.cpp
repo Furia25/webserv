@@ -3,99 +3,138 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/14 17:06:45 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:18:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Response.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-Response::Response(HTTPCode code) : statusCode(code)
+Response::Response(Connection& connection) : connection(connection), state(Response::STATUS), is_chunked(false) {}
+
+Response::Response(Connection& connection, HTTPCode code) : connection(connection), state(Response::STATUS), is_chunked(false)
 {
-		this->setHeader("Server", SERV_NAME "/" SERV_VERSION);
+	this->sendStatusLine(code);
 }
 
-Response::~Response()
-{}
-
-void Response::setStatusCode(HTTPCode code)
+Response&	Response::sendHeader(const std::string& key, const std::string& value)
 {
-	this->statusCode = code;
+	if (state != Response::HEADER)
+		throw std::runtime_error("Can't add headers");
+	this->connection.sendData(key + ": " + value + HTTP_NEWLINE);
+	return (*this);
 }
 
-void Response::setHeader(const std::string& key, const std::string& value)
+Response& Response::sendStatusLine(HTTPCode code)
 {
-	this->headers.insert(key, value);
+	if (this->state != Response::STATUS)
+		throw std::runtime_error("Status already sent");
+	this->connection.sendData(HTTP_VERSION " " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + HTTP_NEWLINE);
+	this->state = Response::HEADER;
+	return (*this);
 }
 
-void Response::setBody(const std::string& body)
+Response& Response::setChunked()
 {
-	this->body = body;
-	this->setContentLength(body.size());
+	this->is_chunked = true;
+	this->sendHeader("Transfer-Encoding", "chunked");
+	return (*this);
 }
 
-void Response::setKeepAlive(bool keepAlive)
+Response& Response::sendDefaults(const Request& request, const Config::RouteConfig& route_config)
 {
-	if (keepAlive)
-		this->setHeader("Connection", "keep-alive");
+	this->sendHeader("Server", SERV_NAME "/" SERV_VERSION);
+	this->sendKeepAlive(request.keep_alive);
+	this->sendCookies(request.getCookies(), route_config.cookies);
+	return (*this);
+}
+
+Response& Response::sendKeepAlive(bool keep_alive)
+{
+	if (keep_alive)
+		this->sendHeader("Connection", "keep-alive");
 	else
-		this->setHeader("Connection", "close");
+		this->sendHeader("Connection", "close");
+	return (*this);
 }
 
-void Response::setContentType(MIME mime_type)
+Response& Response::sendContentType(MIME mime_type)
 {
-	this->setHeader("Content-Type", MIME::toString(mime_type));
+	this->sendHeader("Content-Type", MIME::toString(mime_type));
+	return (*this);
 }
 
-void Response::setContentLength(size_t length)
+Response& Response::sendContentLength(size_t length)
 {
-	this->setHeader("Content-Length", IntegerUtils::itoa(length));
+	this->sendHeader("Content-Length", IntegerUtils::itoa(length));
+	return (*this);
 }
 
-std::string	Response::buildStatusLine() const
+Response& Response::sendCookies(const Cookies& cookies, const HashMap<std::string,
+			Config::CookieConfig>& cookies_config)
 {
-	return "HTTP/1.1 " + IntegerUtils::itoa(this->statusCode) + " " + HTTPCode::toString(this->statusCode) + "\r\n";
+	(void) cookies;
+	(void) cookies_config;
+	return (*this);
 }
 
-std::string Response::build() const
+Response& Response::sendBody(const std::string& body)
 {
-	return this->buildHeadersOnly() + this->body;
+	if (state == Response::END || state == Response::STATUS)
+		throw std::runtime_error("Can't add body");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+
+	this->state = Response::BODY;
+	this->connection.sendData(body);
+	return (*this);
 }
 
-void	Response::addCookies(const std::string& cookie)
+Response& Response::sendBody(const uint8_t *body, size_t length)
 {
-	this->cookies.push_back(cookie);
+	if (state == Response::END || state == Response::STATUS)
+		throw std::runtime_error("Can't add body");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+
+	this->state = Response::BODY;
+	this->connection.sendData(body, length);
+	return (*this);
 }
 
-std::string Response::buildHeadersOnly() const
+Response& Response::sendChunk(const std::string& body)
 {
-	std::string result = this->buildStatusLine();
-	
-	for (HashMap<std::string, std::string>::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
-		result += it->first + ": " + it->second + "\r\n";
-
-	for (size_t i = 0; i < this->cookies.size(); ++i) 
-		result += "Set-Cookie: " + this->cookies[i] + "\r\n";
-		
-	result += "\r\n";
-	
-	return result;
+	this->sendChunk(reinterpret_cast<const uint8_t *>(body.c_str()), body.size());
+	return (*this);
 }
 
-std::string Response::sendChunk(const std::string& body)
+Response& Response::sendChunk(const uint8_t *body, size_t length)
 {
+	if (!this->is_chunked || this->state == Response::END)
+		throw std::runtime_error("Can't send chunk invalid state");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+	this->state = Response::BODY;
 	std::stringstream ss;
-	ss << std::hex << body.size();
+	ss << std::hex << length;
 
-	std::string chunk = ss.str() + "\r\n" + body + "\r\n";
-	return chunk;
+	this->connection.sendData(ss.str() + HTTP_NEWLINE);
+	this->connection.sendData(body, length);
+	this->connection.sendData(HTTP_NEWLINE);
+	return (*this);
 }
 
-std::string Response::sendEndChunks()
+void	Response::sendEnd()
 {
-	return std::string("0\r\n\r\n");
+	if (this->state == Response::END || this->state == Response::STATUS)
+		return ;
+	if (this->state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+	if (this->is_chunked == true)
+		this->connection.sendData("0" HTTP_NEWLINE HTTP_NEWLINE);
+	this->state = Response::END;
 }

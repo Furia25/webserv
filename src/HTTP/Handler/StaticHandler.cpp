@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/14 17:10:32 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 03:48:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Response.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/FileSystem.hpp"
 # include "HTTP/Handler/StaticHandler.hpp"
 # include <dirent.h>
@@ -68,11 +68,9 @@ void	StaticHandler::handleDelete()
 	else
 	{
 		if (std::remove(physicalPath.c_str()) == 0)
-			Response::buildEmptyResponse(connection, HTTPCode::NO_CONTENT);
+			Response(this->connection, HTTPCode::NO_CONTENT).sendEnd();
 		else
-		{
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-		}
 	}
 	this->setFinished();
 }
@@ -84,37 +82,41 @@ void StaticHandler::handleAutoindex()
 	if (!dir)
 		throw HTTPException(HTTPCode::FORBIDDEN);
 
-	Response res(HTTPCode::OK);
-	res.setContentType(MIME::html);
-	res.setHeader("Transfer-Encoding", "chunked");
-	res.setKeepAlive(this->request.wantsKeepAlive());
-
-	this->connection.sendData(res.buildHeadersOnly());
-
-	if (this->request.method == Method::HEAD)
+	try
 	{
+		response.sendStatusLine(HTTPCode::OK)
+			.sendContentType(MIME::html)
+			.sendDefaults(this->request, *this->routeResult.route)
+			.setChunked();
+
+		if (this->request.method == Method::HEAD)
+		{
+			closedir(dir);
+			response.sendEnd();
+			this->setFinished();
+			return;
+		}
+
+		std::string	headerHtml = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><ul>";
+		response.sendChunk(headerHtml);
+
+		struct dirent *ent;
+		while ((ent = readdir(dir)) != NULL)
+		{
+			std::string name = ent->d_name;
+			if (name == ".")
+				continue;
+
+			std::string sep = (path.empty() || path[path.length() - 1] == '/') ? "" : "/";
+			std::string body = "<li><a href=\"" + path + sep + name + "\">" + name + "</a></li>";
+
+			response.sendChunk(body);
+		}
 		closedir(dir);
-		this->setFinished();
-		return;
+		response.sendChunk("</ul><hr></body></html>");
+		response.sendEnd();
 	}
-	std::string	headerHtml = "<html><head><title>Index of " + path + "</title></head><body><h1>Index of " + path + "</h1><hr><ul>";
-	this->connection.sendData(res.sendChunk(headerHtml));
-
-	struct dirent *ent;
-	while ((ent = readdir(dir)) != NULL)
-	{
-		std::string name = ent->d_name;
-		if (name == ".") continue;
-
-		std::string sep = (path.empty() || path[path.length() - 1] == '/') ? "" : "/";
-		std::string body = "<li><a href=\"" + path + sep + name + "\">" + name + "</a></li>";
-
-		this->connection.sendData(res.sendChunk(body));
-	}
-	closedir(dir);
-
-	this->connection.sendData(res.sendChunk("</ul><hr></body></html>"));
-	this->connection.sendData(res.sendEndChunks());
+	catch (...) { closedir(dir); throw ;}
 
 	this->setFinished();
 }
@@ -151,11 +153,14 @@ void StaticHandler::onExecute()
 	{
 		this->fileReader.open(physicalPath);
 
-		size_t	fileSize = this->fileReader.getFileSize();
-		MIME	mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
-		std::string ext = FileSystem::getExtension(physicalPath);
-		Response::buildFileHeaderResponse(connection, statusCode, mime_type, fileSize);
-		
+		size_t		fileSize = this->fileReader.getFileSize();
+		std::string	extension = FileSystem::getExtension(physicalPath);
+		MIME		mime_type = MIME::from_extension(extension);
+		response.sendStatusLine(statusCode)
+			.sendDefaults(this->request, *this->routeResult.route)
+			.sendContentType(mime_type)
+			.sendContentLength(fileSize);
+
 		if (request.method == Method::HEAD)
 		{
 			this->fileReader.close();
@@ -172,7 +177,7 @@ void StaticHandler::onExecute()
 		size_t bytes_read = this->fileReader.readChunk(buffer, 8192);
 		
 		if (bytes_read > 0)
-			Response::sendBodyChunk(connection, buffer.data(), bytes_read);
+			response.sendBody(buffer.data(), bytes_read);
 		
 		if (this->fileReader.hasFinished())
 		{
@@ -183,6 +188,7 @@ void StaticHandler::onExecute()
 	break;
 
 	case FINISHED:
+		response.sendEnd();	
 		this->setFinished();
 		return ;
 	}

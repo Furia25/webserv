@@ -6,13 +6,13 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/13 03:42:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/RequestFactory.hpp"
 # include <algorithm>
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
 
@@ -172,7 +172,7 @@ void RequestFactory::validatePath()
 
 void RequestFactory::validateHeader()
 {
-	Request::Headers::iterator it = headers.find(HEADER_HOST);
+	Headers::iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
@@ -198,7 +198,7 @@ void RequestFactory::print() const
 	std::cout << "Path:   [" << request_path << "]" << '\n';
 	std::cout << "Proto:  [" << protocol << "]" << '\n';
 	std::cout << "Query:  [" << query_string << "]" << '\n';
-	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
+	for (Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 		std::cout << it->first << ":  [" << it->second << "]" << "\n";
 	std::cout << "Headers Count: " << headers.size() << '\n';
 	std::cout << "Complete: " << (is_validated ? "YES" : "NO") << '\n';
@@ -233,7 +233,7 @@ void RequestFactory::setValidateStatus(int status) { is_validated = status; }
 
 const std::string *RequestFactory::getHeader(const std::string& key) const
 {
-	Request::Headers::const_iterator it = this->headers.find(key);
+	Headers::const_iterator it = this->headers.find(key);
 	return it != this->headers.end() ? &it->second : NULL;
 }
 
@@ -267,7 +267,7 @@ static std::string trim(const std::string& s)
 
 static void handleCookie(Request& request, const std::string& val)
 {
-	Request::Cookies&	request_cookies = request.getCookies();
+	Cookies&	request_cookies = request.getCookies();
 	size_t				pos = 0;
 
 	while (pos < val.size())
@@ -318,7 +318,7 @@ Request	RequestFactory::build() const
 	result.protocol			= this->protocol;
 	result.setHeaders(this->headers);
 
-	for (Request::Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
+	for (Headers::const_iterator it = this->headers.begin(); it != this->headers.end(); ++it)
 	{
 		HandlerMap::const_iterator h = handlers.find(it->first);
 		if (h != handlers.end())

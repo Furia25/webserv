@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/12 16:19:21 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 04:43:49 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -148,16 +148,7 @@ void Config::ServerConfig::loadErrors(toml::Table& errors_table, Config::Loader&
 		const std::string& key = it->first;
 		try
 		{
-			HTTPCode code = HTTPCode::NOT_FOUND;
-			try { code = HTTPCode::from(key); }
-			catch (const std::domain_error&)
-			{
-				char* end_ptr = NULL;
-				size_t integer = std::strtoul(key.c_str(), &end_ptr, 10);
-				if (*end_ptr != '\0')
-					throw std::domain_error("Unknown error code: \"" + key + "\"");
-				code = static_cast<HTTPCode::E>(integer);
-			}
+			HTTPCode code = HTTPCode::fromLiteral(key);
 			this->error_fallbacks.insert(code, it->second.as<std::string>());
 		}
 		catch (const std::exception& e)
@@ -348,7 +339,12 @@ void Config::RedirectConfig::loadChild(toml::Variant& table, Config::Loader& loa
 
 	std::string code_str;
 	loader.value(table, "status", code_str);
-	this->status = HTTPCode::from(code_str);
+
+	try { this->status = HTTPCode::fromLiteral(code_str);}
+	catch (const std::exception& e)
+	{
+		loader.push_error("status", "Invalid error code, literal or code needed");
+	}
 }
 
 void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
