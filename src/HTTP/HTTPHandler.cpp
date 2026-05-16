@@ -30,16 +30,13 @@ HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 
 HTTPHandler::~HTTPHandler()
 {
-	for (HashMap<size_t, ClientData>::iterator it = clientsData.begin(); it != clientsData.end(); ++it)
-		it->second.reset();
 }
 
 void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	Router::RouteResult	dummy_results;
 	dummy_results.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
-	//dummy_results.route = dummy_results.host->routes.begin()->second;
-	HashMap<size_t, ClientData>::iterator it = clientsData.find(connection.getClientID());
+	HashMap<size_t, ClientData*>::iterator it = clientsData.find(connection.getClientID());
 	
 	if (it == clientsData.end())
 	{
@@ -49,10 +46,10 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 			.sendEnd();
 		return;
 	}
-	ClientData& client = it->second;
-	if (!client.routeRes.host)
-		client.routeRes.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
-	dispatchError(connection, client.request, client.body, client.routeRes, code);
+	ClientData *client = it->second;
+	if (!client->routeRes.host)
+		client->routeRes.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
+	dispatchError(connection, client->request, client->body, client->routeRes, code);
 }
 
 void	HTTPHandler::dispatchError(Connection& connection,
@@ -338,18 +335,18 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	size_t id = connection.getClientID();
-	HashMap<size_t, ClientData>::iterator it = clientsData.find(id);
-	if (it == clientsData.end())
+	HashMap<size_t, ClientData*>::iterator it = clientsData.find(id);
+	if (it== clientsData.end())
 		return;
 
-	ClientData		&client = it->second;
+	ClientData		*client = it->second;
 	const uint8_t	*fragment = connection.getReadBufferPtr();
 	size_t			dataSize = connection.getReadBufferSize();
 
 	/*C'est juste un test pour reset le client quand on reçois des donées alors qu'on a deja parser c'est a changé*/
-	if (client.actualJob != NULL || client.builder.getCompleteStatus())
+	if (client->actualJob != NULL || client->builder.getCompleteStatus())
 	{
-		client.reset();
+		client->reset();
 		connection.setJob(NULL);
 	}
 		
@@ -358,34 +355,34 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		return;
 	try 
 	{
-		if (!client.builder.get_header_parsed())
+		if (!client->builder.get_header_parsed())
 		{
-			if (!processHeaders(connection, client, fragment, dataSize)) 
+			if (!processHeaders(connection, *client, fragment, dataSize)) 
 			{
 				connection.consumeReadData(dataSize);
 				return;
 			}
-			initializeBodyReception(connection, client);
-			const HashMap<std::string, std::string>& headers = client.request.getHeaders();
+			initializeBodyReception(connection, *client);
+			const HashMap<std::string, std::string>& headers = client->request.getHeaders();
 			if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 
 				Response(connection, HTTPCode::CONTINUE).sendEnd();
-			std::vector<uint8_t> extra = client.builder.getExtraData();
+			std::vector<uint8_t> extra = client->builder.getExtraData();
 			if (!extra.empty()) 
 			{
-				if (client.request.is_chunked)
-					processChunkedData(connection, client, extra.data(), extra.size());
+				if (client->request.is_chunked)
+					processChunkedData(connection, *client, extra.data(), extra.size());
 				else
-					receiveBodyChunk(client, extra.data(), extra.size());
+					receiveBodyChunk(*client, extra.data(), extra.size());
 			}
 			connection.consumeReadData(dataSize);
-			checkCompletion(connection, client);
+			checkCompletion(connection, *client);
 			return;
 		}
-		if (client.request.is_chunked)
-			processChunkedData(connection, client, fragment, dataSize);
+		if (client->request.is_chunked)
+			processChunkedData(connection, *client, fragment, dataSize);
 		else
-			receiveBodyChunk(client, fragment, dataSize);
-		checkCompletion(connection, client);
+			receiveBodyChunk(*client, fragment, dataSize);
+		checkCompletion(connection, *client);
 		connection.consumeReadData(dataSize);
 	}
 	catch (const std::exception &e) 
@@ -407,16 +404,23 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 
 void HTTPHandler::onConnection(Connection& connection)
 {
-	this->clientsData.insert(connection.getClientID(), ClientData());
+	ClientData* newClient = this->clientPool.acquire();
+	this->clientsData.insert(connection.getClientID(), newClient);
 }
 
 void HTTPHandler::onDisconnection(Connection& connection)
 {
-	HashMap<size_t, ClientData>::iterator it = this->clientsData.find(connection.getClientID());
+	HashMap<size_t, ClientData*>::iterator it = this->clientsData.find(connection.getClientID());
 
 	if	(it != this->clientsData.end())
 	{
-		it->second.reset();
+		ClientData* client = it->second;
+		if (client->actualJob)
+		{
+			delete client->actualJob;
+			client->actualJob = NULL;
+		}
+		this->clientPool.release(client);
 		this->clientsData.erase(it);
 	}
 }

@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 22:58:18 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/15 22:58:59 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,7 @@ void AHandler::handleError()
 				.sendContentType(mime_type)
 				.sendContentLength(fileSize);
 		if (this->routeResult.route)
-			response.sendDefaults(this->request, *this->routeResult.route);
+			response.sendDefaults(this->request, this->routeResult.route);
 		else
 			response.sendHeader("Server", SERV_NAME "/" SERV_VERSION).sendKeepAlive(false);
 		if (request.method == Method::HEAD)
