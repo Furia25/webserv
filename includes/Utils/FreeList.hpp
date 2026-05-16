@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/16 00:26:52 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/16 05:41:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 05:52:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,17 +49,17 @@ public:
 		return AlignedBuffer<T>::ptr(slot->storage); 
 	}
 
-	inline void	releaseRaw(T* obj)
+	inline void	releaseRaw(void *ptr)
 	{
-		if (!obj)
+		if (!ptr)
 			return;
 
-		Slot *slot = reinterpret_cast<Slot *>(obj);
+		Slot *slot = reinterpret_cast<Slot *>(ptr);
 		slot->next = freeHead;
 		freeHead = slot;
 	}
 
-	inline void	release(T* obj)
+	inline void	release(T *obj)
 	{
 		if (!obj)
 			return;
@@ -84,7 +84,7 @@ private:
 
 		Block(std::size_t n) : next(NULL)
 		{
-			slots = static_cast<Slot*>(::operator new(n * sizeof(Slot)));
+			slots = static_cast<Slot *>(::operator new(n * sizeof(Slot)));
 		}
 
 		~Block()

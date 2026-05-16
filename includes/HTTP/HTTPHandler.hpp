@@ -119,25 +119,31 @@ inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Reques
 {
 	ClientData&	client_data = *this->clientsData.at(connection.getClientID());
 	AHandler	*handler = NULL;
-	void		*mem = this->handlerPool.acquire();
+	void		*ptr = this->handlerPool.acquire();
 
 	try
 	{
-		handler = new (mem) T(*this, connection, request, body, route_result, status_code);
+		handler = new (ptr) T(*this, connection, request, body, route_result, status_code);
 	}
 	catch (const HTTPException& e)
 	{
 		try
 		{
-			handler = new (mem) ErrorHandler(*this, connection, request, body, route_result, status_code);
+			handler = new (ptr) ErrorHandler(*this, connection, request, body, route_result, status_code);
 		}
 		catch (...)
 		{
-			this->handlerPool.releaseRaw(mem);
+			this->handlerPool.releaseRaw(ptr);
 			throw ;
 		}
 	}
-	client_data.actualHandler = reinterpret_cast<HandlerSlot*>(mem);
+	catch (...)
+	{
+		this->handlerPool.releaseRaw(ptr);
+		throw;
+	}
+
+	client_data.actualHandler = reinterpret_cast<HandlerSlot*>(ptr);
 	return handler;
 }
 
