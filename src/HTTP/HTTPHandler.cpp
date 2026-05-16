@@ -204,8 +204,9 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 	if (!client.builder.get_header_parsed())
 		return false;
 
-	try 
+	try
 	{
+		client.builder.print();
 		client.builder.check();
 	}
 	catch (const std::exception& e)

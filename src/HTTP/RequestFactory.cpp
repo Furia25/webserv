@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 19:52:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:17:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,11 +171,14 @@ void RequestFactory::validatePath()
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void RequestFactory::validateHeader()
+void RequestFactory::validateHeader() const
 {
-	Headers::iterator it = headers.find(HEADER_HOST);
+	Headers::const_iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
+	{
+		std::cout << "nique ta mére" << std::endl;
 		throw HTTPException(HTTPCode::BAD_REQUEST);
+	}
 }
 
 void RequestFactory::invalidPath()
