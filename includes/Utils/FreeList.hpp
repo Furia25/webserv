@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/16 00:26:52 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/16 03:08:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 03:59:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,7 @@ public:
 		Slot *slot = freeHead;
 		freeHead = slot->next;
 
-		return slot->storage.ptr();
+		return AlignedBuffer<T>::ptr(slot->storage); 
 	}
 
 	void	release(T* obj)
@@ -65,8 +65,8 @@ private:
 
 	union Slot
 	{
-		RawStorage<T>	storage;
-		Slot			*next;
+		typename AlignedBuffer<T>::type	storage;
+		Slot							*next;
 	};
 
 	struct Block
