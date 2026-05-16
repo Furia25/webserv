@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 03:52:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:32:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,6 +160,7 @@ void RequestFactory::validateMethod() const
 
 void RequestFactory::validateProtocol() const
 {
+	// NOT NECESSARY
 	if (protocol != HTTP_VERSION)
 		throw HTTPException(HTTPCode::HTTP_VERSION_NOT_SUPPORTED);
 }
@@ -170,11 +171,13 @@ void RequestFactory::validatePath()
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void RequestFactory::validateHeader()
+void RequestFactory::validateHeader() const
 {
-	Headers::iterator it = headers.find(HEADER_HOST);
+	Headers::const_iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
+	{
 		throw HTTPException(HTTPCode::BAD_REQUEST);
+	}
 }
 
 void RequestFactory::invalidPath()
@@ -304,10 +307,6 @@ static HandlerMap buildHandlerMap()
 
 Request	RequestFactory::build() const
 {
-	#if HTTP_DEBUG == true
-	this->print();
-	#endif
-
 	static const HandlerMap handlers = buildHandlerMap();
 	Request result;
 

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 04:06:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:24:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ void CGIHandler::initEnvironment()
 
 	size_t				slash = remainder.find('/');
 	std::string			path_info, script_name = this->routeResult.route->path;
+
 	if (slash != std::string::npos)
 	{
 		script_name += routeResult.pathRemainder.substr(0, slash + 1);

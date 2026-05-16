@@ -107,8 +107,8 @@ private:
 					Body &body, const Router::RouteResult &route_result, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
-	void	dispatchError(Connection& connection, const Request& request, Body& body,
-				const Router::RouteResult& route_result, HTTPCode error_code);
+	void	dispatchError(ClientData& client, Connection& connection, const Request& request,
+			Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
 	
 	void	resetClient(ClientData& client);
 };

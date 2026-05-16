@@ -1,6 +1,11 @@
 
+[engine]
+max_timeout = 4
+closing_timeout = 2
+
 [logging]
-tick_interval = 5
+tick_interval = 20
+level = "DEBUG"
 
 [[servers]]
 server_name = "bureau of odd things"

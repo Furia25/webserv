@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 03:51:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:15:17 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ private:
 	void	validateMethod() const;
 	void	validateProtocol() const;
 	void	validatePath();
-	void	validateHeader();
+	void	validateHeader() const;
 	void	invalidPath();
 
 	const std::string *getHeader(const std::string& key) const;
