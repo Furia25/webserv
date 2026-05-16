@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 19:02:05 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:44:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,6 +120,8 @@ struct CGIConfig : public RouteConfig
 	CGIConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
+
+	~CGIConfig() {};
 };
 
 struct StatusConfig : public RouteConfig

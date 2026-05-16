@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:01:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:51:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,9 @@
 
 # define HTTP_VERSION "HTTP/1.1"
 
+# define CGI_VERSION	"CGI/1.1"
+
+# define HEADER_CONTENT_TYPE	"content-type"
 # define HEADER_CONTENT_LENGTH "content-length"
 # define HEADER_COOKIE	"cookie"
 # define HEADER_HOST "host"

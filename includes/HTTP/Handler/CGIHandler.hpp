@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/13 02:39:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:46:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,14 +33,15 @@ public:
 	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)) {};
 
 	void	onCreation();
-	void	onExecute();
+	void	onExecute() {};
 	void	initEnvironment();
 	void	setEnv(const std::string& key, const std::string& value);
 
 private:
 	const Config::CGIConfig&	CGIConfig;
 
-	std::vector<const char *>	env;
+	HashMap<std::string, std::string>	env;
+	std::vector<const char *>			envFlat;
 };
 
 

@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/13 02:19:05 by vdurand          ###   ########.fr        #
+#    Updated: 2026/05/15 20:47:44 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,6 +80,7 @@ SRC_FILES = \
 	HTTP/Handler/UploadHandler.cpp \
 	HTTP/Handler/StatusHandler.cpp \
 	HTTP/Handler/RedirectHandler.cpp \
+	HTTP/Handler/CGIHandler.cpp \
 	HTTP/Body.cpp \
 	HTTP/Response.cpp \
 	HTTP/Utils/FileReader.cpp \

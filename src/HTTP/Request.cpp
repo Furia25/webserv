@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/15 02:50:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:53:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,19 @@ Request::Request() : method(Method::GET),
 		is_chunked(false)
 {}
 
-void Request::setCookies(const Cookies& cookies) { this->cookies = cookies; }
+const std::string	*Request::operator[](const std::string &key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
+
+const std::string	*Request::operator[](const char *key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
+
+void Request::setCookies(const Cookies &cookies) { this->cookies = cookies; }
 void Request::setHeaders(const Headers& headers) { this->headers = headers; }
 
 const Headers&	Request::getHeaders() const 

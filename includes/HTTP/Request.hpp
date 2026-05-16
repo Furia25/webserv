@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 02:50:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:52:30 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,9 @@ public:
 	bool			keep_alive;
 
 	Request();
+
+	const std::string	*operator[](const std::string& key) const;
+	const std::string	*operator[](const char *key) const;
 
 	const Headers&		getHeaders()		const;
 	const Cookies&		getCookies()		const;

@@ -76,7 +76,7 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 			this->createJob<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-			// this->createJob<CGIHandler>(connection, final_request, *res.host, *res.route, res.physicalPath);
+			this->createJob<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::UPLOAD :
 			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
