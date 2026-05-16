@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 20:17:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:32:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,6 @@ void RequestFactory::validateHeader() const
 	Headers::const_iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
 	{
-		std::cout << "nique ta mére" << std::endl;
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 	}
 }
