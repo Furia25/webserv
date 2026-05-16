@@ -74,19 +74,18 @@ private:
 		void reset();
 	};
 
-	HashMap<size_t, ClientData*>	clientsData;
+	HashMap<size_t, ClientData *>	clientsData;
 	FreeList<ClientData>			clientPool;
-	const Config::AppConfig&	config;
-	size_t						totalRequests;
+	const Config::AppConfig&		config;
+	size_t							totalRequests;
 
-	void					processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
-	bool					processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
-	bool					initializeBodyReception(Connection& connection, ClientData& client);
-	void					receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
+	void	processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
+	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
+	bool	initializeBodyReception(Connection& connection, ClientData& client);
+	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
 
-
-	void 					launchJob(Connection &connection, ClientData &client);
-	void					checkCompletion(Connection& connection, ClientData& clientData);
+	void 	launchJob(Connection &connection, ClientData &client);
+	void	checkCompletion(Connection& connection, ClientData& clientData);
 
 	template <typename T>
 	void	createJob(Connection& connection, const Request& request, Body& body,

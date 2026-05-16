@@ -404,8 +404,8 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 
 void HTTPHandler::onConnection(Connection& connection)
 {
-	ClientData* newClient = this->clientPool.acquire();
-	this->clientsData.insert(connection.getClientID(), newClient);
+	ClientData *new_client = new (this->clientPool.acquire()) ClientData();
+	this->clientsData.insert(connection.getClientID(), new_client);
 }
 
 void HTTPHandler::onDisconnection(Connection& connection)
