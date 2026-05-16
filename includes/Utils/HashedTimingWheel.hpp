@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/21 13:51:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/26 19:55:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 03:51:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,9 +160,9 @@ inline void _HTWDef_::tick(void)
 		current_bucket = (current_bucket + 1) & (WHEEL_SIZE - 1);
 		std::vector<AAlarm *>& slot = this->buckets[current_bucket];
 
-		for (size_t i = 0; i < slot.size(); i++)
+		for (size_t index = 0; index < slot.size(); index++)
 		{
-			AAlarm	*alarm = slot[i];
+			AAlarm	*alarm = slot[index];
 			if (alarm->wheel_round > 0)
 			{
 				alarm->wheel_round--;
@@ -171,10 +171,10 @@ inline void _HTWDef_::tick(void)
 
 			alarm->scheduled = false;
 			alarm->operator()();
-			slot[i] = slot.back();
-			slot[i]->bucket_index = i;
+			slot[index] = slot.back();
+			slot[index]->bucket_index = index;
 			slot.pop_back();
-			--i;
+			--index;
 		}
 		elapsed--;
 	}

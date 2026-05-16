@@ -27,8 +27,7 @@
 # include "HTTP/Body.hpp"
 # include "Utils/FreeList.hpp"
 
-# define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
-
+# define TEMP_FILE_PATH	"/tmp/" SERV_NAME "_upload_"
 
 class HTTPHandler : public IRequestHandler
 {
@@ -69,8 +68,6 @@ private:
 			if (actualJob) 
 				delete actualJob;
 		};
-		ClientData(const ClientData& src);
-		ClientData& operator=(const ClientData& other);
 		void reset();
 	};
 

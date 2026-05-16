@@ -30,13 +30,18 @@ HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 
 HTTPHandler::~HTTPHandler()
 {
+	for (HashMap<size_t, ClientData *>::iterator it = this->clientsData.begin();
+			it != this->clientsData.end(); ++it)
+	{
+		it->second->~ClientData();
+	}
 }
 
 void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	Router::RouteResult	dummy_results;
 	dummy_results.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
-	HashMap<size_t, ClientData*>::iterator it = clientsData.find(connection.getClientID());
+	HashMap<size_t, ClientData *>::iterator it = clientsData.find(connection.getClientID());
 	
 	if (it == clientsData.end())
 	{
@@ -84,39 +89,6 @@ void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
 			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	}
-}
-
-HTTPHandler::ClientData::ClientData(const ClientData& other) 
-{
-	this->builder = other.builder;
-	this->request = other.request;
-	this->routeRes = other.routeRes;
-	this->chunkState = other.chunkState;
-	this->neededBytes = other.neededBytes;
-	this->sizeBuffer = other.sizeBuffer;
-	this->body = other.body;
-	this->actualJob = other.actualJob;
-	/*Horrible ça*/
-	const_cast<ClientData&>(other).actualJob = NULL;
-}
-
-HTTPHandler::ClientData& HTTPHandler::ClientData::operator=(const ClientData& other) 
-{
-	if (this != &other) 
-	{
-		if (this->actualJob) 
-			delete this->actualJob;
-		this->builder = other.builder;
-		this->request = other.request;
-		this->routeRes = other.routeRes;
-		this->chunkState = other.chunkState;
-		this->neededBytes = other.neededBytes;
-		this->sizeBuffer = other.sizeBuffer;
-		this->body = other.body;
-		this->actualJob = other.actualJob;
-		const_cast<ClientData&>(other).actualJob = NULL;
-	}
-	return *this;
 }
 
 void    HTTPHandler::ClientData::reset()
@@ -215,7 +187,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 	else if (isStreaming) 
 	{
 		std::stringstream pathBuilder;
-		pathBuilder << _temp_file_path_ << connection.getHash();
+		pathBuilder << TEMP_FILE_PATH << connection.getHash();
 		path = pathBuilder.str();
 	}
 	client.body.init(client.request.content_length, path, isStreaming);
@@ -245,7 +217,6 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		dispatchError(connection, HTTPCode::BAD_REQUEST);
 		return false;
 	}
-	client.builder.print();
 	client.request = client.builder.build();
 	try
 	{

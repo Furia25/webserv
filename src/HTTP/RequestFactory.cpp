@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 03:52:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,6 +304,10 @@ static HandlerMap buildHandlerMap()
 
 Request	RequestFactory::build() const
 {
+	#if HTTP_DEBUG == true
+	this->print();
+	#endif
+
 	static const HandlerMap handlers = buildHandlerMap();
 	Request result;
 
