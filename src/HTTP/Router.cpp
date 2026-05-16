@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:57:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:19:54 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,6 +70,13 @@ static inline void	validate_constraints(Router::RouteResult& result, const Reque
 	{
 		if (it->second.required && !request_cookies.contain(it->first))
 		throw RouterException(HTTPCode::FORBIDDEN);
+	}
+
+	if (result.route->handler == HandlerType::UPLOAD)
+	{
+		const Config::UploadConfig* upload_route = static_cast<const Config::UploadConfig*>(result.route);
+		if (upload_route->upload_store.empty())
+			throw RouterException(HTTPCode::FORBIDDEN);
 	}
 }
 

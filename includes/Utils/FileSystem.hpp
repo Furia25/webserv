@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 15:07:37 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:29:26 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,6 +79,17 @@ namespace FileSystem
 		closedir(dir);
 	}
 	return count;
+	}
+
+	static inline void FileSystem::removeFile(const std::string& path)
+	{
+		if (std::remove(path.c_str()) != 0)
+		{
+			if (errno == ENOENT)
+				return;
+			std::string errorMsg = "FileSystem::removeFile failed for '" + path + "': " + std::strerror(errno);
+			throw std::runtime_error(errorMsg);
+		}
 	}
 };
 

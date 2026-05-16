@@ -56,7 +56,8 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 void	HTTPHandler::dispatchError(Connection& connection, const Request& request,
 			Body& body, const Router::RouteResult& route_result, HTTPCode error_code)
 {
-	this->createHandler<ErrorHandler>(connection, request, body, route_result, error_code);
+	AHandler* errorHandler = this->createHandler<ErrorHandler>(connection, request, body, route_result, error_code);
+	connection.setJob(errorHandler);
 }
 
 void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
@@ -136,6 +137,17 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	if (is_request_finished) 
 	{
+		if (bodyLength == 0 && client.routeRes.route->handler == HandlerType::UPLOAD)
+		{
+			if (client.body.getIsStreaming() && client.body.getFileWriter())
+			{
+				std::string path = client.body.getFileWriter()->getFilePath();
+				client.body.getFileWriter()->close();
+				FileSystem::removeFile(path);
+			}
+			Logger::ERROR() << "Upload Failed 0 bytes sent";
+			dispatchError(connection, HTTPCode::BAD_REQUEST);
+		}
 		client.body.finish();
 		this->launchHandler(connection, client);
 	}
