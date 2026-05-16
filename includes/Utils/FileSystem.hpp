@@ -6,7 +6,7 @@
 /*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 20:29:26 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:44:02 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,10 @@
 # include <sys/stat.h>
 # include <unistd.h>
 # include <dirent.h>
+# include <cerrno>
+# include <cstring>
+# include <cstdio>
+# include <stdexcept>
 
 namespace FileSystem
 {
@@ -81,7 +85,7 @@ namespace FileSystem
 	return count;
 	}
 
-	static inline void FileSystem::removeFile(const std::string& path)
+	static inline void removeFile(const std::string& path)
 	{
 		if (std::remove(path.c_str()) != 0)
 		{
