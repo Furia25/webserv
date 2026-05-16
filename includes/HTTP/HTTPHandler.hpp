@@ -25,6 +25,7 @@
 # include "HTTP/Router.hpp"
 # include "Server/IJob.hpp"
 # include "HTTP/Body.hpp"
+# include "Utils/FreeList.hpp"
 
 # define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
 
@@ -73,7 +74,8 @@ private:
 		void reset();
 	};
 
-	HashMap<size_t, ClientData>	clientsData;
+	HashMap<size_t, ClientData*>	clientsData;
+	FreeList<ClientData>			clientPool;
 	const Config::AppConfig&	config;
 	size_t						totalRequests;
 
@@ -100,11 +102,11 @@ template <typename T>
 inline void HTTPHandler::createJob(Connection& connection, const Request& request, Body& body,
 	const Router::RouteResult& route_result, HTTPCode status_code)
 {
-	ClientData& client_data = this->clientsData.at(connection.getClientID());
-	if (client_data.actualJob != NULL)
+	ClientData* client_data = this->clientsData.at(connection.getClientID());
+	if (client_data->actualJob != NULL)
 	{
-		delete client_data.actualJob;
-		client_data.actualJob = NULL;
+		delete client_data->actualJob;
+		client_data->actualJob = NULL;
 	}
 	AHandler	*handler = NULL;
 	try {
@@ -115,7 +117,7 @@ inline void HTTPHandler::createJob(Connection& connection, const Request& reques
 		delete handler;
 		handler = new ErrorHandler(*this, connection, request, body, route_result, e.getStatusCode());
 	}
-	client_data.actualJob = handler;
+	client_data->actualJob = handler;
 	connection.setJob(handler);
 }
 

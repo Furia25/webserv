@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/15 20:53:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 02:32:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,33 @@ Request::Request() : method(Method::GET),
 		query_string(""),
 		protocol(""),
 		content_length(0),
-		is_chunked(false)
+		is_chunked(false),
+		keep_alive(false)
 {}
+
+const std::string	*Request::operator[](const std::string &key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
+
+const std::string	*Request::operator[](const char *key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
+
+const std::string	*Request::operator[](const std::string &key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
+
+const std::string	*Request::operator[](const char *key) const
+{
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
+}
 
 const std::string	*Request::operator[](const std::string &key) const
 {

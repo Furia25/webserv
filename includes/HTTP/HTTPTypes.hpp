@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 20:51:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 02:31:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 #define _STATUS_CODES_ \
 (\
 	/*	2xx Success	*/ \
+	(CONTINUE,					100, Continue), \
 	(OK,						200, OK), \
 	(CREATED,					201, Created), \
 	(ACCEPTED,					202, Accepted), \
