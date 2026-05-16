@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 20:32:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:47:26 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ size_t RequestFactory::findHeaderEnd()
 
 size_t RequestFactory::findNewline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
 {
-	for (size_t i = start; i < max && i < buffer.size() - 1; ++i)
+	for (size_t i = start; i <= max && i < buffer.size() - 1; ++i)
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	return std::string::npos;
 }
