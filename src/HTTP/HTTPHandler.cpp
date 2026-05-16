@@ -11,12 +11,6 @@
 /* ************************************************************************** */
 
 # include "Config/Config.hpp"
-# include "HTTP/Handler/CGIHandler.hpp"
-# include "HTTP/Handler/ErrorHandler.hpp"
-# include "HTTP/Handler/RedirectHandler.hpp"
-# include "HTTP/Handler/StaticHandler.hpp"
-# include "HTTP/Handler/StatusHandler.hpp"
-# include "HTTP/Handler/UploadHandler.hpp"
 # include "HTTP/HTTPTypes.hpp"
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Response.hpp"
@@ -24,7 +18,7 @@
 # include "Utils/IntegerUtils.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
-	: config(config), totalRequests(0)
+	: clientPool(256), handlerPool(), config(config), totalRequests(0)
 {
 }
 
@@ -33,6 +27,8 @@ HTTPHandler::~HTTPHandler()
 	for (HashMap<size_t, ClientData *>::iterator it = this->clientsData.begin();
 			it != this->clientsData.end(); ++it)
 	{
+		if (it->second->actualHandler != NULL)
+			it->second->actualHandler->~HandlerSlot();
 		it->second->~ClientData();
 	}
 }
@@ -51,58 +47,54 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 			.sendEnd();
 		return;
 	}
-	ClientData *client = it->second;
-	if (!client->routeRes.host)
-		client->routeRes.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
-	dispatchError(connection, client->request, client->body, client->routeRes, code);
+	ClientData& client = *it->second;
+	if (!client.routeRes.host)
+		client.routeRes.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
+	dispatchError(connection, client.request, client.body, client.routeRes, code);
 }
 
-void	HTTPHandler::dispatchError(Connection& connection,
-		const Request &request, Body& body, const Router::RouteResult& route_result, HTTPCode error_code)
+void	HTTPHandler::dispatchError(Connection& connection, const Request& request,
+			Body& body, const Router::RouteResult& route_result, HTTPCode error_code)
 {
-	this->createJob<ErrorHandler>(connection, request, body, route_result, error_code);
+	this->createHandler<ErrorHandler>(connection, request, body, route_result, error_code);
 }
 
-void	HTTPHandler::launchJob(Connection& connection, ClientData& client)
+void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 {
 	if (!client.builder.get_header_parsed())
 	{
 		Logger::ERROR() << "No request to create the job At HTTPHandler.";
 		return;
 	}
+
+	if (client.actualHandler != NULL)
+	{
+		this->handlerPool.release(client.actualHandler);
+		client.actualHandler = NULL;
+	}
+
+	AHandler	*handler;
 	this->totalRequests++;
+
 	switch (client.routeRes.route->handler)
 	{
 	case HandlerType::STATIC :
-			this->createJob<StaticHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<StaticHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::REDIRECT :
-			this->createJob<RedirectHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<RedirectHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::STATUS :
-			this->createJob<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-			this->createJob<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::UPLOAD :
-			this->createJob<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	}
-}
-
-void    HTTPHandler::ClientData::reset()
-{
-	if (this->actualJob)
-	{
-		delete this->actualJob;
-		this->actualJob = NULL;
-	}
-	this->builder.reset();
-	this->body.reset();
-	this->request = Request();
-	this->chunkState = CHUNK_SIZE;
-	this->neededBytes = 0;
+	connection.setJob(handler);
 }
 
 void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client) 
@@ -145,7 +137,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	if (is_request_finished) 
 	{
 		client.body.finish();
-		this->launchJob(connection, client);
+		this->launchHandler(connection, client);
 	}
 }
 
@@ -306,54 +298,48 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	size_t id = connection.getClientID();
-	HashMap<size_t, ClientData*>::iterator it = clientsData.find(id);
-	if (it== clientsData.end())
-		return;
 
-	ClientData		*client = it->second;
+	ClientData&		client = *this->clientsData.at(id);
 	const uint8_t	*fragment = connection.getReadBufferPtr();
 	size_t			dataSize = connection.getReadBufferSize();
 
 	/*C'est juste un test pour reset le client quand on reçois des donées alors qu'on a deja parser c'est a changé*/
-	if (client->actualJob != NULL || client->builder.getCompleteStatus())
+	if (client.actualHandler != NULL || client.builder.getCompleteStatus())
 	{
-		client->reset();
+		this->resetClient(client);
 		connection.setJob(NULL);
 	}
-		
 
-	if (dataSize == 0)
-		return;
 	try 
 	{
-		if (!client->builder.get_header_parsed())
+		if (!client.builder.get_header_parsed())
 		{
-			if (!processHeaders(connection, *client, fragment, dataSize)) 
+			if (!processHeaders(connection, client, fragment, dataSize)) 
 			{
 				connection.consumeReadData(dataSize);
 				return;
 			}
-			initializeBodyReception(connection, *client);
-			const HashMap<std::string, std::string>& headers = client->request.getHeaders();
+			initializeBodyReception(connection, client);
+			const HashMap<std::string, std::string>& headers = client.request.getHeaders();
 			if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 
 				Response(connection, HTTPCode::CONTINUE).sendEnd();
-			std::vector<uint8_t> extra = client->builder.getExtraData();
+			std::vector<uint8_t> extra = client.builder.getExtraData();
 			if (!extra.empty()) 
 			{
-				if (client->request.is_chunked)
-					processChunkedData(connection, *client, extra.data(), extra.size());
+				if (client.request.is_chunked)
+					processChunkedData(connection, client, extra.data(), extra.size());
 				else
-					receiveBodyChunk(*client, extra.data(), extra.size());
+					receiveBodyChunk(client, extra.data(), extra.size());
 			}
 			connection.consumeReadData(dataSize);
-			checkCompletion(connection, *client);
+			checkCompletion(connection, client);
 			return;
 		}
-		if (client->request.is_chunked)
-			processChunkedData(connection, *client, fragment, dataSize);
+		if (client.request.is_chunked)
+			processChunkedData(connection, client, fragment, dataSize);
 		else
-			receiveBodyChunk(*client, fragment, dataSize);
-		checkCompletion(connection, *client);
+			receiveBodyChunk(client, fragment, dataSize);
+		checkCompletion(connection, client);
 		connection.consumeReadData(dataSize);
 	}
 	catch (const std::exception &e) 
@@ -385,12 +371,9 @@ void HTTPHandler::onDisconnection(Connection& connection)
 
 	if	(it != this->clientsData.end())
 	{
-		ClientData* client = it->second;
-		if (client->actualJob)
-		{
-			delete client->actualJob;
-			client->actualJob = NULL;
-		}
+		ClientData *client = it->second;
+		if (client->actualHandler != NULL)
+			this->handlerPool.release(client->actualHandler);
 		this->clientPool.release(client);
 		this->clientsData.erase(it);
 	}
@@ -400,4 +383,18 @@ void HTTPHandler::onError(Connection& connection, uint32_t error_event)
 {
 	if (!(error_event & EPOLLRDHUP || error_event & EPOLLHUP))
 		Logger::ERROR() << "Connection:" << connection << " errored";
+}
+
+void HTTPHandler::resetClient(ClientData &client)
+{
+	if (client.actualHandler != NULL)
+	{
+		this->handlerPool.release(client.actualHandler);
+		client.actualHandler = NULL;
+	}
+	client.builder.reset();
+	client.body.reset();
+	client.request = Request();
+	client.chunkState = CHUNK_SIZE;
+	client.neededBytes = 0;
 }

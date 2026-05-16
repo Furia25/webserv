@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/16 00:26:52 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/16 03:59:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 05:41:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ public:
 		}
 	}
 
-	void	*acquire()
+	inline void	*acquire()
 	{
 		if (!freeHead)
 			growPool();
@@ -49,16 +49,24 @@ public:
 		return AlignedBuffer<T>::ptr(slot->storage); 
 	}
 
-	void	release(T* obj)
+	inline void	releaseRaw(T* obj)
+	{
+		if (!obj)
+			return;
+
+		Slot *slot = reinterpret_cast<Slot *>(obj);
+		slot->next = freeHead;
+		freeHead = slot;
+	}
+
+	inline void	release(T* obj)
 	{
 		if (!obj)
 			return;
 
 		obj->~T();
 
-		Slot *slot = reinterpret_cast<Slot *>(obj);
-		slot->next = freeHead;
-		freeHead = slot;
+		this->releaseRaw(obj);
 	}
 
 private:
@@ -93,7 +101,7 @@ private:
 	Slot		*freeHead;
 	std::size_t	blockSize;
 
-	void	growPool()
+	inline void	growPool()
 	{
 		Block	*new_block = new Block(blockSize);
 		new_block->next = blocks;

@@ -13,9 +13,10 @@
 # ifndef _HTTPHANDLER_H
 # define _HTTPHANDLER_H
 
-# include "Config/ConfigDefault.hpp"
 # include "Server/IRequestHandler.hpp"
+# include "Config/ConfigDefault.hpp"
 # include "Config/Config.hpp"
+
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/RequestFactory.hpp"
 # include "HTTP/Router.hpp"
@@ -23,6 +24,14 @@
 # include "HTTP/Handler/ErrorHandler.hpp"
 # include "HTTP/Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
+
+# include "HTTP/Handler/CGIHandler.hpp"
+# include "HTTP/Handler/ErrorHandler.hpp"
+# include "HTTP/Handler/RedirectHandler.hpp"
+# include "HTTP/Handler/StaticHandler.hpp"
+# include "HTTP/Handler/StatusHandler.hpp"
+# include "HTTP/Handler/UploadHandler.hpp"
+
 # include "Server/IJob.hpp"
 # include "HTTP/Body.hpp"
 # include "Utils/FreeList.hpp"
@@ -51,28 +60,37 @@ private:
 		CHUNK_COMPLETE
 	};
 
+	struct HandlerSlot
+	{
+		union
+		{
+			AlignedBuffer<StaticHandler>::type		static_handler;
+			AlignedBuffer<RedirectHandler>::type	redirect_handler;
+			AlignedBuffer<ErrorHandler>::type		error_handler;
+			AlignedBuffer<CGIHandler>::type			cgi_handler;
+			AlignedBuffer<StatusHandler>::type		status_handler;
+			AlignedBuffer<UploadHandler>::type		upload_handler;
+		};
+		~HandlerSlot() { reinterpret_cast<AHandler *>(this)->~AHandler(); };
+	};
+
 	struct ClientData
 	{
 		RequestFactory			builder;
 		Request					request;
 		Body					body;
 		Router::RouteResult 	routeRes;
-		IJob					*actualJob;
+		HandlerSlot				*actualHandler;
 		ChunkState				chunkState;
 		size_t					neededBytes;
 		std::string				sizeBuffer;
 
-		ClientData(): actualJob(NULL), chunkState(CHUNK_SIZE), neededBytes(0){};
-		~ClientData() 
-		{ 
-			if (actualJob) 
-				delete actualJob;
-		};
-		void reset();
+		ClientData(): actualHandler(NULL), chunkState(CHUNK_SIZE), neededBytes(0) {};
 	};
 
 	HashMap<size_t, ClientData *>	clientsData;
 	FreeList<ClientData>			clientPool;
+	FreeList<HandlerSlot>			handlerPool;
 	const Config::AppConfig&		config;
 	size_t							totalRequests;
 
@@ -81,40 +99,40 @@ private:
 	bool	initializeBodyReception(Connection& connection, ClientData& client);
 	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
 
-	void 	launchJob(Connection &connection, ClientData &client);
+	void 	launchHandler(Connection &connection, ClientData &client);
 	void	checkCompletion(Connection& connection, ClientData& clientData);
 
 	template <typename T>
-	void	createJob(Connection& connection, const Request& request, Body& body,
-				const Router::RouteResult& route_result, HTTPCode status_code);
+	AHandler	*createHandler(Connection &connection, const Request &request,
+					Body &body, const Router::RouteResult &route_result, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
 	void	dispatchError(Connection& connection, const Request& request, Body& body,
 				const Router::RouteResult& route_result, HTTPCode error_code);
-
+	
+	void	resetClient(ClientData& client);
 };
 
 template <typename T>
-inline void HTTPHandler::createJob(Connection& connection, const Request& request, Body& body,
-	const Router::RouteResult& route_result, HTTPCode status_code)
+inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Request& request,
+				Body& body, const Router::RouteResult& route_result, HTTPCode status_code)
 {
-	ClientData* client_data = this->clientsData.at(connection.getClientID());
-	if (client_data->actualJob != NULL)
+	ClientData&	client_data = *this->clientsData.at(connection.getClientID());
+	HandlerSlot	*slot;
+	AHandler	*handler;
+
+	slot = new (this->handlerPool.acquire()) HandlerSlot();
+	try
 	{
-		delete client_data->actualJob;
-		client_data->actualJob = NULL;
-	}
-	AHandler	*handler = NULL;
-	try {
-		handler = new T(*this, connection, request, body, route_result, status_code);
+		handler = new (slot) T(*this, connection, request, body, route_result, status_code);
 	}
 	catch (const HTTPException& e)
 	{
-		delete handler;
-		handler = new ErrorHandler(*this, connection, request, body, route_result, e.getStatusCode());
+		slot->~HandlerSlot();
+		handler = new (slot) ErrorHandler(*this, connection ,request, body, route_result, status_code);
 	}
-	client_data->actualJob = handler;
-	connection.setJob(handler);
+	client_data.actualHandler = slot;
+	return handler;
 }
 
 #endif // _HTTPHANDLER_H
