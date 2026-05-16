@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 03:50:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 19:51:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,7 +131,14 @@ public:
 		if (!summary.empty())
 			message += " (" + summary + ")";
 	}
-	HTTPException(HTTPCode code) : code(code) {}
+
+	HTTPException(HTTPCode code) : code(code)
+	{
+		std::stringstream	ss;
+		ss << static_cast<int>(code) << " " << HTTPCode::toString(code);
+		message = ss.str();
+	}
+
 	virtual ~HTTPException() throw() {};
 
 	virtual const char* what() const throw() { return message.c_str(); };

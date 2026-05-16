@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 03:48:17 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 19:18:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,15 @@ static void signal_handler(int signum)
 	g_running = false;
 }
 
-TCPServer::TCPServer(const Config::EngineConfig& engine_config) : engineConfig(engine_config)
+TCPServer::TCPServer(const Config::EngineConfig& engine_config) : connectionPool(4946), engineConfig(engine_config)
 {
 	this->startTime = 0;
 	this->actualConnections = 0;
-	this->epoll_fd = ::epoll_create(100);
+	this->epoll_fd = ::epoll_create(MAX_CLIENTS);
 	if (this->epoll_fd == -1)
 		throw std::runtime_error("Unable to init epoll :" + std::string(strerror(errno)));
+	void *ptr = this->connectionPool.acquire();
+	this->connectionPool.releaseRaw(ptr);
 }
 
 TCPServer::~TCPServer()
@@ -47,6 +49,7 @@ void TCPServer::run(void)
 
 	std::vector<epoll_event>	events_vec;
 	events_vec.reserve(this->engineConfig.max_events);
+
 	epoll_event	*events = events_vec.data();
 
 	while (g_running)
@@ -54,6 +57,13 @@ void TCPServer::run(void)
 		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
 		int timeout = next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout;
 		int n = epoll_wait(this->epoll_fd, events, this->engineConfig.max_events, timeout);
+		if (n < 0)
+		{
+			if (errno == EINTR)
+				continue ;
+			Logger::FATAL() << "Epoll wait returned -1" << strerror(errno);
+			break ;
+		}
 		for (int i = 0; i < n; ++i)
 		{
 			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
@@ -88,7 +98,7 @@ void TCPServer::openListener(const char *host, const char *service)
 void TCPServer::cleanConnections(void)
 {
 	for (std::vector<Connection *>::iterator it = this->deletableConnections.begin(); it != this->deletableConnections.end(); ++it)
-		delete *it;
+		this->connectionPool.release(*it);
 	this->deletableConnections.clear();
 }
 
@@ -106,7 +116,9 @@ void TCPServer::dropConnection(Connection *connection)
 	this->handler->onDisconnection(*connection);
 	this->removePollEvent(*connection);
 	this->deletableConnections.push_back(connection);
-	Logger::INFO() << "Connection dropped: Client " << connection->getSocket().getAddress();
+	#if HTTP_DEBUG == true
+	Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
+	#endif
 	this->actualConnections--;
 }
 
@@ -172,7 +184,7 @@ void TCPServer::clearListeners()
 void TCPServer::clearConnections()
 {
 	for (HashMap<int, Connection *>::iterator it = this->connections.begin(); it != this->connections.end(); ++it)
-		delete (*it).second;
+		this->connectionPool.release(it->second);
 	this->connections.clear();
 }
 

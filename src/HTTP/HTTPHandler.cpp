@@ -35,28 +35,33 @@ HTTPHandler::~HTTPHandler()
 
 void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
-	Router::RouteResult	dummy_results;
-	dummy_results.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
 	HashMap<size_t, ClientData *>::iterator it = clientsData.find(connection.getClientID());
 	
 	if (it == clientsData.end())
 	{
-		Response(connection, code)
-			.sendKeepAlive(false)
+		Response response(connection, code);
+			response.sendKeepAlive(false)
 			.sendContentLength(0)
 			.sendEnd();
-		return;
+		return ;
 	}
+
 	ClientData& client = *it->second;
 	if (!client.routeRes.host)
 		client.routeRes.host = &Router::findDefaultServer(connection.getOriginPort(), this->config);
-	dispatchError(connection, client.request, client.body, client.routeRes, code);
+	dispatchError(client, connection, client.request, client.body, client.routeRes, code);
 }
 
-void	HTTPHandler::dispatchError(Connection& connection, const Request& request,
+void	HTTPHandler::dispatchError(ClientData& client, Connection& connection, const Request& request,
 			Body& body, const Router::RouteResult& route_result, HTTPCode error_code)
 {
-	this->createHandler<ErrorHandler>(connection, request, body, route_result, error_code);
+	if (client.actualHandler != NULL)
+	{
+		this->handlerPool.release(client.actualHandler);
+		client.actualHandler = NULL;
+	}
+	AHandler *handler = this->createHandler<ErrorHandler>(connection, request, body, route_result, error_code);
+	connection.setJob(handler);
 }
 
 void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
@@ -205,11 +210,12 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 	}
 	catch (const std::exception& e)
 	{
-		Logger::ERROR() << "Header Validation Failed: " << e.what();
 		dispatchError(connection, HTTPCode::BAD_REQUEST);
 		return false;
 	}
+
 	client.request = client.builder.build();
+
 	try
 	{
 		client.routeRes = Router::resolve(connection, this->config, client.request);
