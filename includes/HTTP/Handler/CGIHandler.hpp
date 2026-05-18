@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 03:35:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:40:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,17 @@ public:
 		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, body, route_result, status_code), 
-	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)), registered(false) {};
+	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)),
+	timeout(false),
+	alarmTimeout(this, timeoutCallback),
+	registered(false)
+	{
+		this->pipeIn[0] = -1;
+		this->pipeIn[1] = -1;
+
+		this->pipeOut[0] = -1;
+		this->pipeOut[1] = -1;
+	};
 
 	~CGIHandler();
 
@@ -39,7 +49,6 @@ public:
 
 	void	initPaths();
 	void	initEnvironment();
-	void	setEnv(const std::string& key, const std::string& value);
 
 private:
 	const Config::CGIConfig&	CGIConfig;
@@ -49,11 +58,19 @@ private:
 	std::string					scriptName;
 	std::string					scriptFilename;
 
+	bool						timeout;
+	Alarm<CGIHandler *>			alarmTimeout;
+
 	bool						registered;
+	int							pipeIn[2];
+	int							pipeOut[2];
+
+	friend void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler);
 
 	CGIHandler(const CGIHandler& other);
 	CGIHandler&	operator=(const CGIHandler& other);
 };
 
+void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler) { handler->timeout = true; };
 
 #endif // _CGIHANDLER_H

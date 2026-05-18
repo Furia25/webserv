@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 04:03:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:36:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,19 @@
 #include "HTTP/Handler/CGIHandler.hpp"
 #include "Server/TCPServer.hpp"
 
+#define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd);} } while (0)
+
 CGIHandler::~CGIHandler()
 {
 	if (registered)
-		this->connection.getServer().removePollEvent(*this, this.);
+	{
+		this->connection.getServer().removePollEvent(*this, this->pipeIn[1]);
+		this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
+		SAFE_CLOSE(this->pipeIn[0]);
+		SAFE_CLOSE(this->pipeIn[1]);
+		SAFE_CLOSE(this->pipeOut[0]);
+		SAFE_CLOSE(this->pipeOut[1]);
+	}
 }
 
 static inline std::string	to_env_key(const std::string& header)
