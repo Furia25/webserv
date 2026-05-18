@@ -1,0 +1,92 @@
+[
+  {
+    "name": "The Nodding Man",
+    "emoji": "🧍",
+    "classification": "CLASS: HUMANOID-ADJACENT / THREAT-AMBER",
+    "description": "Appears at the edge of group photographs as a tall figure nodding slowly. Never present when the photo was taken. Nodding speed increases if the photograph is printed.",
+    "threatLevel": 2,
+    "tags": ["humanoid", "photographic", "ambient"],
+    "redacted": false
+  },
+  {
+    "name": "The Mirror Crab",
+    "emoji": "🦀",
+    "classification": "CLASS: REFLECTIVE-FAUNA / THREAT-LOW",
+    "description": "A crab-like entity that only exists in reflective surfaces. Harmless unless you tap the glass, at which point it taps back — once more than you did. Researchers are advised not to escalate.",
+    "threatLevel": 1,
+    "tags": ["crustacean", "reflective", "countable"],
+    "redacted": false
+  },
+  {
+    "name": "Bureaucratic Fog",
+    "emoji": "🌫️",
+    "classification": "CLASS: ATMOSPHERIC-ENTITY / THREAT-PASSIVE",
+    "description": "A dense fog that requires three forms of ID to pass through. Those who cannot produce documentation in triplicate are gently redirected. No one has seen what lies beyond. The fog itself seems bored.",
+    "threatLevel": 1,
+    "tags": ["atmospheric", "administrative", "bureaucratic"],
+    "redacted": false
+  },
+  {
+    "name": "The Slow Auditor",
+    "emoji": "📋",
+    "classification": "CLASS: PAPERWORK-ENTITY / THREAT-MEDIUM",
+    "description": "An entity resembling a government auditor that methodically reviews everything in a room — furniture, memories, dreams. It issues a receipt on departure. The receipt is always for an amount slightly beyond what you have.",
+    "threatLevel": 3,
+    "tags": ["bureaucratic", "memetic", "financial"],
+    "redacted": false
+  },
+  {
+    "name": "Recursive Pigeon",
+    "emoji": "🐦",
+    "classification": "CLASS: AVIAN-LOOP / THREAT-NEGLIGIBLE",
+    "description": "A pigeon that, upon being observed, becomes two pigeons. Each of these pigeons, upon being observed, becomes two pigeons. Observers are advised to look away. The original pigeon is thought to be pigeon number four.",
+    "threatLevel": 0,
+    "tags": ["avian", "recursive", "multiplying"],
+    "redacted": false
+  },
+  {
+    "name": "The Helpful Shadow",
+    "emoji": "🌑",
+    "classification": "CLASS: SHADOW-ENTITY / CLEARANCE: AMBER",
+    "description": "A shadow that does not belong to anyone present. It assists with minor tasks — handing you pens, pointing at exits, occasionally holding doors. It has never harmed anyone. It is always slightly warmer than the floor.",
+    "threatLevel": 2,
+    "tags": ["shadow", "benevolent", "helpful"],
+    "redacted": false
+  },
+  {
+    "name": "[REDACTED]",
+    "emoji": "⬛",
+    "classification": "CLASS: VIOLET CLEARANCE REQUIRED",
+    "description": "████████████ ████ a smell like wet copper ████████████ the third Tuesday ████████ DO NOT MAKE EYE CONTACT ████████████ it has already seen this report ████████████████████",
+    "threatLevel": 5,
+    "tags": ["classified", "violet-clearance", "do-not-approach"],
+    "redacted": true
+  },
+  {
+    "name": "Apologetic Void",
+    "emoji": "🕳️",
+    "classification": "CLASS: SPATIAL-ANOMALY / THREAT-POLITE",
+    "description": "A small void (approx. 30cm diameter) that appears in hallways and apologizes when walked into. It is always sorry. It never explains why it is there. It smells faintly of lavender.",
+    "threatLevel": 0,
+    "tags": ["void", "spatial", "apologetic", "lavender"],
+    "redacted": false
+  },
+  {
+    "name": "The Census Taker",
+    "emoji": "📊",
+    "classification": "CLASS: UNKNOWN-ORIGIN / THREAT-MEDIUM",
+    "description": "Knocks on doors at odd hours asking for a 'full accounting of everyone currently residing in the premises, including guests, dreams, and lingering regrets.' Produces a clipboard. The clipboard is older than the building.",
+    "threatLevel": 3,
+    "tags": ["humanoid", "counting", "nocturnal", "clipboard"],
+    "redacted": false
+  },
+  {
+    "name": "[ENTITY SEVEN]",
+    "emoji": "⬛",
+    "classification": "CLASS: VIOLET CLEARANCE REQUIRED",
+    "description": "████████████████ it counts your teeth while you sleep ████████████ not maliciously ████ it just likes to know ████████████████████████████████",
+    "threatLevel": 4,
+    "tags": ["classified", "nocturnal", "counting"],
+    "redacted": true
+  }
+]

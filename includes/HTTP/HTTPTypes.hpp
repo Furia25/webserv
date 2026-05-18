@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpTypes.hpp                                      :+:      :+:    :+:   */
+/*   HTTPTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:01:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 19:51:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,13 +21,26 @@
 
 # include "EnumClass.hpp"
 # include "MIME.hpp"
+# include "Utils/HashMap.hpp"
 # include "Utils/Hash.hpp"
 # include "Config/ConfigDefault.hpp"
+# include "Utils/IntegerUtils.hpp"
 
-#define _HTTP_VERSION_ "HTTP/1.1"
+# define HTTP_DEBUG	true
 
-#define _HEADER_CONTENT_LENGTH_ "content-length"
-#define _HEADER_HOST_ "host"
+# define HTTP_VERSION "HTTP/1.1"
+# define CGI_VERSION	"CGI/1.1"
+
+# define HEADER_CONTENT_TYPE	"content-type"
+# define HEADER_CONTENT_LENGTH "content-length"
+# define HEADER_COOKIE	"cookie"
+# define HEADER_HOST "host"
+# define HEADER_TRANSFER_ENCODING	"transfer-encoding"
+# define HEADER_CONNECTION	"connection"
+
+# define HTTP_NEWLINE	"\r\n"
+
+# define MAX_HEADER_SIZE 8192
 
 # define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
 ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
@@ -43,6 +56,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 #define _STATUS_CODES_ \
 (\
 	/*	2xx Success	*/ \
+	(CONTINUE,					100, Continue), \
 	(OK,						200, OK), \
 	(CREATED,					201, Created), \
 	(ACCEPTED,					202, Accepted), \
@@ -79,7 +93,7 @@ ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, E
 	(BAD_GATEWAY,				502, Bad Gateway), \
 	(SERVICE_UNAVAILABLE,		503, Service Unavailable), \
 	(GATEWAY_TIMEOUT,			504, Gateway Timeout), \
-	(_HTTP_VERSION__NOT_SUPPORTED,505, HTTP Version Not Supported) \
+	(HTTP_VERSION_NOT_SUPPORTED,505, HTTP Version Not Supported) \
 )
 
 # define X(tuple, ...)	_M_TUPLE_ELEM_0 tuple = _M_TUPLE_ELEM_1 tuple __VA_ARGS__
@@ -89,6 +103,17 @@ ENUM_CLASS(HTTPCode, _STATUS_CODES_, X,
 	ENUM_LITERALS(_STATUS_CODES_, X_STRING_CODE, X_STRING);
 	public: HTTPCode() : _t(NOT_FOUND) {};
 	static bool is_error(HTTPCode code) { return static_cast<int>(code) >= 400; };
+	static HTTPCode	fromLiteral(const std::string& str)
+	{
+		HTTPCode code = HTTPCode::NOT_FOUND;
+		try { code = HTTPCode::from(str); }
+		catch (const std::domain_error&)
+		{
+			size_t integer = IntegerUtils::strtoul_safe(str.c_str(), 10);
+			code = static_cast<HTTPCode::E>(integer);
+		}
+		return code;
+	};
 );
 # undef X
 # undef X_STRING_CODE
@@ -106,7 +131,14 @@ public:
 		if (!summary.empty())
 			message += " (" + summary + ")";
 	}
-	HTTPException(HTTPCode code) : code(code) {}
+
+	HTTPException(HTTPCode code) : code(code)
+	{
+		std::stringstream	ss;
+		ss << static_cast<int>(code) << " " << HTTPCode::toString(code);
+		message = ss.str();
+	}
+
 	virtual ~HTTPException() throw() {};
 
 	virtual const char* what() const throw() { return message.c_str(); };
@@ -123,5 +155,15 @@ struct Hash<HTTPCode>
 {
 	size_t operator()(HTTPCode key) const { return hash_int(key); }
 };
+
+typedef HashMap<std::string, std::string> Cookies;
+typedef HashMap<std::string, std::string> Headers;
+
+namespace Cookie
+{
+	# define _SAMESITE_ (LAX, STRICT, NONE)
+	ENUM_CLASS(SameSite, _SAMESITE_, ENUM_BASIC, ENUM_LITERALS(_SAMESITE_, ENUM_BASIC, ENUM_BASIC); public: SameSite() : _t(LAX) {});
+	# undef _SAMESITE_
+} // namespace Cookie
 
 #endif // _HTTPTYPES_H

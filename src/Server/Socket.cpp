@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/29 14:09:28 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/16 19:25:17 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ void Socket::accept(Socket& listener_socket)
 	socklen_t			temp_len = sizeof(sockaddr_storage);
 	int temp_fd = ::accept(listener_socket.socket_fd, addr_ptr, &temp_len);
 	if (temp_fd == -1)
-		throw SocketException("Accept", strerror(errno));
+		throw SocketException("Accept", strerror(errno), errno);
 	addrinfo addr_info;
 	addr_info.ai_family = temp_len == 16 ? AF_INET : AF_INET6;
 	addr_info.ai_addr = addr_ptr;

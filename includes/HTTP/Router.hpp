@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:42:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:49:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,9 @@
 # include "Server/AddressResolver.hpp"
 # include "Config/Config.hpp"
 # include "HTTP/Request.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Server/Connection.hpp"
+# include "HTTP/Utils/URIUtils.hpp"
 
 namespace Router 
 {
@@ -25,7 +26,8 @@ namespace Router
 	{
 		const Config::ServerConfig	*host;
 		const Config::RouteConfig	*route;
-		std::string					physicalPath;
+		std::string					basePath;
+		std::string					pathRemainder;
 		HTTPCode					errorCode;
 		bool						success;
 
@@ -34,6 +36,16 @@ namespace Router
 
 	RouteResult resolve(const Connection& connection, const Config::AppConfig &config, const Request &req);
 	const Config::ServerConfig&	findDefaultServer(port_t port, const Config::AppConfig &config);
+};
+
+class RouterException : public std::exception 
+{
+private:
+	HTTPCode code;
+public:
+	RouterException(HTTPCode code) : code(code) {}
+	virtual ~RouterException() throw() {}
+	HTTPCode getCode() const { return code; }
 };
 
 #endif // _ROUTER_H

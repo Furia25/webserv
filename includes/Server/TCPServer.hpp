@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 03:03:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 18:21:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,19 +27,23 @@
 
 # include "Config/Config.hpp"
 # include "EnumClass.hpp"
+
 # include "Server/Address.hpp"
 # include "Server/AddressResolver.hpp"
 # include "Server/Socket.hpp"
 # include "Server/IRequestHandler.hpp"
 # include "Server/Listener.hpp"
 # include "Server/Connection.hpp"
+
 # include "Logger.hpp"
+
 # include "Utils/HashMap.hpp"
 # include "Utils/HashedTimingWheel.hpp"
+# include "Utils/FreeList.hpp"
 
-# define MAX_CLIENTS	1024
-# define MAX_EVENTS	512
-# define MAX_PENDING_CONNECTION	10
+# define MAX_CLIENTS	16384
+# define MAX_PENDING_CONNECTION	4096
+
 # define EPOLL_TIMEOUT	1000
 
 # define LISTENER_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
@@ -84,7 +88,8 @@ private:
 	HashMap<int, Connection*>	connections;
 	std::vector<Connection *>	deletableConnections;
 
-	const Config::EngineConfig&			engineConfig;
+	FreeList<Connection>		connectionPool;
+	const Config::EngineConfig&	engineConfig;
 
 	void	recoverListener(Listener& listener);
 

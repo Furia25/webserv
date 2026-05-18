@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:34:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:44:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,9 @@
 # include "ConfigLoader.hpp"
 # include "Config/toml.hpp"
 
+# include "EnumClass.hpp"
 # include "Utils/RadixTree.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/HashedTimingWheel.hpp"
 # include "Utils/HashMap.hpp"
 # include "Logger.hpp"
@@ -31,6 +32,23 @@ namespace Config
 {
 
 struct ServerConfig;
+
+struct CookieConfig
+{
+	std::string			name;
+
+	int64_t				max_age;
+	bool				http_only;
+	Cookie::SameSite	same_site;
+
+	bool				generate;
+	size_t				generation_length;
+	std::string			default_value;
+
+	bool		required;
+
+	void		load(toml::Variant& table, Config::Loader& loader);
+};
 
 struct RouteConfig
 {
@@ -41,6 +59,8 @@ struct RouteConfig
 
 	std::string	root;
 	std::string	alias;
+
+	HashMap<std::string, CookieConfig>	cookies;
 
 	const ServerConfig	*server_config;
 
@@ -93,13 +113,15 @@ struct RedirectConfig : public RouteConfig
 struct CGIConfig : public RouteConfig
 {
 	HashMap<std::string, std::string>	env;
-	std::string							interpreter;
-	std::string							bin;
+	toml::Table							interpreters;
+	std::string							default_bin;
 	timestamp_ms						timeout;
 
 	CGIConfig(const ServerConfig *server_config) : RouteConfig(server_config) {};
 
 	void	loadChild(toml::Variant& table, Config::Loader& loader);
+
+	~CGIConfig() {};
 };
 
 struct StatusConfig : public RouteConfig
@@ -126,6 +148,8 @@ struct ServerConfig
 	std::vector<std::pair<std::string, port_t> >	bindings;
 	RadixTree<RouteConfig *>						routes;
 	HashMap<HTTPCode, std::string>					error_fallbacks;
+
+	HashMap<std::string, CookieConfig>	cookies;
 
 	~ServerConfig();
 

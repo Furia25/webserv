@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 14:38:55 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/08 09:39:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 03:58:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,22 @@ struct aligned_storage
 };
 
 template <class T>
+struct AlignedBuffer
+{
+	typedef aligned_storage<sizeof(T), alignment_of<T>::value> type;
+
+	static inline T	*ptr(type& buf)
+	{
+		return reinterpret_cast<T *>(&buf.raw[0]);
+	}
+
+	static inline const T	*ptr(const type& buf)
+	{
+		return reinterpret_cast<const T *>(&buf.raw[0]);
+	}
+};
+
+template <class T>
 class RawStorage
 {
 public:
@@ -57,9 +73,9 @@ public:
 	void		copy_from(const RawStorage& other);
 	void		construct(const T& val);
 	void		destroy();
-protected:
-	aligned_storage<sizeof(T), alignment_of<T>::value> buffer;
 
+protected:
+	typename AlignedBuffer<T>::type	buffer;
 };
 
 template <class T>
@@ -243,13 +259,13 @@ inline const T *RawStorage<T>::operator->() const
 template <class T>
 inline T *RawStorage<T>::ptr()
 {
-	return reinterpret_cast<T *>(&this->buffer.raw);
+	return AlignedBuffer<T>::ptr(this->buffer);
 }
 
 template <class T>
 inline const T *RawStorage<T>::ptr() const
 {
-	return reinterpret_cast<const T *>(&this->buffer.raw);
+	return AlignedBuffer<T>::ptr(this->buffer);
 }
 
 template <class T>

@@ -6,12 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:35:15 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 20:46:33 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _CGIHANDLER_H
 # define _CGIHANDLER_H
+
+# include <vector>
 
 # include "Config/Config.hpp"
 # include "HTTP/AHandler.hpp"
@@ -24,16 +26,22 @@ public:
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
-		const Config::ServerConfig *host_config,
-		const Config::RouteConfig *route_config,
-		const std::string& physical_path,
+		Body& body,
+		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK)
-	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), 
-	CGIConfig(static_cast<const Config::CGIConfig&>(*route_config)) {};
+	: AHandler(handler, connection, request, body, route_result, status_code), 
+	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)) {};
 
-	void	onExecute();
+	void	onCreation();
+	void	onExecute() {};
+	void	initEnvironment();
+	void	setEnv(const std::string& key, const std::string& value);
+
 private:
 	const Config::CGIConfig&	CGIConfig;
+
+	HashMap<std::string, std::string>	env;
+	std::vector<const char *>			envFlat;
 };
 
 

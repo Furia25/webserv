@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   FileWriter.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:30 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/30 14:29:11 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Utils/FileWriter.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/Utils/FileWriter.hpp"
+# include "HTTP/HTTPTypes.hpp"
 
 void FileWriter::open(const std::string& path, bool append)
 {
@@ -57,6 +57,7 @@ size_t FileWriter::writeChunk(const char* data, size_t size)
 		hasError = true;
 		return 0;
 	}
+	fileStream.flush();
 	bytesWrittenTotal += size;
 	return size;
 }
@@ -64,6 +65,11 @@ size_t FileWriter::writeChunk(const char* data, size_t size)
 bool FileWriter::getError() const
 {
 	return this->hasError;
+}
+
+bool	FileWriter::isOpen() const
+{
+	return fileStream.is_open();
 }
 
 void FileWriter::close()
@@ -87,4 +93,9 @@ void FileWriter::abort()
 const std::string& FileWriter::getFilePath()const 
 {
 	return this->filePath;
+}
+
+FileWriter::~FileWriter()
+{
+	this->close();
 }

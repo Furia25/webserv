@@ -6,64 +6,85 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 17:34:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:40:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # ifndef _IHANDLER_H
 # define _IHANDLER_H
 
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/Router.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Request.hpp"
 # include "Config/Config.hpp"
 # include "Server/Connection.hpp"
 # include "HTTP/Response.hpp"
 # include "Server/IJob.hpp"
-# include "Utils/FileReader.hpp"
+# include "HTTP/Utils/FileReader.hpp"
 
 class HTTPHandler;
+class Body;
 
 class AHandler : public IJob
 {
 public:
 	virtual ~AHandler() {};
 	bool	execute();
+
 	virtual void onExecute() = 0;
 	virtual void onCreation() {};
 
-	void	setFinished() { this->finished = true; };
+	void	setFinished() { this->finished = true;};
 	bool	isFinished() const { return this->finished; };
+
+	void	sendFullDefaultError();
 
 protected:
 	AHandler(
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
-		const Config::ServerConfig *host_config,
-		const Config::RouteConfig *route_config,
-		const std::string& physical_path,
+		Body& body,
+		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK) :
 			handler(handler),
-			fileHeaderSent(false),
 			connection(connection),
 			request(request),
-			hostConfig(host_config),
-			routeConfig(route_config),
-			physicalPath(physical_path),
+			body(body),
+			routeResult(route_result),
+			fileHeaderSent(false),
 			finished(false),
-			statusCode(status_code) {};
+			statusCode(status_code),
+			physicalPath(route_result.basePath + route_result.pathRemainder),
+			response(connection), state(INIT), errored(false), first(true) {};
 
 	const HTTPHandler&				handler;
-	bool							fileHeaderSent;
 	Connection&						connection;
 	const Request&					request;
-	const Config::ServerConfig* 	hostConfig;
-	const Config::RouteConfig*		routeConfig;
-	std::string						physicalPath;
+	Body&							body;
+	const Router::RouteResult		routeResult;
+	bool							fileHeaderSent;
 	bool							finished;
 	HTTPCode						statusCode;
+	std::string						physicalPath;
+	Response						response;
 
 private:
+	enum State
+	{
+		INIT,
+		SEND_HEADERS,
+		SEND_BODY,
+		SEND_DEFAULT_ERROR,
+		FINISHED
+	};
+
+	FileReader	fileReader;
+	State		state;
+	bool		errored;
+	bool		first;
+
+	void	handleError();
 	void	initError();
 };
 

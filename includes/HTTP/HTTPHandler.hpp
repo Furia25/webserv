@@ -10,22 +10,33 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# ifndef _HTTPHandler_H
-# define _HTTPHandler_H
+# ifndef _HTTPHANDLER_H
+# define _HTTPHANDLER_H
 
-# include "Config/ConfigDefault.hpp"
 # include "Server/IRequestHandler.hpp"
+# include "Config/ConfigDefault.hpp"
 # include "Config/Config.hpp"
+
 # include "HTTP/HTTPHandler.hpp"
-# include "HTTP/RequestBuilder.hpp"
+# include "HTTP/RequestFactory.hpp"
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
-# include "Utils/FileWriter.hpp"
+# include "HTTP/Utils/FileWriter.hpp"
 # include "HTTP/Router.hpp"
-# include "Server/IJob.hpp"
 
-# define _temp_file_path_ "/tmp/" SERV_NAME "_upload_"
+# include "HTTP/Handler/CGIHandler.hpp"
+# include "HTTP/Handler/ErrorHandler.hpp"
+# include "HTTP/Handler/RedirectHandler.hpp"
+# include "HTTP/Handler/StaticHandler.hpp"
+# include "HTTP/Handler/StatusHandler.hpp"
+# include "HTTP/Handler/UploadHandler.hpp"
+
+# include "Server/IJob.hpp"
+# include "HTTP/Body.hpp"
+# include "Utils/FreeList.hpp"
+
+# define TEMP_FILE_PATH	"/tmp/" SERV_NAME "_upload_"
 
 class HTTPHandler : public IRequestHandler
 {
@@ -35,74 +46,105 @@ public:
 	void		onDataReceived(Connection& connection);
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
-	void		onError(Connection& connection);
+	void		onError(Connection& connection, uint32_t error_event);
 
 	size_t		getTotalRequests(void) const { return this->totalRequests; };
 protected:
 private:
 
-	struct ClientData
+	enum ChunkState
 	{
-		RequestBuilder			builder;
-		Request*				request;
-		Router::RouteResult 	routeRes;
-		IJob					*actualJob;
-		ClientData(): request(NULL), actualJob(NULL) {};
-		void reset();
+		CHUNK_SIZE,
+		CHUNK_DATA,
+		CHUNK_TRAILER,
+		CHUNK_COMPLETE
 	};
 
-	HashMap<size_t, ClientData>	clientsData;
-	const Config::AppConfig&	config;
-	size_t						totalRequests;
+	struct HandlerSlot
+	{
+		union
+		{
+			AlignedBuffer<StaticHandler>::type		static_handler;
+			AlignedBuffer<RedirectHandler>::type	redirect_handler;
+			AlignedBuffer<ErrorHandler>::type		error_handler;
+			AlignedBuffer<CGIHandler>::type			cgi_handler;
+			AlignedBuffer<StatusHandler>::type		status_handler;
+			AlignedBuffer<UploadHandler>::type		upload_handler;
+		};
+		~HandlerSlot() { reinterpret_cast<IJob *>(this)->~IJob(); };
+	};
 
-	bool					processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
-	bool					initializeBodyReception(Connection& connection, ClientData& client);
-	void					receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
+	struct ClientData
+	{
+		RequestFactory			builder;
+		Request					request;
+		Body					body;
+		Router::RouteResult 	routeRes;
+		HandlerSlot				*actualHandler;
+		ChunkState				chunkState;
+		size_t					neededBytes;
+		std::string				sizeBuffer;
 
+		ClientData(): actualHandler(NULL), chunkState(CHUNK_SIZE), neededBytes(0) {};
+	};
 
-	void 					launchJob(Connection &connection, ClientData &client);
-	void					checkCompletion(Connection& connection, ClientData& clientData);
+	HashMap<size_t, ClientData *>	clientsData;
+	FreeList<ClientData>			clientPool;
+	FreeList<HandlerSlot>			handlerPool;
+	const Config::AppConfig&		config;
+	size_t							totalRequests;
+
+	void	processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
+	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
+	bool	initializeBodyReception(Connection& connection, ClientData& client);
+	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
+
+	void 	launchHandler(Connection &connection, ClientData &client);
+	void	checkCompletion(Connection& connection, ClientData& clientData);
 
 	template <typename T>
-	void	createJob(Connection& connection, const Request& request,
-				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-				const std::string& physical_path, HTTPCode status_code = HTTPCode::OK);
-				
-	template <typename T>
-	void	createJobUpload(Connection& connection, const Request& request,
-	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-	const std::string& physical_path, bool isUpload, HTTPCode status_code);
+	AHandler	*createHandler(Connection &connection, const Request &request,
+					Body &body, const Router::RouteResult &route_result, HTTPCode status_code);
 
 	void	dispatchError(Connection& connection, HTTPCode error_code);
-	void	dispatchError(Connection& connection, const Request& request,
-				const Config::ServerConfig *host_config, const Config::RouteConfig *route_config, HTTPCode error_code);
-
+	void	dispatchError(ClientData& client, Connection& connection, const Request& request,
+			Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
+	
+	void	resetClient(ClientData& client);
 };
 
 template <typename T>
-inline void HTTPHandler::createJob(Connection& connection, const Request& request,
-	const Config::ServerConfig *host_config, const Config::RouteConfig *route_config,
-	const std::string& physical_path, HTTPCode status_code)
+inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Request& request,
+				Body& body, const Router::RouteResult& route_result, HTTPCode status_code)
 {
-	ClientData& client_data = this->clientsData.at(connection.getClientID());
-	if (client_data.actualJob != NULL)
-	{
-		delete client_data.actualJob;
-		client_data.actualJob = NULL;
-	}
+	ClientData&	client_data = *this->clientsData.at(connection.getClientID());
 	AHandler	*handler = NULL;
-	try {
-		handler = new T(*this, connection, request, host_config, route_config, physical_path, status_code);
-		handler->onCreation();
-		client_data.actualJob = handler;
+	void		*ptr = this->handlerPool.acquire();
+
+	try
+	{
+		handler = new (ptr) T(*this, connection, request, body, route_result, status_code);
 	}
 	catch (const HTTPException& e)
 	{
-		delete handler;
-		handler = new ErrorHandler(*this, connection, request, host_config, route_config, physical_path, e.getStatusCode());
-		client_data.actualJob = handler;
+		try
+		{
+			handler = new (ptr) ErrorHandler(*this, connection, request, body, route_result, status_code);
+		}
+		catch (...)
+		{
+			this->handlerPool.releaseRaw(ptr);
+			throw ;
+		}
 	}
-	connection.setJob(handler);
+	catch (...)
+	{
+		this->handlerPool.releaseRaw(ptr);
+		throw;
+	}
+
+	client_data.actualHandler = reinterpret_cast<HandlerSlot*>(ptr);
+	return handler;
 }
 
-#endif // _HTTPHandler_H
+#endif // _HTTPHANDLER_H

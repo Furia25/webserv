@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLVariant.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/09 21:59:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/24 16:06:58 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/08 22:27:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -202,6 +202,8 @@ template <> inline T&		toml::Variant::as<T>()	{ this->check_types_errors(Variant
 template <> inline const T&	toml::Variant::as<T>() const { this->check_types_errors(Variant::name); return (*this->data.name.ptr()); }
 _VARIANT_TYPES
 #undef X
+
+template <> inline toml::Variant	toml::Variant::get<toml::Variant>() { return (*this); }
 
 template <> inline Variant&			toml::Variant::as<Variant>()	{ return *this; };
 template <> inline const Variant&	toml::Variant::as<Variant>() const { return *this; };

@@ -1,27 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Itoa.hpp                                           :+:      :+:    :+:   */
+/*   RedirectHandler.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/30 13:31:23 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 02:40:24 by vdurand          ###   ########.fr       */
+/*   Created: 2026/05/11 23:19:27 by antoine           #+#    #+#             */
+/*   Updated: 2026/05/15 19:33:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+# include "HTTP/Handler/RedirectHandler.hpp"
 
-#ifndef _ITOA_H
-# define _ITOA_H
-
-# include <sstream>
-
-template <typename T>
-static inline std::string itoa(T n)
+void	RedirectHandler::onExecute()
 {
-	std::stringstream ss;
-	ss << n;
-	return ss.str();
+	response.sendStatusLine(this->redirectConfig.status)
+		.sendDefaults(request, this->routeResult.route)
+		.sendContentLength(0)
+		.sendHeader("Location", this->redirectConfig.redirect_location)
+		.sendEnd();
+	this->setFinished();
 }
-
-#endif // _ITOA_H

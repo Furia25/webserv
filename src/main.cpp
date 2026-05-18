@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:06:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,18 +18,22 @@
 #include "Server/TCPServer.hpp"
 #include "HeaderParam.hpp"
 #include "Logger.hpp"
-#include "HTTP/HttpTypes.hpp"
+#include "HTTP/HTTPTypes.hpp"
 #include "HTTP/HTTPHandler.hpp"
+#include "Utils/FileSystem.hpp"
 
 int main(int argc, char **argv)
 {
-	if (argc != 2)
-	{
-		std::cout << "error : usage ./" SERV_NAME " [config.toml]" << std::endl;
-		return EXIT_FAILURE;
-	}
 	try
 	{
+		if (argc != 2)
+			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Specified config in TOML format needed, see documentation");
+
+		std::string			config_path = argv[1];
+
+		if (!FileSystem::exists(config_path) || FileSystem::isDirectory(config_path))
+			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Must be a valid file");
+
 		Config::AppConfig	config(argv[1]);
 		TCPServer			server(config.engineConfig);
 		HTTPHandler			handler(config);
@@ -42,7 +46,6 @@ int main(int argc, char **argv)
 		Logger::setGlobalLevel(config.loggingConfig.log_level);
 		Logger::setTickInterval(config.loggingConfig.tick_interval);
 		Logger::setTickCallback(&TCPServer::tickCallback, &server);
-		
 
 		for (size_t i = 0; i < config.servers.size(); ++i)
 		{
@@ -58,13 +61,17 @@ int main(int argc, char **argv)
 				server.openListener(binding.first, binding.second);
 			}
 		}
-
 		server.bindHandler(handler);
-		server.run();
+		try { server.run(); }
+		catch (const std::exception& e)
+		{
+			Logger::FATAL() << "Fatal error during execution: " << e.what();
+			return EXIT_FAILURE;
+		}
 	}
 	catch (const std::exception& e)
 	{
-		Logger::FATAL() << "Fatal error : " << e.what() << '\n';
+		Logger::FATAL() << "Couldn't launch server: " << e.what();
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;

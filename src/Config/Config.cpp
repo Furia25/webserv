@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 03:41:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:02:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config/Config.hpp"
-#include "Utils/Itoa.hpp"
+#include "Utils/IntegerUtils.hpp"
 #include <sstream>
 
 Config::AppConfig::AppConfig(const std::string& path)
@@ -44,7 +44,7 @@ Config::AppConfig::AppConfig(const std::string& path)
 					this->serversMap.insert(port, RadixTree<ServerConfig *>());
 				else if (this->serversMap.at(port).count(host) != 0)
 					throw std::runtime_error("Can't redefine binding in server "
-						+ server_config->name + " for " + host + ":" + itoa(port));
+						+ server_config->name + " for " + host + ":" + IntegerUtils::itoa(port));
 				this->serversMap.at(port).insert(host, server_config);
 			}
 			this->servers.push_back(server_config);
@@ -95,6 +95,9 @@ Config::ServerConfig::~ServerConfig()
 		delete it->second;
 }
 
+static inline void loadCookies(HashMap<std::string, Config::CookieConfig>& cookies_map,
+						toml::Variant& table, Config::Loader& loader);
+
 void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 {
 	toml::Array	bindings_array;
@@ -113,6 +116,7 @@ void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 
 	this->loadBindings(bindings_array, loader);
 	this->loadErrors(errors_table, loader);
+	loadCookies(this->cookies, table, loader);
 	this->loadRoutes(routes_array, loader);
 }
 
@@ -144,23 +148,53 @@ void Config::ServerConfig::loadErrors(toml::Table& errors_table, Config::Loader&
 		const std::string& key = it->first;
 		try
 		{
-			HTTPCode code = HTTPCode::NOT_FOUND;
-			try {
-				code = HTTPCode::from(key);
-			} catch (const std::domain_error&)
-			{
-				char* end_ptr = NULL;
-				size_t integer = std::strtoul(key.c_str(), &end_ptr, 10);
-				if (*end_ptr != '\0')
-					throw std::domain_error("Unknown error code: \"" + key + "\"");
-				code = static_cast<HTTPCode::E>(integer);
-			}
+			HTTPCode code = HTTPCode::fromLiteral(key);
 			this->error_fallbacks.insert(code, it->second.as<std::string>());
 		}
 		catch (const std::exception& e)
 		{
 			loader.push_error("errors -> " + key, e.what());
 		}
+	}
+}
+
+static inline void loadCookies(HashMap<std::string, Config::CookieConfig>& cookies_map,
+						toml::Variant& table, Config::Loader& loader)
+{
+	toml::Variant	cookies = table.take_or("cookies", toml::Variant());
+	if (cookies.isNone())
+		return ;
+	toml::Table&	cookies_table = cookies.as<toml::Table>();
+	size_t			cookie_num = 0;
+	for (toml::Table::iterator it = cookies_table.begin(); it != cookies_table.end(); ++it)
+	{
+		const std::string	cookie_name = "Cookie \"" + it->first + "\"";
+
+		if (it->second.isImplicit() || !it->second.isHeader())
+		{
+			loader.push_error(cookie_name, "Cookies need to be defined as explicit headers for example: "
+				"[servers.routes.cookies.foo] for actual route or [servers.cookies.foo] for server global cookies");
+			continue ;
+		}
+
+		try
+		{
+			Config::Loader			cookie_loader;
+			Config::CookieConfig	cookie_config;
+			toml::Table&	actual_cookie_table = it->second.as<toml::Table>();
+
+			cookie_config.name = it->first;
+			cookie_config.load(it->second, cookie_loader);
+			cookies_map.insert(it->first, cookie_config);
+			for (std::vector<std::string>::const_iterator error_it = cookie_loader.errors.begin(); error_it != cookie_loader.errors.end(); ++error_it)
+				loader.push_error(cookie_name, *error_it);
+			if (!actual_cookie_table.empty())
+				loader.push_error(cookie_name, "unexpected properties: " + Config::Loader::format_remaining(it->second));
+		} catch (const std::exception& e)
+		{
+			loader.push_error(cookie_name, e.what());
+		}
+		cookie_num++;
 	}
 }
 
@@ -174,6 +208,7 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 
 		std::string handler_str;
 		loader.value(routes_array[index], "handler", handler_str);
+		
 		HandlerType handler = HandlerType::from(handler_str);
 		RouteConfig	*final_route = NULL;
 		switch (handler)
@@ -186,7 +221,6 @@ void Config::ServerConfig::loadRoutes(toml::Array& routes_array, Config::Loader&
 			default:
 				loader.push_error(route_name, "unknown handler type -> " + handler_str);
 				continue;
-		
 		}
 		final_route->handler = handler;
 		try
@@ -213,10 +247,12 @@ void Config::RouteConfig::load(toml::Variant& table, Config::Loader& loader)
 	loader.value_or(table, "root", this->root, server_config->root);
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, server_config->max_body_size, 0, UINT64_MAX);
 	this->loadAllowedMethod(table, loader);
+	this->cookies = this->server_config->cookies;
+	loadCookies(this->cookies, table, loader);
 	this->loadChild(table, loader);
 }
 
-void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader& loader)
+void Config::RouteConfig::loadAllowedMethod(toml::Variant &table, Config::Loader &loader)
 {
 	toml::Array methods;
 	loader.value(table, "methods", methods);
@@ -236,6 +272,36 @@ void Config::RouteConfig::loadAllowedMethod(toml::Variant& table, Config::Loader
 			loader.push_error("methods", ss.str());
 		}
 	}
+}
+
+void Config::CookieConfig::load(toml::Variant& table, Config::Loader& loader)
+{
+	if (table.as<toml::Table>().contain("max_age"))
+		loader.value_limited<int64_t>(table, "max_age", this->max_age, 0, 34560000);
+	else
+		this->max_age = -1;
+
+	std::string	temp_samesite;
+	loader.value_or<std::string>(table, "same_site", temp_samesite, "");
+	if (temp_samesite == "")
+		this->same_site == Cookie::SameSite::LAX;
+	else
+	{
+		try { this->same_site = Cookie::SameSite::from(temp_samesite); }
+		catch (const std::exception& e)
+		{
+			loader.push_error("same_site", "unknown enum value needs LAX, NONE or STRICT");
+		}
+	}
+	loader.value_or<bool>(table, "http_only", this->http_only, false);
+	loader.value_or<bool>(table, "generate", this->generate, false);
+
+	if (table.as<toml::Table>().contain("generation_length") && this->generate == false)
+		loader.push_error("generation_length", "generation_length requires generate = true");
+	loader.value_limited_or<size_t>(table, "generation_length", this->generation_length, 16, 16, 64);
+
+	loader.value_or<std::string>(table, "default_value", this->default_value, "");
+	loader.value_or<bool>(table, "required", this->required, this->default_value == "" && !this->generate);
 }
 
 void Config::StaticConfig::loadChild(toml::Variant& table, Config::Loader& loader)
@@ -276,13 +342,18 @@ void Config::RedirectConfig::loadChild(toml::Variant& table, Config::Loader& loa
 
 	std::string code_str;
 	loader.value(table, "status", code_str);
-	this->status = HTTPCode::from(code_str);
+
+	try { this->status = HTTPCode::fromLiteral(code_str);}
+	catch (const std::exception& e)
+	{
+		loader.push_error("status", "Invalid error code, literal or code needed");
+	}
 }
 
 void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 {
-	loader.value(table, "cgi_bin", this->bin);
-	loader.value_or(table, "interpreter", this->interpreter, std::string(""));
+	loader.value_or(table, "default_bin", this->default_bin, std::string(""));
+	loader.value_or(table, "interpreters", this->interpreters, toml::Table());
 	loader.value_limited(table, "cgi_timeout", this->timeout, 0, 360);
 
 	toml::Table temp_env;

@@ -3,201 +3,48 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/08 17:17:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/16 02:32:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Request.hpp"
 
-#define _IS_ONE_MO_ 1048576
+Request::Request() : method(Method::GET),
+		path("/"),
+		query_string(""),
+		protocol(""),
+		content_length(0),
+		is_chunked(false),
+		keep_alive(false)
+{}
 
-Request::Request(Method m, const std::string& p, const std::string& q, 
-                 const std::string& proto, size_t cl, 
-                 const HashMap<std::string, std::string>& h)
-    : method(m), path(p), query_string(q), protocol(proto), 
-      content_length(cl), headers(h)
+const std::string	*Request::operator[](const std::string &key) const
 {
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
 }
 
-Request::~Request()
+const std::string	*Request::operator[](const char *key) const
 {
+	Headers::const_iterator it = this->headers.find(key);
+	return it == this->headers.end() ? NULL : &it->second;
 }
 
-void	Request::initBody(const std::string& path, bool stream)
+void Request::setCookies(const Cookies &cookies) { this->cookies = cookies; }
+void Request::setHeaders(const Headers& headers) { this->headers = headers; }
+
+const Headers&	Request::getHeaders() const 
 {
-	body.init(this->content_length, path, stream);
+	return headers;
 }
 
-void	Request::feedBody(const uint8_t* data, size_t size)
+Headers&	Request::getHeaders() 
 {
-	body.feed(data, size);
+	return headers;
 }
 
-bool	Request::isBodyComplete() const
-{
-	return this->body.isComplete();
-}
-
-bool	Request::checkBodyOverflow() const
-{
-	return this->body.checkOverflow();
-}
-
-void	Request::finishBody()
-{
-	return this->body.finish();
-}
-
-const Body&	Request::getBody() const
-{
-	return this->body;
-}
-
-Body&	Request::getBody()
-{
-	return this->body;
-}
-
-size_t    Request::getBodySize() const
-{
-    return this->body.getReceivedSize();
-}
-
-Method  Request::getMethod() const
-{
-    return (method);
-}
-
-const std::string&  Request::getPath() const
-{
-    return (path);
-}
-
-const std::string&	Request::getQueryString() const
-{
-    return (query_string);
-}
-
-const std::string&	Request::getProtocol() const
-{
-    return (protocol);
-}
-
-size_t	Request::getContentLength() const
-{
-    return (content_length);
-}
-
-const HashMap<std::string, std::string>&	Request::getHeaders() const
-{
-    return (headers);
-}
-
-size_t	Request::isLessThanOneMO() const
-{
-    return (this->content_length < _IS_ONE_MO_);
-}
-
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0)
-{
-}
-
-void	Body::init(size_t expected, const std::string& path, bool stream)
-{
-	this->expectedSize = expected;
-	this->isStreaming = stream;
-	this->destinationPath = path;
-
-	if (this->isStreaming)
-	{
-		this->fileWriter = new FileWriter();
-		this->fileWriter->open(this->destinationPath);
-	}
-	else
-		memoryBuffer.reserve(expectedSize);
-}
-
-void    Body::feed(const uint8_t* data, size_t size)
-{
-	if (size == 0)
-		return ;
-    
-	if (this->isStreaming)
-		fileWriter->writeChunk(data, size);
-	else
-		memoryBuffer.insert(memoryBuffer.end(), data, data + size);
-	receivedSize += size;
-}
-
-bool	Body::isComplete() const
-{
-	return this->receivedSize >= this->expectedSize;
-}
-
-bool	Body::checkOverflow() const
-{
-	return this->receivedSize > this->expectedSize;
-}
-
-void	Body::finish()
-{
-	if (this->fileWriter)
-		this->fileWriter->close();
-}
-
-void	Body::reset()
-{
-	if (this->fileWriter)
-	{
-		if (this->receivedSize < this->expectedSize) 
-			std::remove(destinationPath.c_str()); 
-		delete this->fileWriter;
-		this->fileWriter = NULL;
-	}
-	this->receivedSize = 0;
-	this->isStreaming = false;
-	this->destinationPath = "";
-}
-
-bool	Body::getIsStreaming() const
-{
-	return this->isStreaming;
-}
-
-const	std::vector<uint8_t>&	Body::getMemoryBuffer() const
-{
-	return this->memoryBuffer;
-}
-
-const std::string&	Body::getFilePath() const
-{
-	return this->destinationPath;
-}
-
-size_t	Body::getReceivedSize() const
-{
-	return this->receivedSize;
-}
-
-void	Body::setFilePath(const std::string& path)
-{
-	this->destinationPath = path;
-}
-
-void	Body::setIsStreaming(bool stream)
-{
-	this->isStreaming = stream;
-}
-
-FileWriter*	Body::getFileWriter()const 
-{
-	return this->fileWriter;
-}
-
-Body::~Body()
-{
-    this->reset();
-}
+const Cookies&	Request::getCookies() const { return cookies; }
+Cookies&	Request::getCookies() { return cookies; }

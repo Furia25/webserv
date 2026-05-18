@@ -6,22 +6,22 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 18:57:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 19:04:49 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:33:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/HTTPHandler.hpp"
 # include "HTTP/Handler/StatusHandler.hpp"
 # include "HTTP/Response.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 # include "Utils/FileSystem.hpp"
 # include "Server/TCPServer.hpp"
 
-void StatusHandler::onExecute()
+void StatusHandler::onCreation()
 {
-	const TCPServer& server = connection.getServer();
-	std::vector<std::string> sections;
-	std::stringstream ss;
+	const TCPServer&			server = connection.getServer();
+	std::vector<std::string>	sections;
+	std::stringstream			ss;
 
 	sections.push_back("\"status\": \"ok\"");
 
@@ -32,7 +32,7 @@ void StatusHandler::onExecute()
 		
 		ss.str(""); ss.clear();
 		ss << "\"server\": {\n"
-			<< "	\"name\": \"" << this->hostConfig->name << "\",\n"
+			<< "	\"name\": \"" << this->routeResult.host->name << "\",\n"
 			<< "	\"version\": \"" SERV_VERSION "\",\n"
 			<< "	\"uptime_seconds\": " << uptime << "\n"
 			<< "}";
@@ -43,9 +43,9 @@ void StatusHandler::onExecute()
 	{
 		ss.str(""); ss.clear();
 		ss << "\"connections\": {\n"
-		   << "	\"active\": " << server.getConnectionsCount() << ",\n"
-		   << "	\"total_handled\": " << server.getTotalConnections() << "\n"
-		   << "}";
+			<< "	\"active\": " << server.getConnectionsCount() << ",\n"
+			<< "	\"total_handled\": " << server.getTotalConnections() << "\n"
+			<< "}";
 		sections.push_back(ss.str());
 	}
 
@@ -53,8 +53,8 @@ void StatusHandler::onExecute()
 	{
 		ss.str(""); ss.clear();
 		ss << "\"requests\": {\n"
-		   << "	\"total\": " << this->handler.getTotalRequests() << "\n"
-		   << "}";
+			<< "	\"total\": " << this->handler.getTotalRequests() << "\n"
+			<< "}";
 		sections.push_back(ss.str());
 	}
 
@@ -79,5 +79,11 @@ void StatusHandler::onExecute()
 	}
 	json += "}";
 
-	Response::buildRawResponse(this->connection, HTTPCode::OK, MIME::json, json);
+	response.sendStatusLine(HTTPCode::OK)
+		.sendDefaults(this->request, this->routeResult.route)
+		.sendContentType(MIME::json)
+		.sendContentLength(json.size())
+		.sendBody(json)
+		.sendEnd();
+	this->setFinished();
 }

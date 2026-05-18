@@ -6,88 +6,202 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:00:21 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 19:32:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Response.hpp"
-# include "HTTP/HttpTypes.hpp"
-# include "Utils/Itoa.hpp"
+# include "HTTP/HTTPTypes.hpp"
+# include "Utils/IntegerUtils.hpp"
 
-static inline std::string buildStatusLine(HTTPCode code)
+Response::Response(Connection& connection) : connection(connection), state(Response::STATUS), is_chunked(false) {}
+
+Response::Response(Connection& connection, HTTPCode code) : connection(connection), state(Response::STATUS), is_chunked(false)
 {
-	return "HTTP/1.1 " + itoa(code) + " " + HTTPCode::toString(code) + "\r\n";
+	this->sendStatusLine(code);
 }
 
-void Response::buildErrorResponse(Connection& connection, HTTPCode code)
+Response&	Response::sendHeader(const std::string& key, const std::string& value)
 {
+	if (state != Response::HEADER)
+		throw std::runtime_error("Can't add headers");
+	this->connection.sendData(key + ": " + value + HTTP_NEWLINE);
+	return (*this);
+}
+
+Response& Response::sendStatusLine(HTTPCode code)
+{
+	if (this->state != Response::STATUS)
+		throw std::runtime_error("Status already sent");
+	this->connection.sendData(HTTP_VERSION " " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + HTTP_NEWLINE);
+	this->state = Response::HEADER;
+	return (*this);
+}
+
+Response& Response::setChunked()
+{
+	this->is_chunked = true;
+	this->sendHeader("Transfer-Encoding", "chunked");
+	return (*this);
+}
+
+Response& Response::sendDefaults(const Request& request, const Config::RouteConfig *route_config, bool force_close)
+{
+	this->sendHeader("Server", SERV_NAME "/" SERV_VERSION);
+	if (force_close)
+		this->sendKeepAlive(false);
+	else
+		this->sendKeepAlive(request.keep_alive);
+	if (route_config != NULL)
+		this->sendCookies(request.getCookies(), route_config->cookies);
+	return (*this);
+}
+
+Response& Response::sendKeepAlive(bool keep_alive)
+{
+	if (keep_alive)
+		this->sendHeader("Connection", "keep-alive");
+	else
+		this->sendHeader("Connection", "close");
+	return (*this);
+}
+
+Response& Response::sendContentType(MIME mime_type)
+{
+	this->sendHeader("Content-Type", MIME::toString(mime_type));
+	return (*this);
+}
+
+Response& Response::sendContentLength(size_t length)
+{
+	this->sendHeader("Content-Length", IntegerUtils::itoa(length));
+	return (*this);
+}
+
+std::string	cookie_generate(size_t length)
+{
+	static const char charset[] =
+		"abcdefghijklmnopqrstuvwxyz"
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"0123456789";
+	static const size_t charset_size = sizeof(charset) - 1;
+
+	std::string result;
+	result.reserve(length);
+
+	int fd = open("/dev/urandom", O_RDONLY);
+	if (fd == -1)
+		throw std::runtime_error("cookie_generate: cannot open /dev/urandom");
+
+	unsigned char buf[length];
+	ssize_t n = read(fd, buf, length);
+	close(fd);
+
+	if (n == -1 || n != static_cast<ssize_t>(length))
+		throw std::runtime_error("cookie_generate: read failed");
+
+	for (size_t i = 0; i < length; ++i)
+		result += charset[buf[i] % charset_size];
+
+	return result;
+}
+
+Response& Response::sendCookie(const std::string& key, const std::string& value,
+			bool http_only, Cookie::SameSite same_site, int64_t max_age)
+{
+	std::string	cookie_str = key + "=" + value;
+	if (http_only)
+		cookie_str += "; HttpOnly";
+	switch (same_site)
+	{
+	case Cookie::SameSite::LAX:
+		cookie_str += "; SameSite=Lax";
+		break;
+	case Cookie::SameSite::STRICT:
+		cookie_str += "; SameSite=Strict";
+		break;
+	case Cookie::SameSite::NONE:
+		cookie_str += "; SameSite=None";
+		break;
+	}
+	if (max_age > -1)
+		cookie_str += "; Max-Age=" + IntegerUtils::itoa(max_age);
+	this->sendHeader("Set-Cookie", cookie_str);
+	return (*this);
+}
+
+Response& Response::sendCookies(const Cookies& cookies, const HashMap<std::string,
+			Config::CookieConfig>& cookies_config)
+{
+	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = cookies_config.begin();
+			it != cookies_config.end(); ++it)
+	{
+		if (cookies.contain(it->first))
+			continue ;
+		const Config::CookieConfig&	config = it->second;
+		if (config.required)
+			continue ;
+		std::string	value = config.default_value;
+		if (config.generate)
+			value += cookie_generate(config.generation_length);
+		this->sendCookie(it->first, value, config.http_only, config.same_site, config.max_age);
+	}
+	return (*this);
+}
+
+Response& Response::sendBody(const std::string& body)
+{
+	if (state == Response::END || state == Response::STATUS)
+		throw std::runtime_error("Can't add body");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+
+	this->state = Response::BODY;
+	this->connection.sendData(body);
+	return (*this);
+}
+
+Response& Response::sendBody(const uint8_t *body, size_t length)
+{
+	if (state == Response::END || state == Response::STATUS)
+		throw std::runtime_error("Can't add body");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+
+	this->state = Response::BODY;
+	this->connection.sendData(body, length);
+	return (*this);
+}
+
+Response& Response::sendChunk(const std::string& body)
+{
+	this->sendChunk(reinterpret_cast<const uint8_t *>(body.c_str()), body.size());
+	return (*this);
+}
+
+Response& Response::sendChunk(const uint8_t *body, size_t length)
+{
+	if (!this->is_chunked || this->state == Response::END)
+		throw std::runtime_error("Can't send chunk invalid state");
+	if (state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+	this->state = Response::BODY;
 	std::stringstream ss;
-	ss << "<html><head><title>Error " << static_cast<int>(code) << "</title></head>" 
-		<< "<body><center><h1>" << static_cast<int>(code) << " : " << HTTPCode::toString(code) << "</h1><hr>"
-		<< SERV_NAME "/" SERV_VERSION " (Default Error Page)</center></body></html>";
+	ss << std::hex << length;
 
-	std::string body = ss.str();
-	Response::buildRawResponse(connection, code, MIME::html, body);
+	this->connection.sendData(ss.str() + HTTP_NEWLINE);
+	this->connection.sendData(body, length);
+	this->connection.sendData(HTTP_NEWLINE);
+	return (*this);
 }
 
-void Response::buildRawResponse(Connection& connection, HTTPCode code, MIME mime_type, const std::string& body)
+void	Response::sendEnd()
 {
-	std::string response = buildStatusLine(code);
-	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + itoa(body.size()) + "\r\n";
-	response += "Connection: close\r\n\r\n";
-	response += body;
-	
-	connection.sendData(response);
-}
-
-void Response::sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type)
-{
-	std::string headers = buildStatusLine(code);
-	headers += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	headers += "Transfer-Encoding: chunked\r\n";
-	headers += "Connection: keep-alive\r\n\r\n";
-    
-	connection.sendData(headers);
-}
-
-void Response::sendChunk(Connection& connection, const std::string& body)
-{
-	if (body.empty()) 
-		return;
-
-	std::stringstream ss;
-	ss << std::hex << body.size();
-
-	std::string chunk = ss.str() + "\r\n" + body + "\r\n";
-	connection.sendData(chunk);
-}
-
-void Response::sendEndChunks(Connection& connection)
-{
-	std::string end = "0\r\n\r\n";
-	connection.sendData(end);
-}
-
-void Response::buildEmptyResponse(Connection& connection, HTTPCode code)
-{
-	std::string response = buildStatusLine(code);
-	response += "Connection: close\r\n\r\n";
-	
-	connection.sendData(response);
-}
-
-void Response::buildFileHeaderResponse(Connection& connection, HTTPCode code, MIME mime_type, size_t fileSize)
-{
-	std::string response = buildStatusLine(code);
-	response += "Content-Type: " + std::string(MIME::toString(mime_type)) + "\r\n";
-	response += "Content-Length: " + itoa(fileSize) + "\r\n";
-	response += "Connection: close\r\n\r\n";
-	
-	connection.sendData(response);
-}
-
-void Response::sendBodyChunk(Connection& connection, const uint8_t* data, size_t len)
-{
-	connection.sendData(data, len);
+	if (this->state == Response::END || this->state == Response::STATUS)
+		return ;
+	if (this->state == Response::HEADER)
+		this->connection.sendData(HTTP_NEWLINE);
+	if (this->is_chunked == true)
+		this->connection.sendData("0" HTTP_NEWLINE HTTP_NEWLINE);
+	this->state = Response::END;
 }

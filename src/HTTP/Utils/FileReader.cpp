@@ -3,20 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   FileReader.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/29 19:19:12 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Utils/FileReader.hpp"
+# include "HTTP/Utils/FileReader.hpp"
 # include "Utils/FileSystem.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
 
-FileReader::FileReader() : fileSize(0), bytesReadTotal(0), isEOF(false)
-{
-}
+FileReader::FileReader() : fileSize(0), bytesReadTotal(0), isEOF(false) {}
 
 FileReader::~FileReader()
 {
@@ -68,6 +66,7 @@ void FileReader::close()
 {
 	fileStream.close();
 }
+
 bool FileReader::hasFinished() const
 {
 	return this->isEOF;

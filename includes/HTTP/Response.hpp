@@ -3,37 +3,55 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/05 17:31:48 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/15 19:32:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef _RESPONSE_H
 # define _RESPONSE_H
 
+# include "HTTP/Body.hpp"
 # include "Server/Connection.hpp"
-# include "HTTP/HttpTypes.hpp"
+# include "HTTP/HTTPTypes.hpp"
+# include "Utils/HashMap.hpp"
+# include "Config/Config.hpp"
+# include "Request.hpp"
 
 class Response
 {
+private:
+	enum State	{STATUS, HEADER, BODY, END};
+
+	Connection&	connection;
+	enum State	state;
+	bool		is_chunked;
+
 public:
-    static void buildErrorResponse(Connection& connection, HTTPCode code);
+	Response(Connection& connection);
+	Response(Connection& connection, HTTPCode code);
 
-    static void buildRawResponse(Connection& connection, HTTPCode code, MIME mime_type, const std::string& body);
+	Response&	sendStatusLine(HTTPCode code);
+	Response&	setChunked();
+	Response&	sendDefaults(const Request& request,
+					const Config::RouteConfig *route_config, bool force_close = false);
+	Response&	sendKeepAlive(bool keep_alive);
+	Response&	sendContentType(MIME mime_type);
+	Response&	sendContentLength(size_t length);
+	Response&	sendHeader(const std::string& key, const std::string& value);
+	Response&	sendCookies(const Cookies& cookies,
+					const HashMap<std::string, Config::CookieConfig>& cookies_config);
+	Response&	sendCookie(const std::string& key, const std::string& value,
+					bool http_only = false, Cookie::SameSite same_site = Cookie::SameSite::LAX, int64_t max_age = -1);
 
-    static void buildEmptyResponse(Connection& connection, HTTPCode code);
-    
-    static void buildFileHeaderResponse(Connection& connection, HTTPCode code, MIME mime_type, size_t fileSize);
-    
-    static void sendEndChunks(Connection& connection);
-    
-    static void sendChunkedHeader(Connection& connection, HTTPCode code, MIME mime_type);
+	void		sendEnd();
 
-    static void sendChunk(Connection& connection, const std::string& body);
-    
-    static void sendBodyChunk(Connection& connection, const uint8_t* data, size_t len);
+	Response&	sendBody(const std::string& body);
+	Response&	sendBody(const uint8_t *body, size_t length);
+	Response&	sendChunk(const std::string& body);
+	Response&	sendChunk(const uint8_t *body, size_t length);
 };
 
 #endif // _RESPONSE_H

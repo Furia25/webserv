@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 17:35:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/15 05:01:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include "Config/Config.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Response.hpp"
+# include "Config/Config.hpp"
 
 class RedirectHandler : public AHandler
 {
@@ -24,12 +25,11 @@ public:
 		HTTPHandler& handler,
 		Connection& connection,
 		const Request& request,
-		const Config::ServerConfig *host_config,
-		const Config::RouteConfig *route_config,
-		const std::string& physical_path,
+		Body& body,
+		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK)
-	: AHandler(handler, connection, request, host_config, route_config, physical_path, status_code), 
-	redirectConfig(static_cast<const Config::RedirectConfig&>(*route_config)) {};
+	: AHandler(handler, connection, request, body, route_result, status_code), 
+	redirectConfig(static_cast<const Config::RedirectConfig&>(*route_result.route)) {};
 
 	void	onExecute();
 private:

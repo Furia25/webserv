@@ -3,22 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/06 18:28:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 20:19:54 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTP/Router.hpp"
-#include "Utils/Itoa.hpp"
+#include "Utils/IntegerUtils.hpp"
 
-static inline void extract_host(const Request &req, std::string& host)
+static inline void extract_host(const Request &request, std::string& host)
 {
 	host = "";
 
-	HashMap<std::string, std::string>::const_iterator it = req.getHeaders().find("host");
-	if (it == req.getHeaders().end())
+	Headers::const_iterator it = request.getHeaders().find("host");
+	if (it == request.getHeaders().end())
 		return;
 
 	const std::string&	full_host = it->second;
@@ -34,61 +34,101 @@ static inline void extract_host(const Request &req, std::string& host)
 		host = host.substr(1, host.length() - 2);
 }
 
-Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &req)
+static inline void match_server(Router::RouteResult& result, const Connection& connection,
+		const Config::AppConfig &config, const Request &request)
 {
-	Router::RouteResult	res;
-	std::string			host;
-
-	extract_host(req, host);
+	std::string	host;
+	extract_host(request, host);
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
 	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
-	const Config::ServerConfig *tmpHost;
 	if (it == tree.end())
-		tmpHost = &Router::findDefaultServer(connection.getOriginPort(), config);
+		result.host = &Router::findDefaultServer(connection.getOriginPort(), config);
 	else
-		tmpHost = it->second;
-	res.host = tmpHost;
+		result.host = it->second;
+}
 
-	/*We have to make better checks c'est pas super ça parce que il faut juste pas qu'on dépasse le fichier disque de la route*/
-	if (req.getPath().find("../") != std::string::npos)
+static inline void match_route(Router::RouteResult& result, const std::string& current_path)
+{
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = result.host->routes.find_prefix(current_path);
+	if (route_it == result.host->routes.end())
+		throw RouterException(HTTPCode::NOT_FOUND);
+	result.route = route_it->second;
+}
+
+static inline void	validate_constraints(Router::RouteResult& result, const Request& request)
+{
+	if (result.host->max_body_size < request.content_length)
+		throw RouterException(HTTPCode::PAYLOAD_TOO_LARGE);
+
+	if (result.route->method_allowed[static_cast<size_t>(request.method)] == false)
+		throw RouterException(HTTPCode::METHOD_NOT_ALLOWED);
+
+	const Cookies request_cookies = request.getCookies();
+	const HashMap<std::string, Config::CookieConfig>& route_cookies = result.route->cookies;
+
+	for (HashMap<std::string, Config::CookieConfig>::const_iterator it = route_cookies.begin(); it != route_cookies.end(); ++it)
 	{
-		res.errorCode = HTTPCode::FORBIDDEN;
-		return (res);
+		if (it->second.required && !request_cookies.contain(it->first))
+		throw RouterException(HTTPCode::FORBIDDEN);
 	}
 
-	const std::string& current_path = req.getPath();
-	RadixTree<Config::RouteConfig *>::const_iterator route_it = tmpHost->routes.find_prefix(current_path);
-
-	if (route_it == tmpHost->routes.end())
+	if (result.route->handler == HandlerType::UPLOAD)
 	{
-		res.errorCode = HTTPCode::NOT_FOUND;
-		return (res);
+		const Config::UploadConfig* upload_route = static_cast<const Config::UploadConfig*>(result.route);
+		if (upload_route->upload_store.empty())
+			throw RouterException(HTTPCode::FORBIDDEN);
 	}
+}
 
-	res.route = route_it->second;
-	if (res.route->method_allowed[static_cast<size_t>(req.getMethod())] == false)
-	{
-		res.errorCode = HTTPCode::METHOD_NOT_ALLOWED;
-		return res;
-	}
+static inline void	build_physical_path(Router::RouteResult& result, const std::string& current_path)
+{
+	const Config::ServerConfig	*host = result.host;
+	const Config::RouteConfig	*route = result.route;
+	std::string					decoded_path = URIUtils::decodeURI(current_path);
 
-	if (res.host->max_body_size < req.getContentLength())
-	{
-		res.errorCode = HTTPCode::PAYLOAD_TOO_LARGE;
-		return res;
-	}
+	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(decoded_path);
+	const std::string&	found_path = route_it->first;
+	std::string			remainder = decoded_path.substr(found_path.size());
 
-	const std::string& found_path = route_it->first;
-	std::string remainder = current_path.substr(found_path.size());
 	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
 		remainder = remainder.substr(1);
 
-	if (!res.route->alias.empty())
-		res.physicalPath = res.host->root + res.route->alias + remainder;
+	std::string physical_base_path;
+	if (!route->alias.empty())
+		physical_base_path = host->root + route->alias;
 	else
-		res.physicalPath = res.host->root + found_path + remainder;
+		physical_base_path = host->root + found_path;
 
-	res.success = true;
+	std::string final_base_path = URIUtils::normalizePath(physical_base_path);
+	std::string root_jail = URIUtils::normalizePath(host->root); 
+	if (final_base_path.find(root_jail) != 0) 
+		throw RouterException(HTTPCode::FORBIDDEN);
+	result.basePath = final_base_path;
+	result.pathRemainder = remainder;
+}
+
+Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)
+{
+	Router::RouteResult res;
+
+	res.success = false;
+
+	try 
+	{
+		match_server(res, connection, config, request);
+		match_route(res, request.path);
+
+		validate_constraints(res, request);
+		build_physical_path(res, request.path);
+
+		res.success = true;
+	}
+	catch (const RouterException& e)
+	{
+		res.success = false;
+		res.errorCode = e.getCode();
+	}
+
 	return res;
 }
 
@@ -96,6 +136,6 @@ const Config::ServerConfig& Router::findDefaultServer(port_t port, const Config:
 {
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(port);
 	if (tree.begin() == tree.end())
-		throw std::runtime_error("Unable to find default server for port" + itoa(port));
+		throw std::runtime_error("Unable to find default server for port" + IntegerUtils::itoa(port));
 	return *tree.begin()->second;
 }

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 18:03:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/16 19:27:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ Listener::Listener(const char *host, const char *service)
 {
 	std::vector<Address>	addresses = AddressResolver::resolve(host, service);
 	socket.open(SOCK_STREAM, AF_INET);
+	socket.setReuseAddr(true);
 	socket.bind(addresses);
 	socket.setIOBlocking(false);
 	socket.listen(MAX_PENDING_CONNECTION);
@@ -32,19 +33,32 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 		server.recoverListener(*this);
 		return ;
 	}
-	if (events & EPOLLIN)
+	if (!(events & EPOLLIN))
+		return ;
+	
+	while (server.actualConnections < MAX_CLIENTS)
 	{
-		while (server.actualConnections < MAX_CLIENTS)
+		Connection	*client_connection = NULL;
+		void		*ptr = server.connectionPool.acquire();
+
+		try
 		{
-			Connection *client_connection = NULL;
-			try {
-				client_connection = new Connection(server, this->getSocket(), this->getAddress().getPort());
-			}
-			catch (const SocketException& e) {break;}
-			catch (const std::exception& e) {throw;}
-			server.registerConnection(client_connection);
-			Logger::INFO() << "Connection established: Listener " << this->getSocket().getAddress() << " <-> " << client_connection->getSocket().getAddress();
+			client_connection = new (ptr) Connection(server, this->getSocket(), this->getAddress().getPort());
 		}
+		catch (const SocketException& e)
+		{
+			server.connectionPool.releaseRaw(ptr);
+			if (e.getErrorCode() == EAGAIN)
+				break ;
+			Logger::ERROR() << "Accept errored :" << e.what();
+			break ;
+		}
+		catch (...) { server.connectionPool.releaseRaw(ptr); throw ; }
+		server.registerConnection(client_connection);
+		#if HTTP_DEBUG == true
+		Logger::DEBUG() << "Connection established: " << this->getSocket().getAddress()
+				<< " <-> "<< client_connection->getSocket().getAddress();
+		#endif
 	}
 }
 
