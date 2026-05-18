@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 13:36:43 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/18 20:45:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -350,22 +350,17 @@ void Config::RedirectConfig::loadChild(toml::Variant& table, Config::Loader& loa
 	}
 }
 
-void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
+void static inline	loadStringTable(toml::Table& temp_table,
+		HashMap<std::string, std::string>& table, Config::Loader& loader, const std::string& name, bool accept_num)
 {
-	loader.value_or(table, "default_bin", this->default_bin, std::string(""));
-	loader.value_or(table, "interpreters", this->interpreters, toml::Table());
-	loader.value_limited(table, "cgi_timeout", this->timeout, 0, 360);
-
-	toml::Table temp_env;
-	loader.value_or(table, "env", temp_env, toml::Table());
 	size_t index = 0;
-	for (toml::Table::iterator it = temp_env.begin(); it != temp_env.end() ; ++it)
+	for (toml::Table::iterator it = temp_table.begin(); it != temp_table.end() ; ++it)
 	{
 		std::string			value;
 		toml::Value::Type	type = it->second.getType();
 		if (type == toml::Value::STRING)
 			value = it->second.as<std::string>();
-		else if (type == toml::Value::INTEGER || type == toml::Value::FLOATING)
+		else if (accept_num == true && (type == toml::Value::INTEGER || type == toml::Value::FLOATING))
 		{
 			std::stringstream	ss;
 			ss << (type == toml::Value::INTEGER ? it->second.as<long long>() : it->second.as<double>());
@@ -373,16 +368,32 @@ void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 		}
 		else
 		{
-			std::stringstream	ss;
-			ss << "Invalid environment variable at index " <<  index
-				<< ": Only strings, integers and floats can be used as environment variables";
-			loader.push_error("env", ss.str());
-			index++;
+			std::string	error;
+			error += "Invalid variable at key ";
+			error += it->first + ": Only strings";
+			if (accept_num)
+				error += ",integers and floats";
+			error += " can be used as values";
+			loader.push_error(name, error);
 			continue ;
 		}
-		this->env.insert(it->first, value);
+		table.insert(it->first, value);
 		index++;
 	}
+}
+
+void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
+{
+	loader.value_or(table, "default_bin", this->default_bin, std::string(""));
+	loader.value_limited(table, "cgi_timeout", this->timeout, 0, 360);
+
+	toml::Table temp_table;
+	loader.value_or(table, "env", temp_table, toml::Table());
+	loadStringTable(temp_table, this->env, loader, "env", true);
+
+	toml::Table temp_table;
+	loader.value_or(table, "interpreters", temp_table, toml::Table());
+	loadStringTable(temp_table, this->interpreters, loader, "interpreters", false);
 }
 
 void Config::StatusConfig::loadChild(toml::Variant &table, Config::Loader &loader)

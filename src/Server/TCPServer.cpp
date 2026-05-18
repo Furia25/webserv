@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 04:02:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 22:38:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,10 @@ TCPServer::~TCPServer()
 
 void TCPServer::run(void)
 {
+	if (::signal(SIGINT, signal_handler) == SIG_ERR)
+		throw std::runtime_error("Couldn't set handler for signal");
+
 	this->startTime = time(NULL);
-	std::signal(SIGINT, signal_handler);
-	std::signal(SIGPIPE, SIG_IGN);
 
 	std::vector<epoll_event>	events_vec;
 	events_vec.reserve(this->engineConfig.max_events);

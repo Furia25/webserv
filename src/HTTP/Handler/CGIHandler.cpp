@@ -6,15 +6,16 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 19:24:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 00:32:56 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils/FileSystem.hpp"
 #include "HTTP/Handler/CGIHandler.hpp"
 #include "Server/TCPServer.hpp"
+#include <sys/wait.h>
 
-#define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd);} } while (0)
+#define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd); fd = -1;}} while (0)
 
 CGIHandler::~CGIHandler()
 {
@@ -22,25 +23,88 @@ CGIHandler::~CGIHandler()
 	{
 		this->connection.getServer().removePollEvent(*this, this->pipeIn[1]);
 		this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
-		SAFE_CLOSE(this->pipeIn[0]);
-		SAFE_CLOSE(this->pipeIn[1]);
-		SAFE_CLOSE(this->pipeOut[0]);
-		SAFE_CLOSE(this->pipeOut[1]);
 	}
+
+	SAFE_CLOSE(this->pipeIn[0]);
+	SAFE_CLOSE(this->pipeIn[1]);
+	SAFE_CLOSE(this->pipeOut[0]);
+	SAFE_CLOSE(this->pipeOut[1]);
+
+	if (childPID != -1)
+		::kill(this->childPID, SIGKILL);
 }
 
-static inline std::string	to_env_key(const std::string& header)
-{
-	std::string key = "HTTP_";
-	for (std::string::const_iterator it = header.begin(); it != header.end(); ++it)
-		key += (*it == '-') ? '_' : std::toupper(*it);
-	return key;
-}
+static inline std::string	to_env_key(const std::string& header);
+static inline std::string	*get_header(const Headers& header, const std::string& key);
 
-static inline std::string	*get_header(const Headers& header, const std::string& key)
+void CGIHandler::onCreation()
 {
-	Headers::const_iterator	it = header.find(key);
-	return it != header.end() ? &it->second : NULL;
+	this->initPaths();
+	this->initEnvironment();
+
+	if (!FileSystem::exists(this->scriptFilename))
+		throw HTTPException(HTTPCode::NOT_FOUND, "Script file not found");
+
+	if (!FileSystem::isExecutable(this->scriptFilename))
+		throw HTTPException(HTTPCode::FORBIDDEN, "File not executable");
+
+	#if HTTP_DEBUG == true
+	for (size_t index = 0; index < this->envFlat.size(); ++index)
+		std::cout << this->envFlat[index] << "\n";
+	#endif
+
+	const char 					*argv[3];
+	std::vector<const char *>	envp;
+
+	this->initProcessVariables(argv, envp);
+
+	/*Open pipes for inter process comunication*/
+	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
+
+	this->childPID = fork();
+	switch (this->childPID)
+	{
+	case 0: //Child
+	{
+		::close(this->pipeIn[1]);
+		::close(this->pipeOut[0]);
+
+		if (::dup2(this->pipeIn[0], 0) == -1 || ::dup2(this->pipeOut[1], 1) == -1)
+		{
+			::close(this->pipeIn[0]);
+			::close(this->pipeOut[1]);
+			_exit(EXIT_FAILURE);
+		}
+
+		::close(this->pipeIn[0]);
+		::close(this->pipeOut[1]);
+
+		if (::chdir(this->routeResult.basePath.c_str()) == -1)
+			_exit(EXIT_FAILURE);
+		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
+
+		_exit(EXIT_FAILURE);
+		break;
+	}
+	default: //Parent
+
+		::close(this->pipeIn[0]); this->pipeIn[0] = -1;
+		::close(this->pipeOut[1]); this->pipeOut[1] = -1;
+
+		if (::fcntl(this->pipeIn[1], F_SETFL, O_NONBLOCK) == -1
+				|| ::fcntl(this->pipeOut[0], F_SETFL, O_NONBLOCK) == -1)
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
+
+		TCPServer&	server = this->connection.getServer();
+		this->registered = true;
+		server.addPollEvent(*this, this->pipeIn[1],  EPOLLERR | EPOLLHUP | EPOLLOUT);
+		server.addPollEvent(*this, this->pipeOut[0], EPOLLERR | EPOLLHUP | EPOLLIN);
+		break;
+	case -1: //Error
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
+		break;
+	}
 }
 
 void CGIHandler::initPaths()
@@ -117,20 +181,47 @@ inline void CGIHandler::initEnvironment()
 	}
 }
 
-void CGIHandler::onCreation()
+inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<const char *>& envp)
 {
-	this->initPaths();
-	this->initEnvironment();
+	const HashMap<std::string, std::string>&	interpreters = this->CGIConfig.interpreters;
 
-	if (!FileSystem::exists(this->scriptFilename))
-		throw HTTPException(HTTPCode::NOT_FOUND, "Script file not found");
+	HashMap<std::string, std::string>::const_iterator it = interpreters.find(FileSystem::getExtension(this->scriptName));
+	if (it == interpreters.end())
+	{
+		HashMap<std::string, std::string>::const_iterator it = interpreters.find("default");
+		if (it == interpreters.end())
+			this->isBinary = true;
+		else
+			this->interpreter = it->second;
+	}
+	else
+		this->interpreter = it->second;
 
-	#if HTTP_DEBUG == true
+	argv[0] = this->isBinary ? this->scriptFilename.c_str() : this->interpreter.c_str();
+	argv[1] = this->isBinary ? NULL : this->scriptFilename.c_str();
+	argv[2] = NULL;
+
+	envp.reserve(this->envFlat.size() + 1);
 	for (size_t index = 0; index < this->envFlat.size(); ++index)
-		std::cout << this->envFlat[index] << "\n";
-	#endif	
+		envp.push_back(this->envFlat[index].c_str());
+	envp.push_back(NULL);
+}
 
-	if (!FileSystem::isExecutable(this->scriptFilename))
-		throw HTTPException(HTTPCode::FORBIDDEN, "File not executable");
+void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
+{
+	(void) server;
+}
 
+static inline std::string to_env_key(const std::string &header)
+{
+	std::string key = "HTTP_";
+	for (std::string::const_iterator it = header.begin(); it != header.end(); ++it)
+		key += (*it == '-') ? '_' : std::toupper(*it);
+	return key;
+}
+
+static inline std::string	*get_header(const Headers& header, const std::string& key)
+{
+	Headers::const_iterator	it = header.find(key);
+	return it != header.end() ? &it->second : NULL;
 }

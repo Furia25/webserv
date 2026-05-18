@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 04:22:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 22:26:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,14 @@ private:
 	inline void	sendData(const uint8_t *data, size_t len)
 	{
 		if (!this->isBuffered)
+		{
+			if (!this->buffer.empty())
+			{
+				this->connection.sendData(this->buffer.data(), this->buffer.size());
+				this->buffer.clear();
+			}
 			this->connection.sendData(data, len);
+		}
 		else
 			this->buffer.insert(this->buffer.end(), data, data + len);
 	};
