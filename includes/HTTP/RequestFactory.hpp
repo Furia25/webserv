@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 13:38:37 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/19 00:46:04 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,10 +56,6 @@ private:
 	const std::string *getHeader(const std::string& key) const;
 
 public:
-	RequestFactory();
-	RequestFactory(const RequestFactory &other);
-	RequestFactory &operator=(const RequestFactory &other);
-	~RequestFactory();
 
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
