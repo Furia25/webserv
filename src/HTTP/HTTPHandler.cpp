@@ -93,7 +93,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-		handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = NULL ;//this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::UPLOAD :
 		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
