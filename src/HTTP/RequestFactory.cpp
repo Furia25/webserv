@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 20:47:26 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/18 13:38:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 # include "Utils/IntegerUtils.hpp"
 
 RequestFactory::RequestFactory() 
-	: is_parsing_complete(false), is_header_parsed(false), is_validated(false), is_chunked(false)
+	: is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
 }
 

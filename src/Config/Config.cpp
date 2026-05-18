@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 19:02:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 13:36:43 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -284,7 +284,7 @@ void Config::CookieConfig::load(toml::Variant& table, Config::Loader& loader)
 	std::string	temp_samesite;
 	loader.value_or<std::string>(table, "same_site", temp_samesite, "");
 	if (temp_samesite == "")
-		this->same_site == Cookie::SameSite::LAX;
+		this->same_site = Cookie::SameSite::LAX;
 	else
 	{
 		try { this->same_site = Cookie::SameSite::from(temp_samesite); }
