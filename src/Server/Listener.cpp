@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 19:27:48 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:02:21 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,10 +29,8 @@ Listener::~Listener() {}
 void Listener::handleEvent(TCPServer& server, uint32_t events)
 {
 	if (events & EPOLLERR || events & EPOLLHUP)
-	{	
-		server.recoverListener(*this);
-		return ;
-	}
+		throw std::runtime_error("Error on listener, unable to continue");
+
 	if (!(events & EPOLLIN))
 		return ;
 	

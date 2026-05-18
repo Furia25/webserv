@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 20:46:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 03:35:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Response.hpp"
 
-class CGIHandler : public AHandler
+class CGIHandler : public AHandler, IEpollHandler
 {
 public:
 	CGIHandler(
@@ -30,18 +30,29 @@ public:
 		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, body, route_result, status_code), 
-	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)) {};
+	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)), registered(false) {};
+
+	~CGIHandler();
 
 	void	onCreation();
 	void	onExecute() {};
+
+	void	initPaths();
 	void	initEnvironment();
 	void	setEnv(const std::string& key, const std::string& value);
 
 private:
 	const Config::CGIConfig&	CGIConfig;
+	std::vector<std::string>	envFlat;
 
-	HashMap<std::string, std::string>	env;
-	std::vector<const char *>			envFlat;
+	std::string					pathInfo;
+	std::string					scriptName;
+	std::string					scriptFilename;
+
+	bool						registered;
+
+	CGIHandler(const CGIHandler& other);
+	CGIHandler&	operator=(const CGIHandler& other);
 };
 
 

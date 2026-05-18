@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileSystem.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/16 20:44:02 by antoine          ###   ########.fr       */
+/*   Updated: 2026/05/18 02:26:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,11 @@ namespace FileSystem
 	static inline bool	isReadable(const std::string& path) 
 	{
 		return (access(path.c_str(), R_OK) == 0);
+	}
+
+	static inline bool	isExecutable(const std::string& path) 
+	{
+		return (access(path.c_str(), X_OK) == 0);
 	}
 
 	static inline bool	isWritable(const std::string& path) 

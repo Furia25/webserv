@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 19:10:54 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:02:18 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,8 @@ Connection::~Connection()
 
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
-	(void)server;
+	(void) server;
+
 	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
 	{
 		if (events & EPOLLERR)
@@ -78,9 +79,9 @@ void Connection::setJob(IJob *job)
 void Connection::setWritable(bool writable)
 {
 	if (writable)
-		this->server.setPollEvent(*this, CONNECTION_EVENTS | EPOLLOUT);
+		this->server.setPollEvent(*this, this->client_socket.getFd(), CONNECTION_EVENTS | EPOLLOUT);
 	else
-		this->server.setPollEvent(*this, CONNECTION_EVENTS);
+		this->server.setPollEvent(*this, this->client_socket.getFd(), CONNECTION_EVENTS);
 }
 
 void Connection::timeout(Alarm<Connection *> &alarm)

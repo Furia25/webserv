@@ -78,7 +78,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		client.actualHandler = NULL;
 	}
 
-	AHandler	*handler;
+	AHandler	*handler = NULL;
 	this->totalRequests++;
 
 	switch (client.routeRes.route->handler)
@@ -217,7 +217,9 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 	try
 	{
+		#if HTTP_DEBUG == true
 		client.builder.print();
+		#endif
 		client.builder.check();
 	}
 	catch (const std::exception& e)
