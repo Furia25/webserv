@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:32:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:22:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,6 @@
 
 class Response
 {
-private:
-	enum State	{STATUS, HEADER, BODY, END};
-
-	Connection&	connection;
-	enum State	state;
-	bool		is_chunked;
-
 public:
 	Response(Connection& connection);
 	Response(Connection& connection, HTTPCode code);
@@ -52,6 +45,34 @@ public:
 	Response&	sendBody(const uint8_t *body, size_t length);
 	Response&	sendChunk(const std::string& body);
 	Response&	sendChunk(const uint8_t *body, size_t length);
+
+	void		setBuffering(bool enable) { this->isBuffered = enable; };
+
+private:
+	enum State	{STATUS, HEADER, BODY, END};
+
+	Connection&				connection;
+	enum State				state;
+	bool					isChunked;
+
+	bool					isBuffered;
+	std::vector<uint8_t>	buffer;
+
+	inline void	sendData(const uint8_t *data, size_t len)
+	{
+		if (!this->isBuffered)
+			this->connection.sendData(data, len);
+		else
+			this->buffer.insert(this->buffer.end(), data, data + len);
+	};
+
+	inline void	sendData(const std::string &data)
+	{
+		this->sendData(reinterpret_cast<const uint8_t *>(data.c_str()), data.size());
+	};
+
+	Response(const Response& other);
+	Response&	operator=(const Response& other);
 };
 
 #endif // _RESPONSE_H
