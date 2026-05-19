@@ -220,6 +220,11 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 		client.builder.print();
 		client.builder.check();
 	}
+	catch (const HTTPException& e)
+    {
+        dispatchError(connection, e.getStatusCode());
+        return false;
+    }
 	catch (const std::exception& e)
 	{
 		dispatchError(connection, HTTPCode::BAD_REQUEST);

@@ -3,14 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   Body.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/13 03:37:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 15:48:47 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Body.hpp"
+# include "Utils/FileSystem.hpp"
+# include "HTTP/HTTPTypes.hpp"
+# include "Logger.hpp"
+
 #define _IS_ONE_MO_ 1048576
 
 Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), destinationPath(""), isFinished(false)
@@ -44,6 +48,22 @@ Body&	Body::operator=(const Body& other)
 	return *this;
 }
 
+void ensureDirectoryExists(const std::string& filepath)
+{
+	size_t	lastSlash = filepath.find_last_of('/');
+	if (lastSlash == std::string::npos)
+		return;
+	std::string dirPath = filepath.substr(0, lastSlash);
+	if (dirPath.empty())
+		return;
+	struct stat st;
+	if (stat(dirPath.c_str(), &st) != 0)
+	{
+		if (mkdir(dirPath.c_str(), 0755) != 0 && errno != EEXIST)
+			throw HTTPCode(HTTPCode::INTERNAL_SERVER_ERROR);
+	}
+}
+
 void	Body::init(size_t expected, const std::string& path, bool stream)
 {
 	this->expectedSize = expected;
@@ -53,8 +73,9 @@ void	Body::init(size_t expected, const std::string& path, bool stream)
 
 	if (this->isStreaming)
 	{
+		std::string destination_temp = this->destinationPath + ".tmp";
 		this->fileWriter = new FileWriter();
-		this->fileWriter->open(this->destinationPath);
+		this->fileWriter->open(destination_temp);
 	}
 	else
 		memoryBuffer.reserve(expectedSize);
@@ -160,11 +181,8 @@ Body::~Body()
 {
 	if (this->fileWriter) 
 	{
-		if (!this->isFinished && this->isStreaming) 
-		{
-			this->fileWriter->close();
-			std::remove(this->destinationPath.c_str());
-		}
+		if (isStreaming && FileSystem::exists(this->destinationPath)) 
+        std::remove(this->destinationPath.c_str());
 		delete this->fileWriter;
 		this->fileWriter = NULL;
 	}

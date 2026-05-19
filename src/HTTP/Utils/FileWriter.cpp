@@ -3,15 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   FileWriter.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/29 13:49:30 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 15:50:19 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Utils/FileWriter.hpp"
 # include "HTTP/HTTPTypes.hpp"
+# include <unistd.h>
 
 void FileWriter::open(const std::string& path, bool append)
 {
@@ -25,7 +26,9 @@ void FileWriter::open(const std::string& path, bool append)
 	if (!this->fileStream.is_open())
 	{
 		hasError = true;
-		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+		{
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+		}
 	}
 	this->bytesWrittenTotal = 0;
 }

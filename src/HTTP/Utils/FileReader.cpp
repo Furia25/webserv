@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileReader.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 15:50:04 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,9 @@ void FileReader::open(const std::string& path)
 	this->fileStream.open(path.c_str(), std::ios::binary | std::ios::ate);
 	
 	if (!this->fileStream.is_open())
+	{
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+	}
 
 	this->fileSize = this->fileStream.tellg();
 	this->fileStream.seekg(0, std::ios::beg);

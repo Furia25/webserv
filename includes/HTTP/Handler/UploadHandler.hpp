@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 03:43:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 15:10:49 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,6 @@ public:
 	: AHandler(handler, connection, request, body, route_result, status_code), 
 		uploadConfig(static_cast<const Config::UploadConfig&>(*route_result.route)) {};
 
-	void	cleanTempFile(const std::string& path);
 	void	onExecute();
 private:
 	const Config::UploadConfig&	uploadConfig;

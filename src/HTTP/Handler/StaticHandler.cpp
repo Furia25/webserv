@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 20:00:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 15:50:21 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,7 +71,9 @@ void	StaticHandler::handleDelete()
 		if (std::remove(physicalPath.c_str()) == 0)
 			Response(this->connection, HTTPCode::NO_CONTENT).sendEnd();
 		else
+		{
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+		}
 	}
 	this->setFinished();
 }

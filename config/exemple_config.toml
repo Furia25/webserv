@@ -49,7 +49,7 @@ max_body_size = 150000000
 	max_body_size = 100000000
 	allowed_extensions = []
 	allow_overwrite = false
-	upload_store = "./www/site1/uploads"
+	upload_store = "./www/site1/upload"
 
 		[servers.routes.cookies.session_id]
 		generate = true

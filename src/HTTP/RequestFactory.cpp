@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 13:38:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/19 16:32:27 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,7 +160,6 @@ void RequestFactory::validateMethod() const
 
 void RequestFactory::validateProtocol() const
 {
-	// NOT NECESSARY
 	if (protocol != HTTP_VERSION)
 		throw HTTPException(HTTPCode::HTTP_VERSION_NOT_SUPPORTED);
 }
@@ -187,8 +186,8 @@ void RequestFactory::invalidPath()
 
 void RequestFactory::check()
 {
-	validateMethod();
 	validateProtocol();
+	validateMethod();
 	validatePath();
 	validateHeader();
 	is_validated = true;
