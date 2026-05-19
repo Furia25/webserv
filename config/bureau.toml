@@ -40,8 +40,10 @@ root = "www/bureau"
 	path = "/api"
 	methods = ["GET", "POST"]
 	handler = "CGI"
-	default_bin = "webserv"
+	default_bin = "api.py"
+	interpreters = {py = "python3"}
 	cgi_timeout = 10
+	env = {QUERY_STRING = "bite"}
 
 	[[servers.routes]]
 	path = "/status"

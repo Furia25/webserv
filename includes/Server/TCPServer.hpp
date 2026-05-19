@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 18:21:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 03:54:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,32 +70,39 @@ public:
 	size_t				getTotalConnections(void) const { return Connection::last_id; };
 	size_t				getConnectionsCount(void) const { return this->actualConnections; };
 
+	void				setPollEvent(IEpollHandler& event_handler, int fd, uint32_t events);
+	void				addPollEvent(IEpollHandler& event_handler, int fd, uint32_t events);
+	void				removePollEvent(IEpollHandler& event_handler, int fd);
+
 	static void			tickCallback(void *instance);
 
 	static	HashedTimingWheel<EPOLL_TIMEOUT> AlarmManager;
 
 	friend class Connection;
 	friend class Listener;
+
 protected:
 	void	clearListeners();
 	void	clearConnections();
+
 private:
 	time_t						startTime;
 	size_t						actualConnections;
-	int							epoll_fd;
+	int							epollfd;
 	IRequestHandler				*handler;
+
 	std::vector<Listener*>		listeners;
+
 	HashMap<int, Connection*>	connections;
 	std::vector<Connection *>	deletableConnections;
-
 	FreeList<Connection>		connectionPool;
+
+	std::vector<IEpollHandler*>	freeHooks;
+
 	const Config::EngineConfig&	engineConfig;
 
 	void	recoverListener(Listener& listener);
 
-	void	setPollEvent(IEpollHandler& event_handler, uint32_t events);
-	void	addPollEvent(IEpollHandler& event_handler, uint32_t events);
-	void	removePollEvent(IEpollHandler& event_handler);
 	void	registerConnection(Connection *connection);
 	void	dropConnection(Connection* connection);
 };

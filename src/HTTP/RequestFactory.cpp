@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/19 16:32:27 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/19 17:03:11 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,31 +19,8 @@
 RequestFactory::RequestFactory() 
 	: is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
+	this->raw_buffer.reserve(4096);
 }
-
-RequestFactory::RequestFactory(const RequestFactory &other)
-{
-	*this = other;
-}
-
-RequestFactory &RequestFactory::operator=(const RequestFactory &other)
-{
-	if (this != &other)
-	{
-		this->raw_buffer = other.raw_buffer;
-		this->is_parsing_complete = other.is_parsing_complete;
-		this->is_header_parsed = other.is_header_parsed;
-		this->is_validated = other.is_validated;
-		this->headers = other.headers;
-		this->method = other.method;
-		this->request_path = other.request_path;
-		this->query_string = other.query_string;
-		this->protocol = other.protocol;
-	}
-	return (*this);
-}
-
-RequestFactory::~RequestFactory() {}
 
 void RequestFactory::reset()
 {
@@ -61,7 +38,7 @@ void RequestFactory::reset()
 void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
 	if (!is_header_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
-        throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
+		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
 	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
 	if (!is_header_parsed)
 	{
@@ -72,7 +49,6 @@ void RequestFactory::feed(const uint8_t *fragment, size_t length)
 			is_header_parsed = true;
 		}
 	}
-
 }
 
 size_t RequestFactory::findHeaderEnd()

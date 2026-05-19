@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 02:17:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 22:36:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,13 @@ int main(int argc, char **argv)
 {
 	try
 	{
+		if (::signal(SIGINT, SIG_IGN) == SIG_ERR)
+			throw std::runtime_error("Couldn't set handler for signal");
+		if (::signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+			throw std::runtime_error("Couldn't set handler for signal");
+		if (::signal(SIGCHLD, SIG_IGN) == SIG_ERR)
+			throw std::runtime_error("Couldn't set handler for signal");
+
 		if (argc != 2)
 			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Specified config in TOML format needed, see documentation");
 

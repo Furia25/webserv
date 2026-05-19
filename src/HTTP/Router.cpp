@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 20:16:24 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/19 00:37:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTP/Router.hpp"
 #include "Utils/IntegerUtils.hpp"
 
-static inline void extract_host(const Request &request, std::string& host)
+inline void extract_host(const Request &request, std::string& host)
 {
 	host = "";
 
@@ -37,10 +37,9 @@ static inline void extract_host(const Request &request, std::string& host)
 static inline void match_server(Router::RouteResult& result, const Connection& connection,
 		const Config::AppConfig &config, const Request &request)
 {
-	std::string	host;
-	extract_host(request, host);
+	extract_host(request, result.hostStr);
 	const RadixTree<Config::ServerConfig *>& tree = config.serversMap.at(connection.getOriginPort());
-	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(host);
+	RadixTree<Config::ServerConfig *>::const_iterator it = tree.find_prefix(result.hostStr);
 	if (it == tree.end())
 		result.host = &Router::findDefaultServer(connection.getOriginPort(), config);
 	else

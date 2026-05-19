@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 19:18:40 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 22:38:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,8 @@ TCPServer::TCPServer(const Config::EngineConfig& engine_config) : connectionPool
 {
 	this->startTime = 0;
 	this->actualConnections = 0;
-	this->epoll_fd = ::epoll_create(MAX_CLIENTS);
-	if (this->epoll_fd == -1)
+	this->epollfd = ::epoll_create(MAX_CLIENTS);
+	if (this->epollfd == -1)
 		throw std::runtime_error("Unable to init epoll :" + std::string(strerror(errno)));
 	void *ptr = this->connectionPool.acquire();
 	this->connectionPool.releaseRaw(ptr);
@@ -38,14 +38,15 @@ TCPServer::~TCPServer()
 	this->clearListeners();
 	this->cleanConnections();
 	this->clearConnections();
-	close(this->epoll_fd);
+	close(this->epollfd);
 }
 
 void TCPServer::run(void)
 {
+	if (::signal(SIGINT, signal_handler) == SIG_ERR)
+		throw std::runtime_error("Couldn't set handler for signal");
+
 	this->startTime = time(NULL);
-	std::signal(SIGINT, signal_handler);
-	std::signal(SIGPIPE, SIG_IGN);
 
 	std::vector<epoll_event>	events_vec;
 	events_vec.reserve(this->engineConfig.max_events);
@@ -56,7 +57,7 @@ void TCPServer::run(void)
 	{
 		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
 		int timeout = next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout;
-		int n = epoll_wait(this->epoll_fd, events, this->engineConfig.max_events, timeout);
+		int n = epoll_wait(this->epollfd, events, this->engineConfig.max_events, timeout);
 		if (n < 0)
 		{
 			if (errno == EINTR)
@@ -66,7 +67,7 @@ void TCPServer::run(void)
 		}
 		for (int i = 0; i < n; ++i)
 		{
-			IEpollHandler *event_handler = static_cast<IEpollHandler *>(events[i].data.ptr);
+			IEpollHandler *event_handler = reinterpret_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
 		Logger::tick();
@@ -92,7 +93,7 @@ void TCPServer::openListener(const char *host, const char *service)
 	Listener *listener = new Listener(host, service);
 	Logger::INFO() << "Listening on " << listener->getAddress();
 	this->listeners.push_back(listener);
-	this->addPollEvent(*listener, LISTENER_EVENTS);
+	this->addPollEvent(*listener, listener->getSocket().getFd(), LISTENER_EVENTS);
 }
 
 void TCPServer::cleanConnections(void)
@@ -106,15 +107,17 @@ void TCPServer::registerConnection(Connection *connection)
 {
 	this->connections.insert(connection->getSocket().getFd(), connection);
 	this->handler->onConnection(*connection);
-	this->addPollEvent(*connection, CONNECTION_EVENTS);
+	this->addPollEvent(*connection, connection->getSocket().getFd(), CONNECTION_EVENTS);
 	this->actualConnections++;
 }
 
 void TCPServer::dropConnection(Connection *connection)
 {
-	this->connections.erase(connection->getSocket().getFd());
+	int	fd = connection->getSocket().getFd();
+
+	this->connections.erase(fd);
 	this->handler->onDisconnection(*connection);
-	this->removePollEvent(*connection);
+	this->removePollEvent(*connection, fd);
 	this->deletableConnections.push_back(connection);
 	#if HTTP_DEBUG == true
 	Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
@@ -124,7 +127,6 @@ void TCPServer::dropConnection(Connection *connection)
 
 /*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER
  REALLY REALLY UNSAFE IDK WHY I DO THAT, I AM A FOOL
- */
 void TCPServer::recoverListener(Listener& listener)
 {
 	bool		on_heap = false;
@@ -141,35 +143,35 @@ void TCPServer::recoverListener(Listener& listener)
 		}
 	}
 	const Address	address = listener_socket.getAddress();
-	this->removePollEvent(listener);
+	this->removePollEvent(listener, );
 	if (on_heap)
 		delete &listener;
 	this->openListener(address.getHost(), address.getService());
-}
+}*/
 
-void TCPServer::setPollEvent(IEpollHandler &event_handler, uint32_t events)
+void TCPServer::setPollEvent(IEpollHandler &event_handler, int fd, uint32_t events)
 {
 	epoll_event ev;
 	ev.events = events;
 	ev.data.ptr = &event_handler;
 	errno = 0;
-	if (epoll_ctl(this->epoll_fd, EPOLL_CTL_MOD, event_handler.getSocket().getFd(), &ev) == -1)
+	if (epoll_ctl(this->epollfd, EPOLL_CTL_MOD, fd, &ev) == -1)
 		throw std::runtime_error("Unable to add a polling event: " + std::string(strerror(errno)));
 }
 
-void TCPServer::addPollEvent(IEpollHandler &event_handler, uint32_t events){
+void TCPServer::addPollEvent(IEpollHandler &event_handler, int fd, uint32_t events){
 	epoll_event ev;
 	ev.events = events;
 	ev.data.ptr = &event_handler;
 	errno = 0;
-	if (epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, event_handler.getSocket().getFd(), &ev) == -1)
+	if (epoll_ctl(this->epollfd, EPOLL_CTL_ADD, fd, &ev) == -1)
 		throw std::runtime_error("Unable to add a polling event: " + std::string(strerror(errno)));
 }
 
-void TCPServer::removePollEvent(IEpollHandler &event_handler)
+void TCPServer::removePollEvent(IEpollHandler &event_handler, int fd)
 {
 	errno = 0;
-	int result = epoll_ctl(this->epoll_fd, EPOLL_CTL_DEL, event_handler.getSocket().getFd(), NULL);
+	int result = epoll_ctl(this->epollfd, EPOLL_CTL_DEL, fd, NULL);
 	if (result == -1 && !(errno == ENOENT || errno == EBADF))
 		throw std::runtime_error("Unable to remove a polling event: " + std::string(strerror(errno)));
 }

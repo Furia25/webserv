@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:01:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/03/13 18:03:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 04:02:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,9 +24,6 @@ class IEpollHandler
 {
 public:
 	virtual void			handleEvent(TCPServer& server, uint32_t events) = 0;
-	virtual Socket&			getSocket(void) = 0;
-	virtual const Socket&	getSocket(void) const = 0;
-	virtual const Address&	getAddress(void) const = 0;
 protected:
 private:
 };

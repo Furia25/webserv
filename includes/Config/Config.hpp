@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/15 20:44:19 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/18 20:36:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ struct RedirectConfig : public RouteConfig
 struct CGIConfig : public RouteConfig
 {
 	HashMap<std::string, std::string>	env;
-	toml::Table							interpreters;
+	HashMap<std::string, std::string>	interpreters;
 	std::string							default_bin;
 	timestamp_ms						timeout;
 
