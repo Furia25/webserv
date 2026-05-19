@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 20:45:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 18:19:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -391,9 +391,9 @@ void Config::CGIConfig::loadChild(toml::Variant& table, Config::Loader& loader)
 	loader.value_or(table, "env", temp_table, toml::Table());
 	loadStringTable(temp_table, this->env, loader, "env", true);
 
-	toml::Table temp_table;
-	loader.value_or(table, "interpreters", temp_table, toml::Table());
-	loadStringTable(temp_table, this->interpreters, loader, "interpreters", false);
+	toml::Table temp_table_second;
+	loader.value_or(table, "interpreters", temp_table_second, toml::Table());
+	loadStringTable(temp_table_second, this->interpreters, loader, "interpreters", false);
 }
 
 void Config::StatusConfig::loadChild(toml::Variant &table, Config::Loader &loader)

@@ -259,6 +259,55 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 	return true;
 }
 
+void	HTTPHandler::handleChunkSize(ClientData& client, const uint8_t* fragment, size_t& i)
+{
+	char c = fragment[i++];
+	if (c == '\r') 
+		return;
+	if (c == '\n') 
+	{
+		client.neededBytes = std::strtoul(client.sizeBuffer.c_str(), NULL, 16);
+		if (client.neededBytes > 10485760) throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
+			client.sizeBuffer.clear();
+		client.chunkState = (client.neededBytes == 0) ? CHUNK_COMPLETE : CHUNK_DATA;
+	}
+	else
+	{
+		client.sizeBuffer += c;
+	}
+	return ;
+}
+
+void	HTTPHandler::handleChunkData(ClientData& client, const uint8_t* fragment, size_t& i, size_t size)
+{
+	size_t remainingInFragment = size - i;
+	size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
+	if (toWrite > 0) 
+	{
+		receiveBodyChunk(client, fragment + i, toWrite);
+		i += toWrite;
+		client.neededBytes -= toWrite;
+	}
+	if (client.neededBytes == 0)
+		client.chunkState = CHUNK_TRAILER;
+	return ;
+}
+
+void	HTTPHandler::handleChunkTrailer(ClientData& client, const uint8_t* fragment, size_t& i)
+{
+	char c = fragment[i++];
+	if ( c == '\n')
+		client.chunkState = CHUNK_SIZE;
+	return ;
+}
+
+void	HTTPHandler::handleChunkComplete(Connection& connection, ClientData& client, const uint8_t* fragment, size_t& i)
+{
+	client.body.setIsFinished(true);
+	if (fragment[i++] == '\n')
+		checkCompletion(connection, client);
+}
+
 void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
 	size_t i = 0;
@@ -267,7 +316,7 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 		switch (client.chunkState)
 		{
 			case CHUNK_SIZE:
-				handleChunkSize(client, fragment, i, size); break;
+				handleChunkSize(client, fragment, i); break;
 			case CHUNK_DATA:
 				handleChunkData(client, fragment, i, size); break;
 			case CHUNK_TRAILER:
@@ -278,13 +327,46 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 	}
 }
 
+bool	HTTPHandler::handleHeaderPhase(Connection& connection, ClientData& client)
+	{
+		if (!processHeaders(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize())) 
+			{
+				connection.consumeReadData(connection.getReadBufferSize());
+				return false;
+			}
+			return true;
+	}
+
+void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& client)
+{
+	initializeBodyReception(connection, client);
+	
+	const HashMap<std::string, std::string>& headers = client.request.getHeaders();
+	if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 
+		Response(connection, HTTPCode::CONTINUE).sendEnd();
+
+	std::vector<uint8_t> extra = client.builder.getExtraData();
+	if (!extra.empty()) 
+	{
+		if (client.request.is_chunked)
+			processChunkedData(connection, client, extra.data(), extra.size());
+		else
+			receiveBodyChunk(client, extra.data(), extra.size());
+	}
+}
+
+void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
+{
+	if (client.request.is_chunked)
+		processChunkedData(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize());
+	else
+		receiveBodyChunk(client, connection.getReadBufferPtr(), connection.getReadBufferSize());
+}
+
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
-	const uint8_t	*fragment = connection.getReadBufferPtr();
-	size_t			dataSize = connection.getReadBufferSize();
 
-	/*C'est juste un test pour reset le client quand on reçois des donées alors qu'on a deja parser c'est a changé*/
 	if (client.actualHandler != NULL || client.builder.getCompleteStatus())
 	{
 		this->resetClient(client);
@@ -295,33 +377,16 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	{
 		if (!client.builder.get_header_parsed())
 		{
-			if (!processHeaders(connection, client, fragment, dataSize)) 
-			{
-				connection.consumeReadData(dataSize);
+			if (!handleHeaderPhase(connection, client)) 
 				return;
-			}
-			initializeBodyReception(connection, client);
-			const HashMap<std::string, std::string>& headers = client.request.getHeaders();
-			if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 
-				Response(connection, HTTPCode::CONTINUE).sendEnd();
-			std::vector<uint8_t> extra = client.builder.getExtraData();
-			if (!extra.empty()) 
-			{
-				if (client.request.is_chunked)
-					processChunkedData(connection, client, extra.data(), extra.size());
-				else
-					receiveBodyChunk(client, extra.data(), extra.size());
-			}
-			connection.consumeReadData(dataSize);
+			switchToBodyReception(connection, client);
+			connection.consumeReadData(connection.getReadBufferSize());
 			checkCompletion(connection, client);
 			return;
 		}
-		if (client.request.is_chunked)
-			processChunkedData(connection, client, fragment, dataSize);
-		else
-			receiveBodyChunk(client, fragment, dataSize);
+		streamBodyFragment(connection, client);
 		checkCompletion(connection, client);
-		connection.consumeReadData(dataSize);
+		connection.consumeReadData(connection.getReadBufferSize());
 	}
 	catch (const std::exception &e) 
 	{
@@ -330,7 +395,8 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		try 
 		{
 			dispatchError(connection, HTTPCode::INTERNAL_SERVER_ERROR);
-		} catch (...) 
+		}
+		catch (...) 
 		{
 			Response(connection, HTTPCode::INTERNAL_SERVER_ERROR)
 				.sendKeepAlive(false)

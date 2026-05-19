@@ -94,52 +94,6 @@ private:
 	const Config::AppConfig&		config;
 	size_t							totalRequests;
 
-	inline void			HTTPHandler::handleChunkSize(ClientData& client, const uint8_t* fragment, size_t& i, size_t size)
-	{
-		char c = fragment[i++];
-		if (c == '\r') 
-			return;
-		if (c == '\n') 
-		{
-			client.neededBytes = std::strtoul(client.sizeBuffer.c_str(), NULL, 16);
-			if (client.neededBytes > 10485760) throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
-				client.sizeBuffer.clear();
-			client.chunkState = (client.neededBytes == 0) ? CHUNK_COMPLETE : CHUNK_DATA;
-		}
-		else
-		{
-			client.sizeBuffer += c;
-		}
-		return ;
-	}
-	inline void			HTTPHandler::handleChunkData(ClientData& client, const uint8_t* fragment, size_t& i, size_t size)
-	{
-		size_t remainingInFragment = size - i;
-		size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
-		if (toWrite > 0) 
-		{
-			receiveBodyChunk(client, fragment + i, toWrite);
-			i += toWrite;
-			client.neededBytes -= toWrite;
-		}
-		if (client.neededBytes == 0)
-			client.chunkState = CHUNK_TRAILER;
-		return ;
-	}
-	inline void			HTTPHandler::handleChunkTrailer(ClientData& client, const uint8_t* fragment, size_t& i)
-	{
-		char c = fragment[i++];
-		if ( c == '\n')
-			client.chunkState = CHUNK_SIZE;
-		return ;
-	}
-	inline void			HTTPHandler::handleChunkComplete(Connection& connection, ClientData& client, const uint8_t* fragment, size_t& i)
-	{
-		client.body.setIsFinished(true);
-		if (fragment[i++] == '\n')
-			checkCompletion(connection, client);
-	}
-
 	void	processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool	initializeBodyReception(Connection& connection, ClientData& client);
@@ -157,6 +111,15 @@ private:
 			Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
 	
 	void	resetClient(ClientData& client);
+
+	void				handleChunkSize(ClientData& client, const uint8_t* fragment, size_t& i);
+	void				handleChunkData(ClientData& client, const uint8_t* fragment, size_t& i, size_t size);
+	inline void			handleChunkTrailer(ClientData& client, const uint8_t* fragment, size_t& i);
+	inline void			handleChunkComplete(Connection& connection, ClientData& client, const uint8_t* fragment, size_t& i);
+
+	bool		handleHeaderPhase(Connection& connection, ClientData& client);
+	void 		switchToBodyReception(Connection& connection, ClientData& client);
+	void		streamBodyFragment(Connection& connection, ClientData& client);
 };
 
 template <typename T>

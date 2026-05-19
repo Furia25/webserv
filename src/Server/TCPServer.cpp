@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 22:38:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/19 18:19:30 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,6 +170,7 @@ void TCPServer::addPollEvent(IEpollHandler &event_handler, int fd, uint32_t even
 
 void TCPServer::removePollEvent(IEpollHandler &event_handler, int fd)
 {
+	(void)event_handler;
 	errno = 0;
 	int result = epoll_ctl(this->epollfd, EPOLL_CTL_DEL, fd, NULL);
 	if (result == -1 && !(errno == ENOENT || errno == EBADF))

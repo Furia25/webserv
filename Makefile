@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/19 17:34:14 by antbonin         ###   ########.fr        #
+#    Updated: 2026/05/19 18:19:11 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -99,7 +99,7 @@ LIBS_INCLUDE_DIRS :=
 
 # Compiler & flags
 CXX = c++
-CXXFLAGS = -O3 -g3 -wall -wextra -werror -std=c++98
+CXXFLAGS = -O3 -g3 -Wall -Wextra -Werror -std=c++98
 
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I,$(LIBS_DIRS)) $(addprefix -I,$(LIBS_INCLUDE_DIRS))
 LDFLAGS =
