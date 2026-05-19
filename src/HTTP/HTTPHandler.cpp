@@ -93,7 +93,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-		handler = NULL ;//this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = NULL;//this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::UPLOAD :
 		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
@@ -151,6 +151,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 			}
 			Logger::ERROR() << "Upload Failed 0 bytes sent";
 			dispatchError(connection, HTTPCode::BAD_REQUEST);
+			return ;
 		}
 		client.body.finish();
 		this->launchHandler(connection, client);
@@ -265,66 +266,21 @@ void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client,
 	{
 		switch (client.chunkState)
 		{
-		case CHUNK_SIZE:
-			{
-				char c = fragment[i++];
-				if (c == '\r')
-					continue;
-				if (c == '\n')
-				{
-					client.neededBytes = std::strtoul(client.sizeBuffer.c_str(), NULL, 16);
-					if (client.neededBytes > 10485760)
-						throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
-					client.sizeBuffer.clear();
-					if (client.neededBytes == 0)
-						client.chunkState = CHUNK_COMPLETE;
-					else
-						client.chunkState = CHUNK_DATA;
-				}
-				else 
-					client.sizeBuffer += c;
-				break;
-			}
-		case CHUNK_DATA:
-			{
-				size_t remainingInFragment = size - i;
-				size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
-				if (toWrite > 0) 
-				{
-					receiveBodyChunk(client, fragment + i, toWrite);
-					i += toWrite;
-					client.neededBytes -= toWrite;
-				}
-				if (client.neededBytes == 0)
-					client.chunkState = CHUNK_TRAILER;
-				break;
-			}
-		case CHUNK_TRAILER:
-			{
-				char c = fragment[i++];
-				if ( c == '\n')
-					client.chunkState = CHUNK_SIZE;
-				break;
-			}
-		case CHUNK_COMPLETE:
-			{
-				client.body.setIsFinished(true);
-				if (fragment[i++] == '\n')
-				{
-					checkCompletion(connection, client);
-					return ;
-				}
-				break;
-			}
+			case CHUNK_SIZE:
+				handleChunkSize(client, fragment, i, size); break;
+			case CHUNK_DATA:
+				handleChunkData(client, fragment, i, size); break;
+			case CHUNK_TRAILER:
+				handleChunkTrailer(client, fragment, i); break;
+			case CHUNK_COMPLETE:
+				handleChunkComplete(connection, client, fragment, i); return;
 		}
 	}
 }
 
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
-	size_t id = connection.getClientID();
-
-	ClientData&		client = *this->clientsData.at(id);
+	ClientData&		client = *this->clientsData.at(connection.getClientID());
 	const uint8_t	*fragment = connection.getReadBufferPtr();
 	size_t			dataSize = connection.getReadBufferSize();
 
