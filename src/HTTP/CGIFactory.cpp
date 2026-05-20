@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIFactory.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/20 18:48:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/20 19:04:43 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/21 01:01:44 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,14 +64,14 @@ void	CGIResponseParser::feed(const uint8_t* data, size_t len)
 		size_t consumed = tryParseHeaderLine(buffer + pos, buffer_size - pos, key, value);
 		if (consumed == 0)
 			break;
-		if (!first_line_done)
-			first_line_done = true;
+		first_line_done = true;
 		if (!key.empty())
-		headers.insert(key, value);
+			headers.insert(key, value);
 		pos += consumed;
 	}
 	if (pos > 0)
 	{
+		//Ca cest tres cursed de bouger le buffer a chaque fois ca prend du temps pour rien
 		std::memmove(buffer, buffer + pos, buffer_size - pos);
 		buffer_size -= pos;
 	}

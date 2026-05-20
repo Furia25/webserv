@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:07:09 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/13 02:07:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/21 00:52:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 class Body
 {
 private:
-	FileWriter*				fileWriter;
+	FileWriter				*fileWriter;
 	bool					isStreaming;
 	size_t					expectedSize;
 	size_t					receivedSize;

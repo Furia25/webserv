@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/19 00:32:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/21 01:03:12 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "HTTP/Handler/CGIHandler.hpp"
 #include "Server/TCPServer.hpp"
 #include <sys/wait.h>
+#include "CGIHandler.hpp"
 
 #define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd); fd = -1;}} while (0)
 
@@ -21,8 +22,10 @@ CGIHandler::~CGIHandler()
 {
 	if (registered)
 	{
-		this->connection.getServer().removePollEvent(*this, this->pipeIn[1]);
-		this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
+		if (this->pipeIn[1] != -1)
+			this->connection.getServer().removePollEvent(*this, this->pipeIn[1]);
+		if (this->pipeOut[0] != -1)
+			this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
 	}
 
 	SAFE_CLOSE(this->pipeIn[0]);
@@ -31,7 +34,11 @@ CGIHandler::~CGIHandler()
 	SAFE_CLOSE(this->pipeOut[1]);
 
 	if (childPID != -1)
+	{
 		::kill(this->childPID, SIGKILL);
+		waitpid(this->childPID, NULL, 0);
+	}
+	
 }
 
 static inline std::string	to_env_key(const std::string& header);
@@ -207,9 +214,35 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 	envp.push_back(NULL);
 }
 
-void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
+void CGIHandler::onExecute()
+{
+	if (this->statusCode != HTTPCode::OK)
+		throw HTTPException(this->statusCode);
+}
+
+void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
+
+	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR )
+	{
+		if (events & EPOLLERR)
+			Logger::ERROR() << "CGI socket errored";
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return ;
+	}
+
+	if (events & EPOLLOUT)
+	{
+		//ssize_t s = ::send(this->pipeIn[1], this->body.getMemoryBuffer())
+	}
+
+	if (events & EPOLLIN)
+	{
+		uint8_t	buffer[4096];
+		ssize_t readed = ::recv(this->pipeOut[0], buffer, 4096, 0);
+		this->CGIParser.feed(buffer, 4096);
+	}
 }
 
 static inline std::string to_env_key(const std::string &header)

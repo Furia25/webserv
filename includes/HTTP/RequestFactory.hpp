@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestFactory.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/20 19:03:55 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/21 00:40:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@
 # include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Request.hpp"
 
-# define MAX_HEADER_SIZE 8192
+# define MAX_HEADER_SIZE 4096
 
 class RequestFactory
 {
