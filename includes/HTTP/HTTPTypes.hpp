@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 02:48:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/20 11:23:32 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,8 +39,6 @@
 # define HEADER_CONNECTION	"connection"
 
 # define HTTP_NEWLINE	"\r\n"
-
-# define MAX_HEADER_SIZE 8192
 
 # define _HANDLERTYPES_	(STATIC, UPLOAD, CGI, REDIRECT, STATUS)
 ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,

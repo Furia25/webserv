@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/19 15:48:47 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/19 20:24:35 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,22 +46,6 @@ Body&	Body::operator=(const Body& other)
 		const_cast<Body&>(other).fileWriter = NULL; 
 	}
 	return *this;
-}
-
-void ensureDirectoryExists(const std::string& filepath)
-{
-	size_t	lastSlash = filepath.find_last_of('/');
-	if (lastSlash == std::string::npos)
-		return;
-	std::string dirPath = filepath.substr(0, lastSlash);
-	if (dirPath.empty())
-		return;
-	struct stat st;
-	if (stat(dirPath.c_str(), &st) != 0)
-	{
-		if (mkdir(dirPath.c_str(), 0755) != 0 && errno != EEXIST)
-			throw HTTPCode(HTTPCode::INTERNAL_SERVER_ERROR);
-	}
 }
 
 void	Body::init(size_t expected, const std::string& path, bool stream)

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/19 17:03:11 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/20 14:30:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,13 @@
 # include "Utils/IntegerUtils.hpp"
 
 RequestFactory::RequestFactory() 
-	: is_parsing_complete(false), is_header_parsed(false), is_validated(false)
+	: buffer_size(0), is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
-	this->raw_buffer.reserve(4096);
 }
 
 void RequestFactory::reset()
 {
-	this->raw_buffer.clear();
+	std::memset(raw_buffer, '\0', buffer_size);
 	this->is_parsing_complete = false;
 	this->is_header_parsed = false;
 	this->is_validated = true;
@@ -37,9 +36,10 @@ void RequestFactory::reset()
 
 void RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
-	if (!is_header_parsed && (raw_buffer.size() + length > MAX_HEADER_SIZE))
+	if (!is_header_parsed && (buffer_size + length > MAX_HEADER_SIZE))
 		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
-	raw_buffer.insert(raw_buffer.end(), fragment, fragment + length);
+	std::memcpy(raw_buffer, fragment, length);
+	buffer_size += length;
 	if (!is_header_parsed)
 	{
 		size_t header_end = findHeaderEnd();
@@ -53,8 +53,9 @@ void RequestFactory::feed(const uint8_t *fragment, size_t length)
 
 size_t RequestFactory::findHeaderEnd()
 {
-	if (raw_buffer.size() < 4) return std::string::npos;
-	for (size_t i = 0; i <= raw_buffer.size() - 4; ++i)
+	if (buffer_size < 4) 
+		return std::string::npos;
+	for (size_t i = 0; i <= buffer_size - 4; ++i)
 	{
 		if (raw_buffer[i] == '\r' && raw_buffer[i+1] == '\n' && 
 			raw_buffer[i+2] == '\r' && raw_buffer[i+3] == '\n')
@@ -63,27 +64,27 @@ size_t RequestFactory::findHeaderEnd()
 	return std::string::npos;
 }
 
-size_t RequestFactory::findNewline(const std::vector<uint8_t>& buffer, size_t start, size_t max)
+size_t RequestFactory::findNewline(const uint8_t* buffer, size_t start, size_t max)
 {
-	for (size_t i = start; i <= max && i < buffer.size() - 1; ++i)
+	for (size_t i = start; i <= max && i <	buffer_size - 1; ++i)
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	return std::string::npos;
 }
 
-void RequestFactory::parseAllHeaders(const std::vector<uint8_t>& buffer, size_t pos)
+void RequestFactory::parseAllHeaders(const uint8_t* buffer, size_t pos)
 {
 	size_t start = 0;
 	size_t end = findNewline(buffer, start, pos);
 	
 	if (end != std::string::npos)
 	{
-		std::string first_line(buffer.begin() + start, buffer.begin() + end);
+		std::string first_line(reinterpret_cast<const char*>(buffer + start), end - start);
 		parseRequestLine(first_line);
 		start = end + 2;
 
 		while ((end = findNewline(buffer, start, pos)) != std::string::npos && end > start)
 		{
-			std::string header_line(buffer.begin() + start, buffer.begin() + end);
+			std::string header_line(reinterpret_cast<const char*>(buffer + start), end - start);
 			parseHeaderLine(header_line);
 			start = end + 2;
 		}
@@ -186,18 +187,13 @@ void RequestFactory::print() const
 std::vector<uint8_t> RequestFactory::getExtraData()
 {
 	size_t header_end = findHeaderEnd();
-
-	if	(header_end == std::string::npos)
+	if (header_end == std::string::npos)
 		return std::vector<uint8_t>();
-
 	size_t body_start = header_end + 4;
-
-	if	(body_start >= raw_buffer.size())
+	if (body_start >= this->buffer_size)
 		return std::vector<uint8_t>();
-
-	std::vector<uint8_t> extra(raw_buffer.begin() + body_start, raw_buffer.end());
-
-	raw_buffer.clear();
+    std::vector<uint8_t> extra(raw_buffer + body_start, raw_buffer + this->buffer_size);
+	this->buffer_size = body_start; 
 	return extra;
 }
 
