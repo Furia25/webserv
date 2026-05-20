@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/20 14:02:35 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/20 19:03:55 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,5 +76,6 @@ public:
 	const bool&		isValidated() 			const;
 	void			setValidateStatus(int status);
 };
+
 
 #endif // _REQUESTFACTORY_H

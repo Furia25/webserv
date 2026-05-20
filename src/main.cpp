@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 22:36:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/20 15:48:58 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,8 @@
 #include "HTTP/HTTPTypes.hpp"
 #include "HTTP/HTTPHandler.hpp"
 #include "Utils/FileSystem.hpp"
+
+#include <cstdlib>
 
 int main(int argc, char **argv)
 {
