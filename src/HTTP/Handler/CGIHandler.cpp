@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/12 14:42:30 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/21 01:03:12 by vdurand          ###   ########.fr       */
+/*   Created: 2026/05/21 22:45:08 by vdurand           #+#    #+#             */
+/*   Updated: 2026/05/21 22:51:41 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,7 +224,10 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 {
 	(void) server;
 
-	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR )
+	if (this->statusCode != HTTPCode::OK)
+		return ;
+
+	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
 	{
 		if (events & EPOLLERR)
 			Logger::ERROR() << "CGI socket errored";
@@ -234,15 +237,113 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 
 	if (events & EPOLLOUT)
 	{
+		//::write(this->pipeIn[1], );
 		//ssize_t s = ::send(this->pipeIn[1], this->body.getMemoryBuffer())
 	}
 
 	if (events & EPOLLIN)
 	{
-		uint8_t	buffer[4096];
-		ssize_t readed = ::recv(this->pipeOut[0], buffer, 4096, 0);
-		this->CGIParser.feed(buffer, 4096);
+		if (!this->isHeaderParsed)
+			this->parseCGIHeader();
+		else
+			this->proxyBody();
 	}
+}
+
+void CGIHandler::parseCGIHeader()
+{
+	ssize_t readed = ::read(this->pipeOut[0],
+		this->buffer + this->readedSize,
+		CGI_BUFFER_SIZE - this->readedSize);
+
+	if (readed <= 0)
+	{
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return;
+	}
+
+	this->readedSize += readed;
+
+	size_t	total_parsed = 0;
+	size_t remaining;
+
+	while ((remaining = this->readedSize - total_parsed) > 0)
+	{
+		if (this->buffer[total_parsed] == '\n' ||
+			(remaining >= 2 && this->buffer[total_parsed] == '\r' && this->buffer[total_parsed + 1] == '\n'))
+		{
+			total_parsed += (this->buffer[total_parsed] == '\r') ? 2 : 1;
+			this->isHeaderParsed = true;
+			Headers::iterator it = this->headers.find("status");
+			if (it != this->headers.end())
+			{
+				this->response.sendStatusLine(it->second);
+				this->headers.erase(it);
+			}
+			else
+				this->response.sendStatusLine(HTTPCode::OK);
+			break;
+			this->response.sendDefaults(this->request, &this->CGIConfig);
+			this->response.sendHeaders(this->headers);
+			this->response.setChunked();
+			if (this->readedSize > 0)
+				this->response.sendChunk(this->buffer, this->readedSize);
+		}
+
+		std::string key;
+		std::string value;
+		size_t parsed = 0;
+
+		try
+		{
+			parsed = HeaderParser::tryParseHeaderLine(
+				this->buffer + total_parsed,
+				remaining, key, value);
+		}
+		catch (const std::exception& e)
+		{
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+			return;
+		}
+
+		if (parsed == 0)
+			break;
+
+		this->firstHeader = true;
+		this->headers.insert(key, value);
+		total_parsed += parsed;
+	}
+
+	std::memmove(this->buffer,
+		this->buffer + total_parsed,
+		this->readedSize - total_parsed);
+	this->readedSize -= total_parsed;
+
+	if (this->readedSize >= CGI_BUFFER_SIZE)
+	{
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return;
+	}
+}
+
+void CGIHandler::proxyBody()
+{
+	ssize_t readed = ::read(this->pipeOut[0], this->buffer, CGI_BUFFER_SIZE);
+
+	if (readed == -1)
+	{
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return;
+	}
+
+	if (readed == 0)
+	{
+		this->response.sendEnd();
+		this->setFinished();
+		return;
+	}
+
+	this->response.sendChunk(this->buffer, readed);
 }
 
 static inline std::string to_env_key(const std::string &header)

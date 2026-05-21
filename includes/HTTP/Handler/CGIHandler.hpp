@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/21 00:33:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/21 22:44:44 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,12 @@
 # include <vector>
 
 # include "Config/Config.hpp"
+
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Response.hpp"
-# include "HTTP/CGIFactory.hpp"
+# include "HTTP/Utils/HeaderParser.hpp"
+
+# define CGI_BUFFER_SIZE		4096
 
 class CGIHandler : public AHandler, IEpollHandler
 {
@@ -32,11 +35,13 @@ public:
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, body, route_result, status_code), 
 	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)),
-	timeout(false),
 	alarmTimeout(this, timeoutCallback),
 	isBinary(false),
 	registered(false),
-	childPID(-1)
+	childPID(-1),
+	readedSize(0),
+	isHeaderParsed(false),
+	firstHeader(false)
 	{
 		this->pipeIn[0] = -1;
 		this->pipeIn[1] = -1;
@@ -51,6 +56,8 @@ public:
 
 	void	onExecute();
 	void	handleEvent(TCPServer& server, uint32_t events);
+	void	parseCGIHeader();
+	void	proxyBody();
 
 	void	initPaths();
 	void	initEnvironment();
@@ -59,11 +66,7 @@ public:
 private:
 	const Config::CGIConfig&	CGIConfig;
 
-	CGIResponseParser			CGIParser;
-
 	std::vector<std::string>	envFlat;
-
-	bool						timeout;
 	Alarm<CGIHandler *>			alarmTimeout;
 
 	std::string					pathInfo;
@@ -78,7 +81,12 @@ private:
 	int							pipeOut[2];
 	pid_t						childPID;
 
-	std::string					line;
+	Headers						headers;
+
+	uint8_t						buffer[CGI_BUFFER_SIZE];
+	size_t						readedSize;
+	bool						isHeaderParsed;
+	bool						firstHeader;
 
 	friend void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler);
 
@@ -86,6 +94,6 @@ private:
 	CGIHandler&	operator=(const CGIHandler& other);
 };
 
-void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler) { handler->timeout = true; };
+void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler) { handler->statusCode = HTTPCode::GATEWAY_TIMEOUT; };
 
 #endif _CGIHANDLER_H

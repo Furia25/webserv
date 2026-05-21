@@ -218,9 +218,9 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 	try
 	{
-		#if HTTP_DEBUG == true
-		client.builder.print();
-		#endif
+		// #if HTTP_DEBUG == true
+		// client.builder.print();
+		// #endif
 		client.builder.check();
 	}
 	catch (const HTTPException& e)

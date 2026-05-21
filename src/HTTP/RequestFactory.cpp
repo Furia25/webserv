@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/20 19:05:42 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/21 13:12:36 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,14 @@
 # include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
+# include "HTTP/Utils/HeaderParser.hpp"
 
 RequestFactory::RequestFactory() 
 	: buffer_size(0), is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
 }
 
-void RequestFactory::reset()
+void	RequestFactory::reset()
 {
 	std::memset(raw_buffer, '\0', buffer_size);
 	this->is_parsing_complete = false;
@@ -34,7 +35,7 @@ void RequestFactory::reset()
 	this->protocol.clear();
 }
 
-void RequestFactory::feed(const uint8_t *fragment, size_t length)
+void	RequestFactory::feed(const uint8_t *fragment, size_t length)
 {
 	if (!is_header_parsed && (buffer_size + length > MAX_HEADER_SIZE))
 		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
@@ -51,7 +52,7 @@ void RequestFactory::feed(const uint8_t *fragment, size_t length)
 	}
 }
 
-size_t RequestFactory::findHeaderEnd()
+size_t	RequestFactory::findHeaderEnd()
 {
 	if (buffer_size < 4) 
 		return std::string::npos;
@@ -64,34 +65,41 @@ size_t RequestFactory::findHeaderEnd()
 	return std::string::npos;
 }
 
-size_t RequestFactory::findNewline(const uint8_t* buffer, size_t start, size_t max)
+size_t	RequestFactory::findNewline(const uint8_t* buffer, size_t start, size_t max)
 {
 	for (size_t i = start; i <= max && i <	buffer_size - 1; ++i)
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	return std::string::npos;
 }
 
-void RequestFactory::parseAllHeaders(const uint8_t* buffer, size_t pos)
+void	RequestFactory::parseAllHeaders(const uint8_t* buffer, size_t size)
 {
-	size_t start = 0;
-	size_t end = findNewline(buffer, start, pos);
-	
-	if (end != std::string::npos)
+	size_t i = 0;
+	while (i < size && buffer[i] != '\n')
+		i++;
+	if (i == size)
+		return;
+	size_t actual_end = (i > 0 && buffer[i - 1] == '\r') ? i - 1 : i;
+	std::string first_line(reinterpret_cast<const char*>(buffer), actual_end);
+	parseRequestLine(first_line);
+	i++;
+	while (i < size)
 	{
-		std::string first_line(reinterpret_cast<const char*>(buffer + start), end - start);
-		parseRequestLine(first_line);
-		start = end + 2;
-
-		while ((end = findNewline(buffer, start, pos)) != std::string::npos && end > start)
+		std::string key, value;
+		size_t consumed = HeaderParser::tryParseHeaderLine(buffer + i, size - i, key, value);
+		if (consumed == 0)
+			break;
+		if (key.empty() && value.empty()) 
 		{
-			std::string header_line(reinterpret_cast<const char*>(buffer + start), end - start);
-			parseHeaderLine(header_line);
-			start = end + 2;
+			i += consumed;
+			break;
 		}
+		headers.insert(key, value);
+		i += consumed;
 	}
 }
 
-void RequestFactory::parseRequestLine(std::string &line)
+void	RequestFactory::parseRequestLine(std::string &line)
 {
 	std::istringstream iss(line);
 	iss >> method >> request_path >> protocol;
@@ -104,7 +112,7 @@ void RequestFactory::parseRequestLine(std::string &line)
 	}
 }
 
-void RequestFactory::parseHeaderLine(std::string &line)
+void	RequestFactory::parseHeaderLine(std::string &line)
 {
 	if (line.empty())
 		return ;
@@ -123,31 +131,31 @@ void RequestFactory::parseHeaderLine(std::string &line)
 		throw std::invalid_argument("Malformed header line: missing colon");
 }
 
-void RequestFactory::toLowerCase(std::string &str)
+void	RequestFactory::toLowerCase(std::string &str)
 {
 	for (size_t i = 0; i < str.length(); ++i)
 		str[i] = std::tolower(str[i]);
 }
 
-void RequestFactory::validateMethod() const
+void	RequestFactory::validateMethod() const
 {
 	if (method.empty())
 		throw HTTPException(HTTPCode::BAD_REQUEST); 
 }
 
-void RequestFactory::validateProtocol() const
+void	RequestFactory::validateProtocol() const
 {
 	if (protocol != HTTP_VERSION)
 		throw HTTPException(HTTPCode::HTTP_VERSION_NOT_SUPPORTED);
 }
 
-void RequestFactory::validatePath()
+void	RequestFactory::validatePath()
 {
 	if (request_path.empty() || request_path[0] != '/')
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void RequestFactory::validateHeader() const
+void	RequestFactory::validateHeader() const
 {
 	Headers::const_iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
@@ -156,12 +164,12 @@ void RequestFactory::validateHeader() const
 	}
 }
 
-void RequestFactory::invalidPath()
+void	RequestFactory::invalidPath()
 {
 	throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void RequestFactory::check()
+void	RequestFactory::check()
 {
 	validateProtocol();
 	validateMethod();
@@ -170,7 +178,7 @@ void RequestFactory::check()
 	is_validated = true;
 }
 
-void RequestFactory::print() const 
+void	RequestFactory::print() const 
 {
 	std::cout << "--- REQUEST DEBUG ---" << '\n';
 	std::cout << "Method: [" << method << "]" << '\n';
@@ -184,7 +192,7 @@ void RequestFactory::print() const
 	std::cout << "---------------------" << std::endl;
 }
 
-std::vector<uint8_t> RequestFactory::getExtraData()
+std::vector<uint8_t>	RequestFactory::getExtraData()
 {
 	size_t header_end = findHeaderEnd();
 	if (header_end == std::string::npos)

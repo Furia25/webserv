@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 04:27:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/21 22:40:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,22 +23,55 @@ Response::Response(Connection& connection, HTTPCode code) : connection(connectio
 
 Response&	Response::sendHeader(const std::string& key, const std::string& value)
 {
-	if (state != Response::HEADER)
-		throw std::runtime_error("Can't add headers");
-	this->sendData(key + ": " + value + HTTP_NEWLINE);
-	return (*this);
+
 }
 
-Response& Response::sendStatusLine(HTTPCode code)
+Response &Response::sendHeaders(const Headers &headers)
+{
+	if (state != Response::HEADER)
+		throw std::runtime_error("Can't add headers");
+	for (Headers::const_iterator it = headers.begin(); it != headers.end(); ++it)
+		this->sendHeader(it->first, it->second);
+}
+
+Response &Response::sendStatusLine(HTTPCode code)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
-	this->sendData(HTTP_VERSION " " + IntegerUtils::itoa(code) + " " + HTTPCode::toString(code) + HTTP_NEWLINE);
+	this->sendData(HTTP_VERSION "");
+	this->sendData(IntegerUtils::itoa(code));
+	this->sendData(" ");
+	this->sendData(HTTPCode::toString(code));
+	this->sendData(HTTP_NEWLINE);
 	this->state = Response::HEADER;
 	return (*this);
 }
 
-Response& Response::setChunked()
+Response &Response::sendStatusLine(size_t code)
+{
+	if (this->state != Response::STATUS)
+		throw std::runtime_error("Status already sent");
+	this->sendData(HTTP_VERSION "");
+	this->sendData(IntegerUtils::itoa(code));
+	this->sendData(" ");
+	this->sendData(HTTPCode::toString(code));
+	this->sendData(HTTP_NEWLINE);
+	this->state = Response::HEADER;
+	return (*this);
+}
+
+Response& Response::sendStatusLine(const std::string& code_full_str)
+{
+	if (this->state != Response::STATUS)
+		throw std::runtime_error("Status already sent");
+	this->sendData(HTTP_VERSION "");
+	this->sendData(code_full_str);
+	this->sendData(HTTP_NEWLINE);
+	this->state = Response::HEADER;
+	return (*this);
+}
+
+Response &Response::setChunked()
 {
 	this->isChunked = true;
 	this->sendHeader("Transfer-Encoding", "chunked");

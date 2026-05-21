@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileReader.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 11:36:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/04/28 14:28:04 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/21 22:52:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <fstream>
 # include <vector>
 # include <stdint.h>
+
 class FileReader
 {
 public:

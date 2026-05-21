@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 22:26:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/21 22:40:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,15 @@ public:
 	Response(Connection& connection, HTTPCode code);
 
 	Response&	sendStatusLine(HTTPCode code);
+	Response&	sendStatusLine(size_t code);
+	Response&	sendStatusLine(const std::string& code_full_str);
 	Response&	setChunked();
 	Response&	sendDefaults(const Request& request,
 					const Config::RouteConfig *route_config, bool force_close = false);
 	Response&	sendKeepAlive(bool keep_alive);
 	Response&	sendContentType(MIME mime_type);
 	Response&	sendContentLength(size_t length);
-	Response&	sendHeader(const std::string& key, const std::string& value);
+	Response&	sendHeaders(const Headers& headers);
 	Response&	sendCookies(const Cookies& cookies,
 					const HashMap<std::string, Config::CookieConfig>& cookies_config);
 	Response&	sendCookie(const std::string& key, const std::string& value,
@@ -47,6 +49,17 @@ public:
 	Response&	sendChunk(const uint8_t *body, size_t length);
 
 	void		setBuffering(bool enable) { this->isBuffered = enable; };
+
+	inline Response&	sendHeader(const std::string& key, const std::string& value)
+	{
+		if (this->state != Response::HEADER)
+			throw std::runtime_error("Can't add headers");
+		this->sendData(key);
+		this->sendData(": ");
+		this->sendData(value);
+		this->sendData(HTTP_NEWLINE);
+		return (*this);
+	};
 
 private:
 	enum State	{STATUS, HEADER, BODY, END};
