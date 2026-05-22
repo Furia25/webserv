@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 18:13:47 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 04:02:37 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 02:50:02 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,7 +98,7 @@ private:
 	const Config::EngineConfig&	engineConfig;
 	IJob						*actualJob;
 
-	friend void		timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
+	friend void		connection_timeout_callback(Alarm<Connection *>& alarm, Connection* connection);
 
 	void			setWritable(bool writable);
 	void			timeout(Alarm<Connection *>& alarm);
@@ -110,7 +110,7 @@ private:
 	Connection&		operator=(const Connection& other);
 };
 
-void	timeoutCallback(Alarm<Connection *>& alarm, Connection* connection);
+void	connection_timeout_callback(Alarm<Connection *>& alarm, Connection* connection);
 
 bool	operator==(const Connection& lhs, const Connection& rhs);
 

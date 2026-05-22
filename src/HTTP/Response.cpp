@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 22:40:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 02:52:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,17 +21,13 @@ Response::Response(Connection& connection, HTTPCode code) : connection(connectio
 	this->sendStatusLine(code);
 }
 
-Response&	Response::sendHeader(const std::string& key, const std::string& value)
-{
-
-}
-
-Response &Response::sendHeaders(const Headers &headers)
+Response& Response::sendHeaders(const Headers &headers)
 {
 	if (state != Response::HEADER)
 		throw std::runtime_error("Can't add headers");
 	for (Headers::const_iterator it = headers.begin(); it != headers.end(); ++it)
 		this->sendHeader(it->first, it->second);
+	return *this;
 }
 
 Response &Response::sendStatusLine(HTTPCode code)

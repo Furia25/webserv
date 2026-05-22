@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 04:02:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 03:23:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 size_t Connection::last_id = 0;
 
 Connection::Connection(TCPServer& server, Socket& server_socket, port_t origin_port) : server(server), bytes_sended(0),
-	bytes_received(0), state(CONNECTED), alarmTimeout(this, timeoutCallback), originPort(origin_port), engineConfig(server.engineConfig), actualJob(NULL)
+	bytes_received(0), state(CONNECTED), alarmTimeout(this, connection_timeout_callback), originPort(origin_port), engineConfig(server.engineConfig), actualJob(NULL)
 {
 	this->client_socket.accept(server_socket);
 	this->read_buffer.reserve(4096);
@@ -278,7 +278,7 @@ const char *Connection::getStateString(State state)
 	}
 }
 
-void	timeoutCallback(Alarm<Connection *> &alarm, Connection *connection)
+void	connection_timeout_callback(Alarm<Connection *> &alarm, Connection *connection)
 {
 	connection->timeout(alarm);
 }

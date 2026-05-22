@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 22:45:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/21 22:51:41 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 03:14:30 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,9 @@ void CGIHandler::onCreation()
 	std::vector<const char *>	envp;
 
 	this->initProcessVariables(argv, envp);
+
+	if (this->body.isOpen())
+		Logger::DEBUG() << "ZIzi";
 
 	/*Open pipes for inter process comunication*/
 	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
@@ -358,4 +361,9 @@ static inline std::string	*get_header(const Headers& header, const std::string& 
 {
 	Headers::const_iterator	it = header.find(key);
 	return it != header.end() ? &it->second : NULL;
+}
+
+void cgi_timeout_callback(Alarm<CGIHandler *> &alarm, CGIHandler *handler)
+{
+	handler->statusCode = HTTPCode::GATEWAY_TIMEOUT;
 }

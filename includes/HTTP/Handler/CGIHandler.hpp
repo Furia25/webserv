@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/21 22:44:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 03:13:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,10 @@
 
 # define CGI_BUFFER_SIZE		4096
 
+class CGIHandler;
+
+void	cgi_timeout_callback(Alarm<CGIHandler *>& alarm, CGIHandler *handler);
+
 class CGIHandler : public AHandler, IEpollHandler
 {
 public:
@@ -35,7 +39,7 @@ public:
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, body, route_result, status_code), 
 	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)),
-	alarmTimeout(this, timeoutCallback),
+	alarmTimeout(this, cgi_timeout_callback),
 	isBinary(false),
 	registered(false),
 	childPID(-1),
@@ -79,6 +83,7 @@ private:
 	bool						registered;
 	int							pipeIn[2];
 	int							pipeOut[2];
+	int							bodyFD;
 	pid_t						childPID;
 
 	Headers						headers;
@@ -88,12 +93,10 @@ private:
 	bool						isHeaderParsed;
 	bool						firstHeader;
 
-	friend void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler);
-
 	CGIHandler(const CGIHandler& other);
 	CGIHandler&	operator=(const CGIHandler& other);
+
+	friend void	cgi_timeout_callback(Alarm<CGIHandler *>& alarm, CGIHandler *handler);
 };
 
-void	timeoutCallback(Alarm<CGIHandler *>& alarm, CGIHandler *handler) { handler->statusCode = HTTPCode::GATEWAY_TIMEOUT; };
-
-#endif _CGIHANDLER_H
+#endif // _CGIHANDLER_H

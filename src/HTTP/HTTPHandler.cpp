@@ -428,8 +428,8 @@ void HTTPHandler::onDisconnection(Connection& connection)
 
 void HTTPHandler::onError(Connection& connection, uint32_t error_event)
 {
-	if (!(error_event & EPOLLRDHUP || error_event & EPOLLHUP))
-		Logger::ERROR() << "Connection:" << connection << " errored";
+	(void) error_event;
+	Logger::ERROR() << "Connection:" << connection << " errored " << std::strerror(errno);
 }
 
 void HTTPHandler::resetClient(ClientData &client)

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 19:40:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 03:10:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,9 @@ private:
 
 	void	handleError();
 	void	initError();
+
+	AHandler(const AHandler& other);
+	AHandler& operator=(const AHandler& other);
 };
 
 #endif // _IHANDLER_H
