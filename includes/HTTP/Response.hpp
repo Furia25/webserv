@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 22:40:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:42:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,8 @@ public:
 	Response&	sendBody(const uint8_t *body, size_t length);
 	Response&	sendChunk(const std::string& body);
 	Response&	sendChunk(const uint8_t *body, size_t length);
+
+	bool		hasStatus() const { return this->state == Response::STATUS; };
 
 	void		setBuffering(bool enable) { this->isBuffered = enable; };
 

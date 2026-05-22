@@ -37,13 +37,68 @@ root = "www/bureau"
 	status = "303"
 
 	[[servers.routes]]
-	path = "/api"
-	methods = ["GET", "POST"]
+	path = "/api/auth/login"
+	methods = ["POST"]
 	handler = "CGI"
 	default_bin = "api.py"
-	interpreters = {py = "python3"}
+	interpreters = {py = "/usr/bin/python3"}
 	cgi_timeout = 10
-	env = {}
+
+	[[servers.routes]]
+	path = "/api/auth/logout"
+	methods = ["POST"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/auth/validate"
+	methods = ["POST"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/auth/refresh"
+	methods = ["POST"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/users/profile"
+	methods = ["GET"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/reports"
+	methods = ["GET"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/bestiary"
+	methods = ["GET"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/api/artifacts"
+	methods = ["GET"]
+	handler = "CGI"
+	default_bin = "api.py"
+	interpreters = {py = "/usr/bin/python3"}
+	cgi_timeout = 10
 
 	[[servers.routes]]
 	path = "/status"

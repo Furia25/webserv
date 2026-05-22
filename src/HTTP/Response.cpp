@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/22 03:58:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:54:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ Response::Response(Connection& connection, HTTPCode code) : connection(connectio
 	this->sendStatusLine(code);
 }
 
-Response& Response::sendHeaders(const Headers &headers)
+Response& Response::sendHeaders(const Headers& headers)
 {
 	if (state != Response::HEADER)
 		throw std::runtime_error("Can't add headers");
@@ -30,7 +30,7 @@ Response& Response::sendHeaders(const Headers &headers)
 	return *this;
 }
 
-Response &Response::sendStatusLine(HTTPCode code)
+Response& Response::sendStatusLine(HTTPCode code)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
@@ -43,7 +43,7 @@ Response &Response::sendStatusLine(HTTPCode code)
 	return (*this);
 }
 
-Response &Response::sendStatusLine(size_t code)
+Response& Response::sendStatusLine(size_t code)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
@@ -67,7 +67,7 @@ Response& Response::sendStatusLine(const std::string& code_full_str)
 	return (*this);
 }
 
-Response &Response::setChunked()
+Response& Response::setChunked()
 {
 	this->isChunked = true;
 	this->sendHeader("Transfer-Encoding", "chunked");

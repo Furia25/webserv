@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 05:01:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:59:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ void CGIHandler::onCreation()
 		if (this->bodyFD == -1)
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 	}
-		
+
 	/*Open pipes for inter process comunication*/
 	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
@@ -96,12 +96,8 @@ void CGIHandler::onCreation()
 		::close(this->pipeOut[1]);
 
 		if (::chdir(this->routeResult.basePath.c_str()) == -1)
-		{
-			std::cout << "test\n";
 			_exit(EXIT_FAILURE);
-		}
 		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
-
 		_exit(EXIT_FAILURE);
 		break;
 	}
@@ -131,13 +127,14 @@ void CGIHandler::initPaths()
 	const std::string&	remainder = routeResult.pathRemainder;
 	size_t				slash = remainder.find('/', 1);
 
-	this->scriptName = remainder.substr(0, slash);
+	this->scriptName = remainder.substr(1, slash);
 	if (slash != std::string::npos)
 		this->pathInfo = remainder.substr(slash);
 	if (this->scriptName.empty() || this->scriptName == "/")
-		this->scriptName = "/" + this->CGIConfig.default_bin;
+		this->scriptName = this->CGIConfig.default_bin;
 
-	this->scriptFilename = this->routeResult.basePath + this->scriptName;
+	this->scriptFilename.reserve(this->routeResult.basePath.size() + 1 + this->scriptName.size());
+	this->scriptFilename = this->routeResult.basePath + "/" + this->scriptName;
 }
 
 inline void CGIHandler::initEnvironment()
@@ -158,7 +155,7 @@ inline void CGIHandler::initEnvironment()
 	env.insert("PATH_TRANSLATED", this->pathInfo.empty() ? ""
 		: this->routeResult.basePath + this->pathInfo);
 
-	env.insert("SCRIPT_NAME", this->scriptName);
+	env.insert("SCRIPT_NAME", this->CGIConfig.path + "/" + this->scriptName);
 
 	env.insert("SCRIPT_FILENAME", this->scriptFilename);
 	env.insert("QUERY_STRING", this->request.query_string);
@@ -216,8 +213,8 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 	else
 		this->interpreter = it->second;
 
-	argv[0] = this->isBinary ? this->scriptFilename.c_str() : this->interpreter.c_str();
-	argv[1] = this->isBinary ? NULL : this->scriptFilename.c_str();
+	argv[0] = this->isBinary ? this->scriptName.c_str() : this->interpreter.c_str();
+	argv[1] = this->isBinary ? NULL : this->scriptName.c_str();
 	argv[2] = NULL;
 
 	envp.reserve(this->envFlat.size() + 1);
@@ -232,7 +229,7 @@ void CGIHandler::onExecute()
 		throw HTTPException(this->statusCode);
 }
 
-void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
+void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 {
 	if (this->statusCode != HTTPCode::OK)
 		return ;
@@ -241,7 +238,7 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 	{
 		if (events & EPOLLERR)
 			Logger::ERROR() << "CGI socket errored";
-		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		//this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		return ;
 	}
 
@@ -250,6 +247,8 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 
 	if (events & EPOLLIN)
 	{
+		if (this->body.getSize() < this->writedSize)
+			return ;
 		if (!this->isHeaderParsed)
 			this->parseCGIHeader();
 		else
@@ -326,8 +325,7 @@ void CGIHandler::parseCGIHeader()
 
 	while ((remaining = this->readedSize - total_parsed) > 0)
 	{
-		if (this->buffer[total_parsed] == '\n' ||
-			(remaining >= 2 && this->buffer[total_parsed] == '\r' && this->buffer[total_parsed + 1] == '\n'))
+		if (this->buffer[total_parsed] == '\n' || (remaining >= 2 && this->buffer[total_parsed] == '\r' && this->buffer[total_parsed + 1] == '\n'))
 		{
 			total_parsed += (this->buffer[total_parsed] == '\r') ? 2 : 1;
 			this->isHeaderParsed = true;
@@ -339,12 +337,12 @@ void CGIHandler::parseCGIHeader()
 			}
 			else
 				this->response.sendStatusLine(HTTPCode::OK);
-			break;
 			this->response.sendDefaults(this->request, &this->CGIConfig);
 			this->response.sendHeaders(this->headers);
 			this->response.setChunked();
 			if (this->readedSize > 0)
-				this->response.sendChunk(this->buffer, this->readedSize);
+				this->response.sendChunk(this->buffer + total_parsed, this->readedSize - total_parsed);
+			return ;
 		}
 
 		std::string key;

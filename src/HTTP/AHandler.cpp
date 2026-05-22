@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 04:44:03 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:56:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,9 +32,6 @@ bool AHandler::execute()
 	}
 	catch (const HTTPException& http_exception)
 	{
-		#if HTTP_DEBUG == true
-			Logger::ERROR() << http_exception.getSummary();
-		#endif
 		this->statusCode = http_exception.getStatusCode();
 		this->errored = true;
 	}
@@ -111,9 +108,9 @@ void AHandler::handleError()
 		size_t	fileSize = this->fileReader.getFileSize();
 		MIME 	mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
 		response.sendStatusLine(statusCode)
-				.sendDefaults(this->request, NULL)
-				.sendContentType(mime_type)
-				.sendContentLength(fileSize);
+			.sendDefaults(this->request, NULL)
+			.sendContentType(mime_type)
+			.sendContentLength(fileSize);
 		if (this->routeResult.route)
 			response.sendDefaults(this->request, this->routeResult.route);
 		else
@@ -147,7 +144,7 @@ void AHandler::handleError()
 	case SEND_DEFAULT_ERROR:
 	{
 		response.sendStatusLine(statusCode)
-				.sendDefaults(this->request, NULL);
+			.sendDefaults(this->request, NULL);
 		if (request.method != Method::HEAD)
 			this->sendFullDefaultError();
 		this->state = FINISHED;
