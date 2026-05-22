@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/19 15:50:11 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/22 04:44:03 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,9 @@ bool AHandler::execute()
 	}
 	catch (const HTTPException& http_exception)
 	{
+		#if HTTP_DEBUG == true
+			Logger::ERROR() << http_exception.getSummary();
+		#endif
 		this->statusCode = http_exception.getStatusCode();
 		this->errored = true;
 	}

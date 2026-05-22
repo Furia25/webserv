@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/22 02:52:08 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 03:58:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ Response &Response::sendStatusLine(HTTPCode code)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
-	this->sendData(HTTP_VERSION "");
+	this->sendData(HTTP_VERSION " ");
 	this->sendData(IntegerUtils::itoa(code));
 	this->sendData(" ");
 	this->sendData(HTTPCode::toString(code));
@@ -47,7 +47,7 @@ Response &Response::sendStatusLine(size_t code)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
-	this->sendData(HTTP_VERSION "");
+	this->sendData(HTTP_VERSION " ");
 	this->sendData(IntegerUtils::itoa(code));
 	this->sendData(" ");
 	this->sendData(HTTPCode::toString(code));
@@ -60,7 +60,7 @@ Response& Response::sendStatusLine(const std::string& code_full_str)
 {
 	if (this->state != Response::STATUS)
 		throw std::runtime_error("Status already sent");
-	this->sendData(HTTP_VERSION "");
+	this->sendData(HTTP_VERSION " ");
 	this->sendData(code_full_str);
 	this->sendData(HTTP_NEWLINE);
 	this->state = Response::HEADER;

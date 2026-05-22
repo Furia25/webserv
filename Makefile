@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
+#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/21 13:33:14 by antbonin         ###   ########.fr        #
+#    Updated: 2026/05/22 04:28:19 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -79,6 +79,7 @@ SRC_FILES = \
 	HTTP/Handler/ErrorHandler.cpp \
 	HTTP/Handler/UploadHandler.cpp \
 	HTTP/Handler/StatusHandler.cpp \
+	HTTP/Handler/CGIHandler.cpp \
 	HTTP/Handler/RedirectHandler.cpp \
 	HTTP/Body.cpp \
 	HTTP/Response.cpp \
@@ -99,7 +100,7 @@ LIBS_INCLUDE_DIRS :=
 
 # Compiler & flags
 CXX = c++
-CXXFLAGS = -O3 -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -O3 -Wall -Wextra -Werror -std=c++98 -g3
 
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I,$(LIBS_DIRS)) $(addprefix -I,$(LIBS_INCLUDE_DIRS))
 LDFLAGS =

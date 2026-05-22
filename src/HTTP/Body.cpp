@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Body.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/19 20:24:35 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/22 04:00:23 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ void	Body::init(size_t expected, const std::string& path, bool stream)
 	if (this->isStreaming)
 	{
 		std::string destination_temp = this->destinationPath + ".tmp";
-		this->fileWriter = new FileWriter();
+		this->fileWriter = new FileWriter(); //bruh ??? pourquoi ??
 		this->fileWriter->open(destination_temp);
 	}
 	else

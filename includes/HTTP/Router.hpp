@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 03:13:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:03:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ namespace Router
 		const Config::RouteConfig	*route;
 		std::string					basePath;
 		std::string					pathRemainder;
+		std::string					fullPath;
 		std::string					hostStr;
 		HTTPCode					errorCode;
 		bool						success;
@@ -35,7 +36,6 @@ namespace Router
 		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
 	};
 
-	void						extract_host(const Request &request, std::string& host);
 	RouteResult					resolve(const Connection& connection,
 									const Config::AppConfig &config, const Request &req);
 	const Config::ServerConfig&	findDefaultServer(port_t port, const Config::AppConfig &config);

@@ -43,7 +43,7 @@ root = "www/bureau"
 	default_bin = "api.py"
 	interpreters = {py = "python3"}
 	cgi_timeout = 10
-	env = {QUERY_STRING = "bite"}
+	env = {}
 
 	[[servers.routes]]
 	path = "/status"

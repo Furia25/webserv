@@ -93,8 +93,8 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-		handler = NULL;//this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
-		break;
+		handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+	break;
 	case HandlerType::UPLOAD :
 		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
@@ -218,9 +218,9 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 	try
 	{
-		// #if HTTP_DEBUG == true
-		// client.builder.print();
-		// #endif
+		#if HTTP_DEBUG == true
+			client.builder.print();
+		#endif
 		client.builder.check();
 	}
 	catch (const HTTPException& e)
@@ -429,7 +429,14 @@ void HTTPHandler::onDisconnection(Connection& connection)
 void HTTPHandler::onError(Connection& connection, uint32_t error_event)
 {
 	(void) error_event;
-	Logger::ERROR() << "Connection:" << connection << " errored " << std::strerror(errno);
+
+	int			error_code = 0;
+	socklen_t	len = sizeof(error_code);
+	const char	*error = "Unknown";
+
+	if (getsockopt(connection.getSocket().getFd(), SOL_SOCKET, SO_ERROR, &error_code, &len) == 0)
+		error = strerror(error_code);
+	Logger::ERROR() << "Connection:" << connection << " errored " << error;
 }
 
 void HTTPHandler::resetClient(ClientData &client)

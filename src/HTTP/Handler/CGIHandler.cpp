@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/05/21 22:45:08 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 03:14:30 by vdurand          ###   ########.fr       */
+/*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
+/*   Updated: 2026/05/22 05:01:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 #include "HTTP/Handler/CGIHandler.hpp"
 #include "Server/TCPServer.hpp"
 #include <sys/wait.h>
-#include "CGIHandler.hpp"
 
 #define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd); fd = -1;}} while (0)
 
@@ -27,6 +26,8 @@ CGIHandler::~CGIHandler()
 		if (this->pipeOut[0] != -1)
 			this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
 	}
+
+	SAFE_CLOSE(this->bodyFD);
 
 	SAFE_CLOSE(this->pipeIn[0]);
 	SAFE_CLOSE(this->pipeIn[1]);
@@ -49,25 +50,29 @@ void CGIHandler::onCreation()
 	this->initPaths();
 	this->initEnvironment();
 
+	#if HTTP_DEBUG == true
+	for (size_t index = 0; index < this->envFlat.size(); ++index)
+		std::cout << this->envFlat[index] << "\n";
+	#endif
+
 	if (!FileSystem::exists(this->scriptFilename))
 		throw HTTPException(HTTPCode::NOT_FOUND, "Script file not found");
 
 	if (!FileSystem::isExecutable(this->scriptFilename))
 		throw HTTPException(HTTPCode::FORBIDDEN, "File not executable");
 
-	#if HTTP_DEBUG == true
-	for (size_t index = 0; index < this->envFlat.size(); ++index)
-		std::cout << this->envFlat[index] << "\n";
-	#endif
-
 	const char 					*argv[3];
 	std::vector<const char *>	envp;
 
 	this->initProcessVariables(argv, envp);
 
-	if (this->body.isOpen())
-		Logger::DEBUG() << "ZIzi";
-
+	if (this->body.getIsStreaming())
+	{
+		this->bodyFD = open(this->body.getFilePath().c_str(), 0);
+		if (this->bodyFD == -1)
+			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
+	}
+		
 	/*Open pipes for inter process comunication*/
 	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
@@ -91,14 +96,17 @@ void CGIHandler::onCreation()
 		::close(this->pipeOut[1]);
 
 		if (::chdir(this->routeResult.basePath.c_str()) == -1)
+		{
+			std::cout << "test\n";
 			_exit(EXIT_FAILURE);
+		}
 		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
 
 		_exit(EXIT_FAILURE);
 		break;
 	}
 	default: //Parent
-
+	{
 		::close(this->pipeIn[0]); this->pipeIn[0] = -1;
 		::close(this->pipeOut[1]); this->pipeOut[1] = -1;
 
@@ -106,11 +114,12 @@ void CGIHandler::onCreation()
 				|| ::fcntl(this->pipeOut[0], F_SETFL, O_NONBLOCK) == -1)
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 
-		TCPServer&	server = this->connection.getServer();
+		TCPServer& server = this->connection.getServer();
 		this->registered = true;
 		server.addPollEvent(*this, this->pipeIn[1],  EPOLLERR | EPOLLHUP | EPOLLOUT);
 		server.addPollEvent(*this, this->pipeOut[0], EPOLLERR | EPOLLHUP | EPOLLIN);
-		break;
+	}
+	break;
 	case -1: //Error
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 		break;
@@ -225,8 +234,6 @@ void CGIHandler::onExecute()
 
 void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 {
-	(void) server;
-
 	if (this->statusCode != HTTPCode::OK)
 		return ;
 
@@ -239,10 +246,7 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 	}
 
 	if (events & EPOLLOUT)
-	{
-		//::write(this->pipeIn[1], );
-		//ssize_t s = ::send(this->pipeIn[1], this->body.getMemoryBuffer())
-	}
+		this->handleWrite(server);
 
 	if (events & EPOLLIN)
 	{
@@ -251,6 +255,56 @@ void CGIHandler::handleEvent(TCPServer &server, uint32_t events)
 		else
 			this->proxyBody();
 	}
+}
+
+void CGIHandler::handleWrite(TCPServer& server)
+{
+	if (this->bodyFD == -1)
+	{
+		size_t  size = this->body.getSize();
+
+		ssize_t writed = ::write(this->pipeIn[1],
+			this->body.getMemoryBuffer().data() + this->writedSize,
+			size - this->writedSize);
+
+		if (writed == -1)
+		{
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+			return ;
+		}
+
+		if (writed == 0 || this->writedSize + writed >= size)
+		{
+			server.removePollEvent(*this, this->pipeIn[1]);
+			return ;
+		}
+
+		this->writedSize += writed;
+		return ;
+	}
+
+	loff_t offset = static_cast<loff_t>(this->writedSize);
+
+	ssize_t writed = splice(
+		this->bodyFD, &offset,
+		this->pipeIn[1], NULL,
+		65536,
+		SPLICE_F_MOVE
+	);
+
+	if (writed == -1)
+	{
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return ;
+	}
+
+	if (writed == 0)
+	{
+		server.removePollEvent(*this, this->pipeIn[1]);
+		return ;
+	}
+
+	this->writedSize += writed;
 }
 
 void CGIHandler::parseCGIHeader()
@@ -365,5 +419,6 @@ static inline std::string	*get_header(const Headers& header, const std::string& 
 
 void cgi_timeout_callback(Alarm<CGIHandler *> &alarm, CGIHandler *handler)
 {
+	(void) alarm;
 	handler->statusCode = HTTPCode::GATEWAY_TIMEOUT;
 }

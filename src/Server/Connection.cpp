@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 03:23:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 04:21:42 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,12 +142,6 @@ void Connection::handleWrite(void)
 	sent = this->client_socket.send(buffer_ptr, remaining);
 	if (sent > 0)
 		this->bytes_sended += sent;
-	else if (sent == -1) 
-	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK) 
-			this->setDeletable();
-		return ;
-	}
 	if (this->bytes_sended >= this->write_buffer.size())
 		this->clearWriteBuffer();
 }

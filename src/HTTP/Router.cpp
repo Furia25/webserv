@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/19 00:37:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 05:07:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,36 +79,36 @@ static inline void	validate_constraints(Router::RouteResult& result, const Reque
 	}
 }
 
-static inline void	build_physical_path(Router::RouteResult& result, const std::string& current_path)
+static inline void build_physical_path(Router::RouteResult& result, const std::string& current_path)
 {
-	const Config::ServerConfig	*host = result.host;
-	const Config::RouteConfig	*route = result.route;
+	const Config::ServerConfig  *host = result.host;
+	const Config::RouteConfig   *route = result.route;
 
 	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
 	const std::string&	found_path = route_it->first;
 	std::string			remainder = current_path.substr(found_path.size());
 
-	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
+	if (!remainder.empty() && remainder[0] == '/'
+			&& !found_path.empty() && found_path[found_path.size() - 1] == '/')
 		remainder = remainder.substr(1);
 
-	std::string active_root = host->root;
-	if (!route->root.empty())
-		active_root = route->root;
+	std::string base_physical_path;
 
-	std::string full_physical_path;
-	if (!route->alias.empty()) 
-		full_physical_path = active_root + route->alias + remainder;
+	if (!route->alias.empty())
+		base_physical_path = route->root + route->alias;
 	else
-		full_physical_path = active_root + found_path + remainder;
+		base_physical_path = route->root + found_path;
+	base_physical_path = URIUtils::normalizePath(base_physical_path);
 
-	full_physical_path = URIUtils::normalizePath(full_physical_path);
-    
-	std::string root_jail = URIUtils::normalizePath(active_root); 
-	if (full_physical_path.find(root_jail) != 0)
+	std::string root_jail = URIUtils::normalizePath(route->root);
+	result.fullPath = base_physical_path + remainder;
+
+	result.fullPath = URIUtils::normalizePath(result.fullPath);
+	if (result.fullPath.find(root_jail) != 0)
 		throw RouterException(HTTPCode::FORBIDDEN);
 
-	result.basePath = full_physical_path;
-	result.pathRemainder = "";
+	result.basePath = base_physical_path;
+	result.pathRemainder = remainder;
 }
 
 Router::RouteResult Router::resolve(const Connection& connection, const Config::AppConfig &config, const Request &request)

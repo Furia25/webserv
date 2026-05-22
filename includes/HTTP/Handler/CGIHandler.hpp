@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 03:13:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/22 04:35:36 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,16 @@ public:
 		const Request& request,
 		Body& body,
 		const Router::RouteResult& route_result,
-		HTTPCode status_code = HTTPCode::OK)
-	: AHandler(handler, connection, request, body, route_result, status_code), 
+		HTTPCode status_code = HTTPCode::OK) :
+	AHandler(handler, connection, request, body, route_result, status_code), 
 	CGIConfig(static_cast<const Config::CGIConfig&>(*route_result.route)),
 	alarmTimeout(this, cgi_timeout_callback),
 	isBinary(false),
 	registered(false),
+	bodyFD(-1),
 	childPID(-1),
 	readedSize(0),
+	writedSize(0),
 	isHeaderParsed(false),
 	firstHeader(false)
 	{
@@ -60,6 +62,9 @@ public:
 
 	void	onExecute();
 	void	handleEvent(TCPServer& server, uint32_t events);
+
+	void	handleWrite(TCPServer& server);
+
 	void	parseCGIHeader();
 	void	proxyBody();
 
@@ -90,6 +95,8 @@ private:
 
 	uint8_t						buffer[CGI_BUFFER_SIZE];
 	size_t						readedSize;
+	size_t						writedSize;
+
 	bool						isHeaderParsed;
 	bool						firstHeader;
 

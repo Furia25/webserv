@@ -67,7 +67,7 @@ private:
 			AlignedBuffer<StaticHandler>::type		static_handler;
 			AlignedBuffer<RedirectHandler>::type	redirect_handler;
 			AlignedBuffer<ErrorHandler>::type		error_handler;
-			// AlignedBuffer<CGIHandler>::type			cgi_handler;
+			AlignedBuffer<CGIHandler>::type			cgi_handler;
 			AlignedBuffer<StatusHandler>::type		status_handler;
 			AlignedBuffer<UploadHandler>::type		upload_handler;
 		};
