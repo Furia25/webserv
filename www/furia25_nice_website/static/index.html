@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liminal Registry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div id="view-login" class="view active">
+    <div class="grid-bg"></div>
+    <div class="login-wrap">
+      <header class="login-header">
+        <span class="tag">LIMINAL REGISTRY</span>
+        <h1>Bureau<br/><em>d'accès</em></h1>
+        <p class="subtitle">Système d'authentification v0.1</p>
+      </header>
+
+      <form id="login-form" class="login-form" onsubmit="return false">
+        <div class="field">
+          <label for="username">Identifiant</label>
+          <input type="text" id="username" name="username" autocomplete="username" placeholder="admin" />
+        </div>
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <div id="login-error" class="error-msg" hidden></div>
+        <button type="submit" id="login-btn" onclick="doLogin()">
+          <span class="btn-text">Connexion</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+
+      <footer class="login-footer">
+        <span class="mono">localhost:8080</span>
+        <span id="server-status" class="status-dot" title="Vérification..."></span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="view-dashboard" class="view">
+    <div class="grid-bg"></div>
+    <nav class="topbar">
+      <span class="tag">LIMINAL REGISTRY</span>
+      <div class="topbar-right">
+        <span class="mono" id="dash-username"></span>
+        <button class="btn-ghost" onclick="doLogout()">Déconnexion →</button>
+      </div>
+    </nav>
+
+    <main class="dashboard">
+      <section class="dash-hero">
+        <h2>Bienvenue,<br/><span id="dash-greeting"></span></h2>
+        <p class="mono small">Session active · <span id="dash-time"></span></p>
+      </section>
+
+      <div class="cards">
+        <div class="card card--active">
+          <div class="card-label mono">MODULE 01</div>
+          <div class="card-title">Authentification</div>
+          <div class="card-status ok">● Actif</div>
+          <p>Login / logout / verify via CGI Python. Sessions par token signé HMAC-SHA256.</p>
+        </div>
+        <div class="card card--soon">
+          <div class="card-label mono">MODULE 02</div>
+          <div class="card-title">Gestion utilisateurs</div>
+          <div class="card-status soon">○ Bientôt</div>
+          <p>CRUD complet sur les comptes, rôles et permissions.</p>
+        </div>
+        <div class="card card--soon">
+          <div class="card-label mono">MODULE 03</div>
+          <div class="card-title">Journaux système</div>
+          <div class="card-status soon">○ Bientôt</div>
+          <p>Consultation des logs du serveur en temps réel.</p>
+        </div>
+        <div class="card card--soon">
+          <div class="card-label mono">MODULE 04</div>
+          <div class="card-title">API Explorer</div>
+          <div class="card-status soon">○ Bientôt</div>
+          <p>Interface de test des endpoints CGI disponibles.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

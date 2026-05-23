@@ -76,7 +76,7 @@ max_body_size = 15000000
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
-	alias = "/static/"
+	alias = ""
 	methods = ["GET"]
 	index = "index.html"
 	autoindex = false

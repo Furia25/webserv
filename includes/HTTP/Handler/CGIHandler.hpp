@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 04:35:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/23 23:29:10 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,9 @@ public:
 	childPID(-1),
 	readedSize(0),
 	writedSize(0),
+	firstHeader(false),
 	isHeaderParsed(false),
-	firstHeader(false)
+	isCGICompleted(false)
 	{
 		this->pipeIn[0] = -1;
 		this->pipeIn[1] = -1;
@@ -97,8 +98,9 @@ private:
 	size_t						readedSize;
 	size_t						writedSize;
 
-	bool						isHeaderParsed;
 	bool						firstHeader;
+	bool						isHeaderParsed;
+	bool						isCGICompleted;
 
 	CGIHandler(const CGIHandler& other);
 	CGIHandler&	operator=(const CGIHandler& other);

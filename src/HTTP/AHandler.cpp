@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 05:56:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/24 01:31:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,13 @@ bool AHandler::execute()
 {
 	if (this->finished)
 		return false;
+
 	if (this->errored)
+	{
 		this->handleError();
+		return !this->finished;
+	}
+
 	try
 	{
 		if (this->first)
@@ -32,11 +37,13 @@ bool AHandler::execute()
 	}
 	catch (const HTTPException& http_exception)
 	{
+		this->first = false;
 		this->statusCode = http_exception.getStatusCode();
 		this->errored = true;
 	}
 	catch (...)
 	{
+		this->first = false;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		this->errored = true;
 	}
@@ -103,12 +110,11 @@ void AHandler::handleError()
 	case SEND_HEADERS:
 	{
 		try  { this->fileReader.open(physicalPath); }
-		catch (...) { this->state = SEND_DEFAULT_ERROR;}
+		catch (...) { this->state = SEND_DEFAULT_ERROR; return ;}
 
 		size_t	fileSize = this->fileReader.getFileSize();
 		MIME 	mime_type = MIME::from_extension(FileSystem::getExtension(physicalPath));
 		response.sendStatusLine(statusCode)
-			.sendDefaults(this->request, NULL)
 			.sendContentType(mime_type)
 			.sendContentLength(fileSize);
 		if (this->routeResult.route)

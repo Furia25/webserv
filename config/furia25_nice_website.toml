@@ -1,0 +1,48 @@
+[engine]
+max_timeout     = 4
+closing_timeout = 2
+
+[logging]
+tick_interval = 20
+level         = "DEBUG"
+
+[[servers]]
+server_name = "nice_website"
+root        = "www/furia25_nice_website"
+
+  [[servers.bindings]]
+  host    = "localhost"
+  service = "8080"
+
+  [servers.errors]
+  404 = "/errors/404.html"
+  500 = "/errors/500.html"
+  403 = "/errors/403.html"
+
+  [[servers.routes]]
+  handler   = "STATIC"
+  path      = "/"
+  alias     = "/static/"
+  methods   = ["GET"]
+  index     = "index.html"
+
+  [[servers.routes]]
+  path        = "/api"
+  handler     = "CGI"
+  methods     = ["GET", "POST"]
+  default_bin = "auth.py"
+  interpreters = { py = "/usr/bin/python3" }
+  cgi_timeout  = 10
+
+    [servers.routes.env]
+    HTTPS                = "off"
+
+  [[servers.routes]]
+  handler              = "STATUS"
+  path                 = "/status"
+  methods              = ["GET"]
+  show_start_time      = true
+  show_server_info     = true
+  show_connection_info = true
+  show_request_info    = true
+  show_timestamp       = true

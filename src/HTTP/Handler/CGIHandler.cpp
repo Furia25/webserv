@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 05:59:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/24 01:32:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,13 +127,32 @@ void CGIHandler::initPaths()
 	const std::string&	remainder = routeResult.pathRemainder;
 	size_t				slash = remainder.find('/', 1);
 
-	this->scriptName = remainder.substr(1, slash);
-	if (slash != std::string::npos)
-		this->pathInfo = remainder.substr(slash);
-	if (this->scriptName.empty() || this->scriptName == "/")
-		this->scriptName = this->CGIConfig.default_bin;
+	std::string firstSegment;
 
-	this->scriptFilename.reserve(this->routeResult.basePath.size() + 1 + this->scriptName.size());
+	if (remainder.size() > 1)
+		firstSegment = remainder.substr(1, slash == std::string::npos ? std::string::npos : slash - 1);
+
+	bool isExplicitScript = false;
+
+	size_t dot = firstSegment.rfind('.');
+	if (dot != std::string::npos)
+	{
+		std::string ext = firstSegment.substr(dot + 1);
+		isExplicitScript = this->CGIConfig.interpreters.contain(ext) > 0;
+	}
+
+	if (isExplicitScript)
+	{
+		this->scriptName = firstSegment;
+		if (slash != std::string::npos)
+			this->pathInfo = remainder.substr(slash);
+	}
+	else if (!this->CGIConfig.default_bin.empty())
+	{
+		this->scriptName = this->CGIConfig.default_bin;
+		this->pathInfo   = remainder;
+	}
+
 	this->scriptFilename = this->routeResult.basePath + "/" + this->scriptName;
 }
 
@@ -226,7 +245,24 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 void CGIHandler::onExecute()
 {
 	if (this->statusCode != HTTPCode::OK)
-		throw HTTPException(this->statusCode);
+	{
+		if (this->response.hasStatus())
+		{
+			this->response
+				.sendDefaults(this->request, this->routeResult.route, true)
+				.sendEnd();
+			this->setFinished();
+			return ;
+		}
+		else
+			throw HTTPException(this->statusCode);
+	}
+
+	if (this->isCGICompleted)
+	{
+		this->response.sendEnd();
+		this->setFinished();
+	}
 }
 
 void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
@@ -237,8 +273,29 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
 	{
 		if (events & EPOLLERR)
-			Logger::ERROR() << "CGI socket errored";
-		//this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		{
+			Logger::ERROR() << "CGI pipe errored";
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+			return ;
+		}
+
+		if (!this->response.hasStatus())
+		{
+			Headers::iterator it = this->headers.find("status");
+			if (it != this->headers.end())
+			{
+				this->response.sendStatusLine(it->second);
+				this->headers.erase(it);
+			}
+			else
+				this->response.sendStatusLine(HTTPCode::OK);
+			this->response.sendDefaults(this->request, &this->CGIConfig);
+			this->response.sendHeaders(this->headers);
+			this->response.setChunked();
+			if (this->readedSize > 0)
+				this->response.sendChunk(this->buffer, this->readedSize);
+			this->isCGICompleted = true;
+		}
 		return ;
 	}
 
@@ -247,8 +304,6 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 
 	if (events & EPOLLIN)
 	{
-		if (this->body.getSize() < this->writedSize)
-			return ;
 		if (!this->isHeaderParsed)
 			this->parseCGIHeader();
 		else
@@ -329,20 +384,7 @@ void CGIHandler::parseCGIHeader()
 		{
 			total_parsed += (this->buffer[total_parsed] == '\r') ? 2 : 1;
 			this->isHeaderParsed = true;
-			Headers::iterator it = this->headers.find("status");
-			if (it != this->headers.end())
-			{
-				this->response.sendStatusLine(it->second);
-				this->headers.erase(it);
-			}
-			else
-				this->response.sendStatusLine(HTTPCode::OK);
-			this->response.sendDefaults(this->request, &this->CGIConfig);
-			this->response.sendHeaders(this->headers);
-			this->response.setChunked();
-			if (this->readedSize > 0)
-				this->response.sendChunk(this->buffer + total_parsed, this->readedSize - total_parsed);
-			return ;
+			break ;
 		}
 
 		std::string key;
@@ -393,11 +435,11 @@ void CGIHandler::proxyBody()
 
 	if (readed == 0)
 	{
-		this->response.sendEnd();
-		this->setFinished();
-		return;
+		this->isCGICompleted = true;
+		return ;
 	}
 
+	this->readedSize += readed;
 	this->response.sendChunk(this->buffer, readed);
 }
 
@@ -419,4 +461,5 @@ void cgi_timeout_callback(Alarm<CGIHandler *> &alarm, CGIHandler *handler)
 {
 	(void) alarm;
 	handler->statusCode = HTTPCode::GATEWAY_TIMEOUT;
+	Logger::ERROR() << "CGI timeout on path " << handler->request.path;
 }
