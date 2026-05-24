@@ -1,94 +1,1026 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Liminal Registry</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/style.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FURIA25 :: LIMINAL REGISTRY :: YOU FOUND IT</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&family=Bungee+Shade&family=Special+Elite&family=Courier+Prime&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --pink:    #FF00FF;
+  --cyan:    #00FFFF;
+  --yellow:  #FFFF00;
+  --green:   #00FF41;
+  --orange:  #FF6A00;
+  --lime:    #CCFF00;
+  --red:     #FF1111;
+  --purple:  #CC00FF;
+  --teal:    #00FFCC;
+  --void:    #030305;
+  --void2:   #08080f;
+}
+
+/* ── SCANLINES + CRT LAYER ── */
+html { background: var(--void); }
+
+body {
+  background-color: var(--void);
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 3px,
+      rgba(0,255,65,0.018) 3px, rgba(0,255,65,0.018) 4px);
+  font-family: 'VT323', monospace;
+  color: var(--green);
+  min-height: 100vh;
+  cursor: crosshair;
+  overflow-x: hidden;
+}
+
+/* CRT scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px,
+      transparent 1px, transparent 2px);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center,
+    transparent 55%, rgba(0,0,0,0.70) 100%);
+  pointer-events: none;
+  z-index: 9997;
+}
+
+/* ── NOISE OVERLAY ── */
+@keyframes noiseShift { 0%,100%{background-position:0 0} 50%{background-position:30px 40px} }
+
+/* ── HEADER ── */
+header {
+  background: #000;
+  border-top: 6px solid var(--pink);
+  border-bottom: 3px double var(--purple);
+  text-align: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.ticker-wrap {
+  background: linear-gradient(90deg, var(--red), #900, var(--red));
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 4px 0;
+}
+.ticker-inner {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: var(--yellow);
+  letter-spacing: 2px;
+  animation: ticker 18s linear infinite;
+}
+@keyframes ticker { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+
+.site-title {
+  font-family: 'Bungee Shade', sans-serif;
+  font-size: clamp(3rem, 9vw, 7rem);
+  display: block;
+  padding: 10px 0 0;
+  background: linear-gradient(90deg,
+    var(--pink) 0%, var(--yellow) 25%,
+    var(--cyan) 50%, var(--lime) 75%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: huerot 8s linear infinite, glow 3s ease-in-out infinite alternate;
+  background-size: 200%;
+}
+@keyframes huerot { to { background-position: 200% 0; } }
+@keyframes glow {
+  from { filter: drop-shadow(0 0 12px var(--pink)) drop-shadow(0 0 30px rgba(255,0,255,0.3)); }
+  to   { filter: drop-shadow(0 0 20px var(--cyan)) drop-shadow(0 0 40px rgba(0,255,255,0.3)); }
+}
+
+.site-sub {
+  font-family: 'Special Elite', serif;
+  font-size: 1rem;
+  color: #555;
+  letter-spacing: 6px;
+  padding-bottom: 8px;
+  font-style: italic;
+}
+
+/* ── MARQUEE ── */
+.marquee-wrap {
+  background: #000;
+  border-top: 2px solid var(--cyan);
+  border-bottom: 2px solid var(--purple);
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 5px 0;
+  font-size: 1.3rem;
+  color: var(--cyan);
+}
+.marquee-inner {
+  display: inline-block;
+  animation: mq 26s linear infinite;
+}
+@keyframes mq { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
+
+/* ── STATUS BAR ── */
+#status-bar {
+  background: #000;
+  border-bottom: 2px solid var(--green);
+  padding: 4px 14px;
+  font-size: 1rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.dot { width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;animation:bl 1.1s step-end infinite; }
+.dot.on { background:var(--green);animation:none; }
+#auth-label { color:var(--cyan);margin-left:auto; }
+#live-clock { font-family:'Press Start 2P',monospace;font-size:11px;color:var(--yellow); }
+
+.blink      { animation: bl 1.1s step-end infinite; }
+.blink-slow { animation: bl 2.5s step-end infinite; }
+@keyframes bl { 50%{opacity:0} }
+
+/* ── LAYOUT ── */
+main {
+  max-width: 900px;
+  margin: 18px auto;
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── PANELS ── */
+.panel {
+  border: 3px solid;
+  padding: 14px;
+  background: var(--void2);
+  position: relative;
+  box-shadow: 0 0 20px rgba(0,0,0,0.8);
+}
+.panel::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.panel-pink   { border-color:var(--pink);  box-shadow:0 0 18px rgba(255,0,255,0.12); }
+.panel-cyan   { border-color:var(--cyan);  box-shadow:0 0 18px rgba(0,255,255,0.12); }
+.panel-yellow { border-color:var(--yellow);box-shadow:0 0 18px rgba(255,255,0,0.10); }
+.panel-green  { border-color:var(--green); box-shadow:0 0 18px rgba(0,255,65,0.10); }
+.panel-purple { border-color:var(--purple);box-shadow:0 0 18px rgba(204,0,255,0.12); }
+.panel-teal   { border-color:var(--teal);  box-shadow:0 0 18px rgba(0,255,204,0.10); }
+
+.ptitle {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  padding: 4px 8px;
+  display: inline-block;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  color: #000;
+}
+.ptitle.pink   { background:var(--pink); }
+.ptitle.cyan   { background:var(--cyan); }
+.ptitle.yellow { background:var(--yellow); }
+.ptitle.green  { background:var(--green); }
+.ptitle.purple { background:var(--purple); color:#fff; }
+.ptitle.teal   { background:var(--teal); }
+
+.corner {
+  position:absolute;top:-1px;right:-1px;
+  width:16px;height:16px;
+  clip-path:polygon(100% 0,100% 100%,0 0);
+}
+
+/* ── TABS (Login / Register) ── */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #1a1a1a;
+}
+.auth-tab {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: #000;
+  color: #333;
+  border: 2px solid #1a1a1a;
+  border-bottom: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.1s;
+  position: relative;
+  bottom: -2px;
+}
+.auth-tab.active {
+  color: var(--green);
+  border-color: var(--green);
+  background: #020f02;
+}
+.auth-tab:hover:not(.active) { color: #555; }
+
+.auth-pane { display: none; }
+.auth-pane.visible { display: block; }
+
+/* ── INPUTS ── */
+.login-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.login-row input {
+  background: #000;
+  border: 2px solid var(--green);
+  color: var(--green);
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  outline: none;
+  width: 150px;
+}
+.login-row input:focus { border-color: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+
+.reg-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.reg-form input {
+  background: #000;
+  border: 2px solid var(--purple);
+  color: var(--purple);
+  font-family: 'VT323', monospace;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  outline: none;
+  width: 100%;
+}
+.reg-form input:focus { border-color: var(--pink); box-shadow: 0 0 8px var(--pink); }
+.reg-form input::placeholder { color: #2a002a; }
+.reg-full { grid-column: 1 / -1; }
+
+/* ── BUTTONS ── */
+.retro-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  background: #000;
+  color: var(--green);
+  border: 2px solid var(--green);
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: all 0.1s;
+  letter-spacing: 1px;
+}
+.retro-btn:hover { background:var(--green);color:#000;transform:translate(-2px,-2px);box-shadow:4px 4px 0 #005c1a; }
+.retro-btn.red   { color:var(--red);   border-color:var(--red); }
+.retro-btn.red:hover   { background:var(--red);   color:#fff;box-shadow:4px 4px 0 #700;transform:translate(-2px,-2px); }
+.retro-btn.pink  { color:var(--pink);  border-color:var(--pink); }
+.retro-btn.pink:hover  { background:var(--pink);  color:#000;box-shadow:4px 4px 0 #800060;transform:translate(-2px,-2px); }
+.retro-btn.yellow{ color:var(--yellow);border-color:var(--yellow); }
+.retro-btn.yellow:hover{ background:var(--yellow);color:#000;box-shadow:4px 4px 0 #888800;transform:translate(-2px,-2px); }
+.retro-btn.purple{ color:var(--purple);border-color:var(--purple); }
+.retro-btn.purple:hover{ background:var(--purple);color:#fff;box-shadow:4px 4px 0 #600090;transform:translate(-2px,-2px); }
+.retro-btn.cyan  { color:var(--cyan);  border-color:var(--cyan); }
+.retro-btn.cyan:hover  { background:var(--cyan);  color:#000;box-shadow:4px 4px 0 #007777;transform:translate(-2px,-2px); }
+
+#login-msg, #reg-msg {
+  font-size: 1.05rem;
+  min-height: 1.4em;
+}
+#login-msg.ok, #reg-msg.ok  { color:var(--green); }
+#login-msg.err, #reg-msg.err { color:var(--red); }
+#reg-msg.warn { color:var(--yellow); }
+
+/* ── VISITOR STRIP ── */
+.visit-strip {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: var(--orange);
+  text-align: center;
+  border: 2px solid var(--orange);
+  background: #0a0000;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.visit-num { font-size: 15px; letter-spacing: 4px; color: var(--yellow); }
+
+/* ── GUESTBOOK ENTRIES ── */
+#gb-entries {
+  max-height: 520px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pink) #000;
+}
+#gb-entries::-webkit-scrollbar       { width:5px; }
+#gb-entries::-webkit-scrollbar-track { background:#000; }
+#gb-entries::-webkit-scrollbar-thumb { background:var(--pink); }
+
+.entry {
+  padding: 10px 0 8px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  grid-template-rows: auto auto auto;
+  column-gap: 10px;
+  border-bottom: 1px dashed #141414;
+  transition: background 0.2s;
+}
+.entry:last-child { border-bottom:none; }
+.entry:hover { background: rgba(255,0,255,0.02); }
+
+.e-avatar {
+  grid-row: 1 / 4;
+  width:40px;height:40px;
+  border: 2px solid;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Press Start 2P',monospace;font-size:8px;
+  align-self:start;margin-top:2px;
+  flex-shrink: 0;
+}
+/* rainbow avatars cycle by idx */
+.av0 { border-color:var(--green);  color:var(--green); }
+.av1 { border-color:var(--pink);   color:var(--pink); }
+.av2 { border-color:var(--cyan);   color:var(--cyan); }
+.av3 { border-color:var(--yellow); color:var(--yellow); }
+.av4 { border-color:var(--purple); color:var(--purple); }
+.av5 { border-color:var(--teal);   color:var(--teal); }
+
+.e-meta { display:flex;align-items:baseline;gap:8px;grid-column:2/3; }
+.e-name { font-size:1.3rem;color:var(--yellow); }
+.e-verified { font-family:'Press Start 2P',monospace;font-size:6px;color:var(--green);border:1px solid var(--green);padding:2px 4px;vertical-align:middle; }
+.e-website  { font-size:0.85rem;color:#2a2a2a; }
+.e-time  { font-size:0.85rem;color:#252525;white-space:nowrap;padding-top:2px; }
+
+.e-text {
+  font-size:1.2rem;color:#aaa;line-height:1.5;
+  word-break:break-word;white-space:pre-wrap;
+  margin-top:3px;grid-column:2/4;
+}
+
+.e-reactions {
+  display:flex;gap:5px;flex-wrap:wrap;
+  margin-top:6px;grid-column:2/4;
+}
+
+.react-btn {
+  background:#0a0a0a;border:1px solid #1e1e1e;color:#444;
+  font-size:1rem;padding:2px 9px;cursor:pointer;
+  font-family:'VT323',monospace;transition:all 0.1s;user-select:none;
+}
+.react-btn:hover { border-color:var(--pink);color:var(--pink); }
+.react-btn.voted { border-color:var(--pink);color:var(--pink);cursor:default; }
+
+/* GB loading / empty */
+.gb-loading { color:#1a1a1a;font-size:1.1rem;text-align:center;padding:20px 0;animation:bl 1.2s step-end infinite; }
+
+/* ── GUESTBOOK FORM ── */
+.gb-form { display:flex;flex-direction:column;gap:8px; }
+.gb-form input,
+.gb-form textarea {
+  background:#000;border:2px solid #2a2a2a;color:#ccc;
+  font-family:'VT323',monospace;font-size:1.25rem;
+  padding:6px 8px;outline:none;resize:vertical;width:100%;
+  transition:border-color 0.15s;
+}
+.gb-form input::placeholder,
+.gb-form textarea::placeholder { color:#252525; }
+.gb-form input:focus,
+.gb-form textarea:focus { border-color:var(--cyan);box-shadow:0 0 8px rgba(0,255,255,0.15); }
+.gb-form-row { display:flex;gap:8px; }
+.gb-form-row input { flex:1; }
+
+/* ── ARCHIVE ── */
+.secret-entry {
+  border-left: 3px solid var(--pink);
+  padding: 5px 10px;
+  margin: 6px 0;
+  font-size: 1.1rem;
+  background: rgba(255,0,255,0.03);
+  transition: background 0.2s;
+}
+.secret-entry:hover { background: rgba(255,0,255,0.06); }
+.sk { color:var(--pink); }
+.sv { color:#888; }
+
+/* ── LIMINAL NOTE ── */
+.liminal {
+  font-family: 'Special Elite', serif;
+  font-size: 1rem;
+  color: #1e2e1e;
+  line-height: 2.2;
+  font-style: italic;
+}
+.liminal strong { color:#2e5e2e; }
+.liminal .fl { color:var(--cyan);opacity:0.25; }
+
+/* ── TWO-COL PANELS ── */
+.two-col { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+@media(max-width:600px) { .two-col{grid-template-columns:1fr;} .reg-form{grid-template-columns:1fr;} }
+
+/* ── ONLINE STRIP ── */
+.online-strip {
+  display:flex;gap:12px;align-items:center;
+  font-size:0.85rem;color:#1a1a1a;
+  padding-top:8px;border-top:1px dashed #111;margin-top:8px;
+}
+.online-dot { width:5px;height:5px;border-radius:50%;background:var(--green);animation:bl 2s step-end infinite; }
+
+/* ── FOOTER ── */
+footer {
+  background:#000;
+  border-top:4px solid;
+  border-image: linear-gradient(90deg,var(--pink),var(--yellow),var(--cyan),var(--purple)) 1;
+  text-align:center;
+  padding:14px;
+  color:#222;
+  font-size:0.95rem;
+  margin-top:8px;
+}
+.badges { display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin-top:10px; }
+.badge { font-family:'Press Start 2P',monospace;font-size:7px;border:2px solid;padding:3px 7px; }
+.badge.g { color:var(--green); border-color:var(--green); }
+.badge.p { color:var(--pink);  border-color:var(--pink); }
+.badge.y { color:var(--yellow);border-color:var(--yellow); }
+.badge.c { color:var(--cyan);  border-color:var(--cyan); }
+.badge.v { color:var(--purple);border-color:var(--purple); }
+
+@keyframes spin { to{transform:rotate(360deg)} }
+.spin { display:inline-block;animation:spin 8s linear infinite; }
+
+/* ── GLITCH on title hover ── */
+.site-title:hover { animation: glitch 0.3s steps(2) infinite, huerot 8s linear infinite; }
+@keyframes glitch {
+  0%   { transform:translate(0); }
+  25%  { transform:translate(-3px,1px); filter:hue-rotate(90deg) drop-shadow(0 0 20px var(--pink)); }
+  50%  { transform:translate(3px,-1px); filter:hue-rotate(180deg) drop-shadow(0 0 20px var(--cyan)); }
+  75%  { transform:translate(-2px,2px); }
+  100% { transform:translate(0); }
+}
+
+/* ── PULSE BORDER on archive unlock ── */
+@keyframes pulseB {
+  0%,100%{box-shadow:0 0 14px rgba(255,0,255,0.2);}
+  50%{box-shadow:0 0 30px rgba(255,0,255,0.6);}
+}
+.panel-pink.unlocked { animation:pulseB 2s ease-in-out infinite; }
+
+/* ── PASSWORD STRENGTH ── */
+#pw-strength {
+  height:3px;width:0%;
+  transition:width 0.3s, background 0.3s;
+  margin-top:2px;
+}
+</style>
 </head>
 <body>
 
-  <!-- LOGIN VIEW -->
-  <div id="view-login" class="view active">
-    <div class="grid-bg"></div>
-    <div class="login-wrap">
-      <header class="login-header">
-        <span class="tag">LIMINAL REGISTRY</span>
-        <h1>Bureau<br/><em>d'accès</em></h1>
-        <p class="subtitle">Système d'authentification v0.1</p>
-      </header>
+<div id="status-bar">
+  <span><span class="dot" id="cdot"></span> connection</span>
+  <span id="live-clock">--:--:--</span>
+  <span id="auth-label">[ NOT AUTHENTICATED ]</span>
+</div>
 
-      <form id="login-form" class="login-form" onsubmit="return false">
-        <div class="field">
-          <label for="username">Identifiant</label>
-          <input type="text" id="username" name="username" autocomplete="username" placeholder="admin" />
-        </div>
-        <div class="field">
-          <label for="password">Mot de passe</label>
-          <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" />
-        </div>
-        <div id="login-error" class="error-msg" hidden></div>
-        <button type="submit" id="login-btn" onclick="doLogin()">
-          <span class="btn-text">Connexion</span>
-          <span class="btn-arrow">→</span>
-        </button>
-      </form>
+<header>
+  <div class="ticker-wrap">
+    <span class="ticker-inner">
+      ★ FURIA25 ★ LIMINAL REGISTRY ★ FLOOR 4 IS CLOSED ★ DO NOT LOOK AT THE DOOR ★ FURIA25 ★ REGISTER NOW ★ SIGN THE GUESTBOOK ★ WE REMEMBER YOU ★ FURIA25 ★
+    </span>
+  </div>
+  <span class="site-title">FURIA25</span>
+  <div class="site-sub">
+    <span class="blink">▶</span>&nbsp;
+    something is always watching
+    &nbsp;<span class="blink-slow">▶</span>
+  </div>
+</header>
 
-      <footer class="login-footer">
-        <span class="mono">localhost:8080</span>
-        <span id="server-status" class="status-dot" title="Vérification..."></span>
-      </footer>
+<div class="marquee-wrap">
+  <span class="marquee-inner">
+    ✦ WELCOME TO THE LIMINAL REGISTRY ✦ &nbsp;&nbsp;
+    YOU ARE VISITOR #<span id="vnum">10483</span> &nbsp;&nbsp;
+    ✦ DO NOT CLICK THE BLINKING THING ✦ &nbsp;&nbsp;
+    IT IS 3AM SOMEWHERE &nbsp;&nbsp;
+    ✦ THE DOOR IS OPEN ✦ &nbsp;&nbsp;
+    HAVE YOU CHECKED BEHIND YOU ✦ &nbsp;&nbsp;
+    BEST VIEWED IN 800×600 &nbsp;&nbsp;
+    ✦ ACCOUNTS ARE PERMANENT ✦ &nbsp;&nbsp;
+    ✦ YOUR MESSAGES DO NOT LEAVE ✦ &nbsp;&nbsp;
+    THIS SITE IS UNDER ETERNAL CONSTRUCTION ✦ &nbsp;&nbsp;
+  </span>
+</div>
+
+<main>
+
+  <!-- visitor counter -->
+  <div class="visit-strip">
+    <span>VISITOR #<span class="visit-num" id="vnum2">010,483</span></span>
+    <span style="color:#2a1200;font-size:7px;">online since 25 JAN 1999</span>
+    <span><span class="visit-num" id="online-count">1</span> online now</span>
+  </div>
+
+  <!-- ── AUTH PANEL (login + register tabs) ── -->
+  <div class="panel panel-green">
+    <div class="corner" style="background:var(--green);"></div>
+    <div class="ptitle green">:: RESTRICTED ACCESS :: LIMINAL REGISTRY ::</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"    onclick="switchTab('login')">[ LOGIN ]</button>
+      <button class="auth-tab"        id="tab-register" onclick="switchTab('register')">[ CREATE ACCOUNT ]</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-pane visible" id="pane-login">
+      <div class="login-row">
+        <input type="text"     id="u-in" placeholder="username" autocomplete="off">
+        <input type="password" id="p-in" placeholder="password">
+        <button class="retro-btn" onclick="doLogin()">[ LOGIN ]</button>
+        <button class="retro-btn red" onclick="doLogout()">[ LOGOUT ]</button>
+      </div>
+      <div id="login-msg" style="margin-top:6px;"></div>
+      <div style="font-size:0.85rem;color:#1a1a1a;margin-top:4px;" class="blink-slow">
+        default: admin / admin1234 &nbsp;|&nbsp; guest / guest
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-pane" id="pane-register">
+      <div class="reg-form">
+        <input type="text"     id="reg-u"  placeholder="choose a username">
+        <input type="email"    id="reg-e"  placeholder="email (optional)">
+        <input type="password" id="reg-p1" placeholder="password" oninput="checkStrength(this.value)">
+        <input type="password" id="reg-p2" placeholder="confirm password">
+        <div class="reg-full">
+          <div id="pw-strength"></div>
+        </div>
+        <div class="reg-full" style="display:flex;gap:8px;align-items:center;">
+          <button class="retro-btn purple" onclick="doRegister()">[ CREATE ACCOUNT ]</button>
+          <span id="reg-msg"></span>
+        </div>
+      </div>
+      <div style="font-size:0.85rem;color:#1a001a;margin-top:6px;font-style:italic;">
+        accounts are permanent. your name will echo here forever.
+      </div>
     </div>
   </div>
 
-  <!-- DASHBOARD VIEW -->
-  <div id="view-dashboard" class="view">
-    <div class="grid-bg"></div>
-    <nav class="topbar">
-      <span class="tag">LIMINAL REGISTRY</span>
-      <div class="topbar-right">
-        <span class="mono" id="dash-username"></span>
-        <button class="btn-ghost" onclick="doLogout()">Déconnexion →</button>
-      </div>
-    </nav>
-
-    <main class="dashboard">
-      <section class="dash-hero">
-        <h2>Bienvenue,<br/><span id="dash-greeting"></span></h2>
-        <p class="mono small">Session active · <span id="dash-time"></span></p>
-      </section>
-
-      <div class="cards">
-        <div class="card card--active">
-          <div class="card-label mono">MODULE 01</div>
-          <div class="card-title">Authentification</div>
-          <div class="card-status ok">● Actif</div>
-          <p>Login / logout / verify via CGI Python. Sessions par token signé HMAC-SHA256.</p>
-        </div>
-        <div class="card card--soon">
-          <div class="card-label mono">MODULE 02</div>
-          <div class="card-title">Gestion utilisateurs</div>
-          <div class="card-status soon">○ Bientôt</div>
-          <p>CRUD complet sur les comptes, rôles et permissions.</p>
-        </div>
-        <div class="card card--soon">
-          <div class="card-label mono">MODULE 03</div>
-          <div class="card-title">Journaux système</div>
-          <div class="card-status soon">○ Bientôt</div>
-          <p>Consultation des logs du serveur en temps réel.</p>
-        </div>
-        <div class="card card--soon">
-          <div class="card-label mono">MODULE 04</div>
-          <div class="card-title">API Explorer</div>
-          <div class="card-status soon">○ Bientôt</div>
-          <p>Interface de test des endpoints CGI disponibles.</p>
-        </div>
-      </div>
-    </main>
+  <!-- ── PROTECTED ARCHIVE ── -->
+  <div class="panel panel-pink" id="archive-panel" style="display:none;">
+    <div class="corner" style="background:var(--pink);"></div>
+    <div class="ptitle pink">:: RESTRICTED ARCHIVE :: AUTHENTICATED ::</div>
+    <div id="secret-content">
+      <div class="blink-slow" style="color:#444;">querying secure endpoint...</div>
+    </div>
+    <br>
+    <button class="retro-btn pink" onclick="fetchSecretData()">[ REFRESH ]</button>
   </div>
 
-  <script src="/app.js"></script>
+  <!-- archive teaser -->
+  <div class="panel panel-pink" id="archive-teaser">
+    <div class="ptitle pink">:: RESTRICTED ARCHIVE ::</div>
+    <p style="font-size:1.2rem;color:#2a002a;padding:6px 0;text-align:center;">
+      <span class="blink" style="color:var(--red);">⚠</span>
+      &nbsp; LOGIN REQUIRED TO ACCESS &nbsp;
+      <span class="blink" style="color:var(--red);">⚠</span>
+    </p>
+    <p style="font-size:0.95rem;color:#1a001a;font-style:italic;padding-bottom:6px;text-align:center;">
+      We found it in 2003. We stopped looking after that.
+    </p>
+  </div>
+
+  <!-- ── GUESTBOOK ── -->
+  <div class="panel panel-yellow">
+    <div class="corner" style="background:var(--yellow);"></div>
+    <div class="ptitle yellow">:: GUESTBOOK :: PERMANENT RECORD :: SIGN NOW ::</div>
+
+    <div id="gb-entries">
+      <div class="gb-loading">loading entries from the server...</div>
+    </div>
+
+    <div class="gb-form">
+      <div class="gb-form-row">
+        <input type="text" id="gb-name"    placeholder="your name or alias (leave blank for anonymous)">
+        <input type="text" id="gb-website" placeholder="website (optional)" style="flex:none;width:220px;">
+      </div>
+      <textarea id="gb-text" rows="3" placeholder="leave your mark on this place... (ctrl+enter to post)"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="retro-btn yellow" onclick="postEntry()">[ POST TO GUESTBOOK ]</button>
+        <span id="gb-msg" style="font-size:1rem;min-height:1.2em;"></span>
+      </div>
+      <div style="font-size:0.85rem;color:#1a1a00;">
+        entries are saved permanently to the server database.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIMINAL NOTE ── -->
+  <div class="two-col">
+    <div class="panel panel-cyan">
+      <div class="ptitle cyan">:: NOTICE ::</div>
+      <div class="liminal">
+        The hallway on <strong>floor 4</strong> does not end.<br>
+        You may have noticed <strong>the smell</strong>. It is from before.<br>
+        If you see someone you <strong>recognize</strong>, do not wave.<br>
+        <span class="fl">your account has been noted.</span>
+      </div>
+    </div>
+    <div class="panel panel-teal">
+      <div class="ptitle teal">:: REGISTRY STATUS ::</div>
+      <div style="font-size:1.05rem;line-height:2.2;color:#1a3a30;">
+        <span style="color:var(--teal);">ACCOUNTS</span> &nbsp;·&nbsp; <span id="stat-accounts" style="color:#aaa;">—</span><br>
+        <span style="color:var(--teal);">ENTRIES</span> &nbsp;&nbsp;&nbsp;·&nbsp; <span id="stat-entries"  style="color:#aaa;">—</span><br>
+        <span style="color:var(--teal);">DATABASE</span> &nbsp;&nbsp;·&nbsp; <span style="color:var(--green);">ONLINE</span><br>
+        <span style="color:var(--teal);">FLOOR 4</span> &nbsp;&nbsp;&nbsp;·&nbsp; <span class="blink" style="color:var(--red);">CLOSED</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div>
+    FURIA25 &copy; 1999–<span id="yr">2025</span>
+    &nbsp;|&nbsp; best viewed at 800×600
+    &nbsp;|&nbsp; <span class="blink-slow" style="color:#1a0000;">we are always here</span>
+    &nbsp;&nbsp;<span class="spin" style="color:#0d0d0d;font-size:1.2rem;">✦</span>
+  </div>
+  <div class="badges">
+    <span class="badge g">NETSCAPE 4.0</span>
+    <span class="badge p">FLASH ENABLED</span>
+    <span class="badge y">Y2K COMPLIANT</span>
+    <span class="badge c">HTML 3.2</span>
+    <span class="badge v">PERMANENT DB</span>
+    <span class="badge g">ACCOUNTS REAL</span>
+    <span class="badge p">NO COOKIES*</span>
+    <span class="badge y">*HMAC SESSIONS</span>
+  </div>
+</footer>
+
+<script>
+// ── CLOCK ──
+function tick() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent = now.toTimeString().slice(0,8);
+  document.getElementById('yr').textContent = now.getFullYear();
+}
+setInterval(tick, 1000); tick();
+
+// ── VISITOR COUNTER ──
+const vCount = 10483 + Math.floor(Math.random() * 40);
+document.getElementById('vnum').textContent  = vCount.toLocaleString();
+document.getElementById('vnum2').textContent = String(vCount).padStart(7,'0').replace(/(\d{3})(\d{3})$/,'$1,$2');
+
+function jiggleOnline() {
+  document.getElementById('online-count').textContent =
+    Math.random() < 0.65 ? 1 : (Math.random() < 0.5 ? 2 : 0);
+}
+jiggleOnline(); setInterval(jiggleOnline, 9000);
+
+// ── CGI PATHS ──
+const CGI_BASE = './api';
+
+// ── UTILS ──
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+const AV_CLASSES = ['av0','av1','av2','av3','av4','av5'];
+function initials(name) { return (name||'?').slice(0,2).toUpperCase(); }
+
+// ── TABS ──
+function switchTab(which) {
+  document.getElementById('pane-login').classList.toggle('visible', which==='login');
+  document.getElementById('pane-register').classList.toggle('visible', which==='register');
+  document.getElementById('tab-login').classList.toggle('active', which==='login');
+  document.getElementById('tab-register').classList.toggle('active', which==='register');
+}
+
+// ── PASSWORD STRENGTH ──
+function checkStrength(pw) {
+  const bar = document.getElementById('pw-strength');
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors = ['var(--red)','var(--orange)','var(--yellow)','var(--green)'];
+  bar.style.width = (score * 25) + '%';
+  bar.style.background = colors[score-1] || '#111';
+}
+
+// ── GUESTBOOK ──
+let entries = [];
+const voted = new Set();
+
+const DEMO_ENTRIES = [
+  { id:0, name:'deleted_user',   website:'', text:'                                   ', created_at:'??:?? ??', reactions:{seen:12,wtf:3,heart:0}, verified:false },
+  { id:1, name:'Administrator',  website:'', text:'welcome. please do not go past floor 4.', created_at:'01:01 AM', reactions:{seen:88,wtf:4,heart:2}, verified:true },
+  { id:2, name:'x_rave_rabbit_x',website:'angelfire.com/~raverabbit', text:'first post!! this site gives me feelings i cannot name', created_at:'03:14 AM', reactions:{seen:31,wtf:7,heart:14}, verified:false },
+  { id:3, name:'guest8823',      website:'', text:"i signed but my name isn't showing. hello? hello?", created_at:'11:59 PM', reactions:{seen:5,wtf:19,heart:0}, verified:false },
+  { id:4, name:'break_room_3',   website:'', text:'someone took my lunch from the fridge. it was from 1999. it was still fresh.', created_at:'12:00 PM', reactions:{seen:71,wtf:55,heart:1}, verified:false },
+  { id:5, name:'unknown_user',   website:'', text:"i tried to leave but came back. i don't know why. nice vibes though.", created_at:'04:44 AM', reactions:{seen:42,wtf:42,heart:42}, verified:false },
+  { id:6, name:'????',           website:'', text:'', created_at:'00:00 AM', reactions:{seen:0,wtf:0,heart:999}, verified:false }
+];
+
+async function loadEntries() {
+  try {
+    const r = await fetch(`${CGI_BASE}/guestbook.py?action=list`, { credentials:'include' });
+    if (!r.ok) throw new Error('http '+r.status);
+    const d = await r.json();
+    if (d.ok && d.entries) {
+      entries = d.entries;
+      if (d.total_accounts !== undefined) document.getElementById('stat-accounts').textContent = d.total_accounts;
+      if (d.total_entries  !== undefined) document.getElementById('stat-entries').textContent  = d.total_entries;
+    } else throw new Error(d.error || 'unknown');
+  } catch(_) {
+    // demo mode
+    entries = DEMO_ENTRIES.map(e => ({ ...e, reactions:{...e.reactions} }));
+    document.getElementById('stat-accounts').textContent = '7';
+    document.getElementById('stat-entries').textContent  = '7';
+  }
+  renderAll();
+}
+
+function renderEntry(e, i) {
+  const avCls  = AV_CLASSES[i % AV_CLASSES.length];
+  const emptyText = (e.text||'').trim() === '';
+  const textHtml  = emptyText
+    ? '<em style="color:#111;">[this message exists]</em>'
+    : esc(e.text);
+
+  const websiteHtml = e.website
+    ? `<span class="e-website"> · <a href="https://${esc(e.website)}" style="color:#333;text-decoration:none;" target="_blank" rel="noopener">${esc(e.website)}</a></span>`
+    : '';
+
+  const verBadge = e.verified
+    ? ` <span class="e-verified">✓ VERIFIED</span>` : '';
+
+  const reacts = [
+    { key:'seen', label:'👁' },
+    { key:'wtf',  label:'?!' },
+    { key:'heart',label:'♥' }
+  ];
+  const reactHtml = reacts.map(r => {
+    const vk = `${e.id}-${r.key}`;
+    const isVoted = voted.has(vk);
+    return `<button class="react-btn${isVoted?' voted':''}"
+      onclick="castReact(${i},'${r.key}',this,'${esc(e.id)}')"
+      data-key="${vk}">${r.label} <span id="rc-${e.id}-${r.key}">${e.reactions[r.key]||0}</span></button>`;
+  }).join('');
+
+  return `<div class="entry" id="entry-${i}">
+    <div class="e-avatar ${avCls}">${esc(initials(e.name))}</div>
+    <div class="e-meta">
+      <span class="e-name">${esc(e.name||'anonymous')}</span>${verBadge}${websiteHtml}
+    </div>
+    <div class="e-time">${esc(e.created_at||'')}</div>
+    <div class="e-text">${textHtml}</div>
+    <div class="e-reactions">${reactHtml}</div>
+  </div>`;
+}
+
+function renderAll() {
+  const el = document.getElementById('gb-entries');
+  if (entries.length === 0) {
+    el.innerHTML = '<div style="color:#1a1a1a;padding:10px 0;font-style:italic;">no entries yet. be the first.</div>';
+    return;
+  }
+  el.innerHTML = entries.map((e,i) => renderEntry(e,i)).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+loadEntries();
+
+function castReact(idx, key, btn, entryId) {
+  const vk = `${entryId}-${key}`;
+  if (voted.has(vk)) return;
+  voted.add(vk);
+  entries[idx].reactions[key] = (entries[idx].reactions[key]||0) + 1;
+  document.getElementById(`rc-${entryId}-${key}`).textContent = entries[idx].reactions[key];
+  btn.classList.add('voted');
+  btn.onclick = null;
+  // fire-and-forget react CGI call
+  fetch(`${CGI_BASE}/guestbook.py`, {
+    method:'POST', credentials:'include',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`action=react&entry_id=${encodeURIComponent(entryId)}&reaction=${encodeURIComponent(key)}`
+  }).catch(()=>{});
+}
+
+async function postEntry() {
+  const nameEl = document.getElementById('gb-name');
+  const siteEl = document.getElementById('gb-website');
+  const textEl = document.getElementById('gb-text');
+  const msgEl  = document.getElementById('gb-msg');
+
+  const name    = nameEl.value.trim() || 'anonymous';
+  const website = siteEl.value.trim().replace(/^https?:\/\//i,'');
+  const text    = textEl.value.trim();
+
+  if (!text) {
+    msgEl.style.color = 'var(--red)'; msgEl.textContent = 'write something first.'; return;
+  }
+
+  msgEl.style.color = 'var(--yellow)'; msgEl.textContent = 'posting...';
+
+  try {
+    const r = await fetch(`${CGI_BASE}/guestbook.py`, {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`action=post&name=${encodeURIComponent(name)}&website=${encodeURIComponent(website)}&text=${encodeURIComponent(text)}`
+    });
+    const d = await r.json();
+    if (d.ok) {
+      nameEl.value=''; siteEl.value=''; textEl.value='';
+      msgEl.style.color='var(--green)'; msgEl.textContent='posted! refreshing...';
+      setTimeout(()=>{ msgEl.textContent=''; },3000);
+      await loadEntries();
+    } else {
+      msgEl.style.color='var(--red)'; msgEl.textContent=d.error||'error posting.';
+    }
+  } catch(_) {
+    // demo fallback
+    const now = new Date();
+    const time = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const newId = Date.now();
+    entries.push({ id:newId, name, website, text, created_at:time, reactions:{seen:0,wtf:0,heart:0}, verified:isAuth });
+    nameEl.value=''; siteEl.value=''; textEl.value='';
+    msgEl.style.color='var(--green)'; msgEl.textContent='posted! (demo mode — not saved to server)';
+    setTimeout(()=>{ msgEl.textContent=''; },3500);
+    renderAll();
+    document.getElementById('gb-entries').scrollTop = 9999;
+  }
+}
+
+document.getElementById('gb-text').addEventListener('keydown', e => {
+  if (e.key==='Enter' && e.ctrlKey) postEntry();
+});
+
+// ── AUTH ──
+let isAuth = false;
+let currentUser = null;
+
+async function doLogin() {
+  const u = document.getElementById('u-in').value.trim();
+  const p = document.getElementById('p-in').value;
+  if (!u||!p) { setMsg('fill in both fields','err'); return; }
+  setMsg('authenticating...','ok');
+  try {
+    const r = await fetch(`${CGI_BASE}/auth.py`,{
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`action=login&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p)}`
+    });
+    const d = await r.json();
+    if (d.ok) { setAuth(true,d.username); setMsg('ACCESS GRANTED · welcome, '+d.username,'ok'); }
+    else       { setAuth(false,null);      setMsg(d.error||'access denied','err'); }
+  } catch(_) {
+    // demo
+    if (u==='admin'&&p==='admin1234') { setAuth(true,'admin'); setMsg('ACCESS GRANTED · demo','ok'); }
+    else if (u==='guest'&&p==='guest'){ setAuth(true,'guest'); setMsg('ACCESS GRANTED · demo','ok'); }
+    else setMsg('ACCESS DENIED · (demo: admin / admin1234)','err');
+  }
+}
+
+async function doRegister() {
+  const u  = document.getElementById('reg-u').value.trim();
+  const e  = document.getElementById('reg-e').value.trim();
+  const p1 = document.getElementById('reg-p1').value;
+  const p2 = document.getElementById('reg-p2').value;
+  const msgEl = document.getElementById('reg-msg');
+
+  if (!u || !p1) { setRegMsg('username and password required','err'); return; }
+  if (p1 !== p2) { setRegMsg('passwords do not match','err'); return; }
+  if (p1.length < 4) { setRegMsg('password too short (min 4)','err'); return; }
+
+  setRegMsg('creating account...','warn');
+  try {
+    const r = await fetch(`${CGI_BASE}/auth.py`,{
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`action=register&username=${encodeURIComponent(u)}&password=${encodeURIComponent(p1)}&email=${encodeURIComponent(e)}`
+    });
+    const d = await r.json();
+    if (d.ok) {
+      setRegMsg('account created! logging in...','ok');
+      setTimeout(()=>{ switchTab('login'); setMsg('welcome, '+d.username,'ok'); setAuth(true,d.username); },1200);
+    } else {
+      setRegMsg(d.error||'registration failed','err');
+    }
+  } catch(_) {
+    setRegMsg('could not reach server — demo mode, no DB available','err');
+  }
+}
+
+async function doLogout() {
+  try { await fetch(`${CGI_BASE}/auth.py?action=logout`,{credentials:'include'}); } catch(_) {}
+  setAuth(false,null); setMsg('','');
+  document.getElementById('p-in').value='';
+}
+
+async function checkSession() {
+  try {
+    const r = await fetch(`${CGI_BASE}/auth.py?action=verify`,{credentials:'include'});
+    const d = await r.json();
+    if (d.ok) { setAuth(true,d.username); return; }
+  } catch(_) {}
+  setAuth(false,null);
+}
+checkSession();
+
+function setAuth(auth, user) {
+  isAuth = auth; currentUser = user;
+  document.getElementById('cdot').className        = auth ? 'dot on' : 'dot';
+  document.getElementById('auth-label').textContent = auth ? '[ '+user+' · authenticated ]' : '[ NOT AUTHENTICATED ]';
+  document.getElementById('auth-label').style.color = auth ? 'var(--green)' : 'var(--cyan)';
+  document.getElementById('archive-panel').style.display  = auth ? 'block' : 'none';
+  document.getElementById('archive-teaser').style.display = auth ? 'none'  : 'block';
+  if (auth) fetchSecretData();
+}
+
+function setMsg(t, cls) {
+  const el = document.getElementById('login-msg');
+  el.textContent=t; el.className=cls;
+}
+function setRegMsg(t, cls) {
+  const el = document.getElementById('reg-msg');
+  el.textContent=t; el.className=cls;
+}
+
+// ── PROTECTED CONTENT ──
+const statusColor = {
+  ACTIVE:'var(--green)',OPEN:'var(--yellow)',
+  UNRESOLVED:'var(--orange)',CLASSIFIED:'var(--red)',MISSING:'var(--pink)'
+};
+
+async function fetchSecretData() {
+  if (!isAuth) return;
+  const el = document.getElementById('secret-content');
+  el.innerHTML = '<div class="blink-slow" style="color:#444;">querying secure endpoint...</div>';
+  try {
+    const r = await fetch(`${CGI_BASE}/secret.py?action=get_records`,{credentials:'include'});
+    const d = await r.json();
+    if (d.ok) renderSecretData(d);
+    else el.innerHTML = `<div style="color:var(--red);">ERROR: ${esc(d.error)}</div>`;
+  } catch(_) {
+    renderSecretData({
+      ok:true, username:currentUser, classification:'LEVEL-2 CLEARANCE',
+      note:'DEMO MODE — no CGI server detected. Data simulated.',
+      records:[
+        { id:'REC-001', subject:'Incident Report — Floor 4',          status:'UNRESOLVED', timestamp:'1999-11-03 03:14:00' },
+        { id:'REC-002', subject:'Personnel File — Admin Account',      status:'ACTIVE',     timestamp:'2001-09-10 08:30:00' },
+        { id:'REC-003', subject:'Maintenance Log — Smell (ongoing)',   status:'OPEN',       timestamp:'1999-11-03 00:00:01' },
+        { id:'REC-004', subject:'███████████████',                     status:'CLASSIFIED', timestamp:'??-??-?? ??:??:??' },
+        { id:'REC-005', subject:'Exit Procedure Documentation',        status:'MISSING',    timestamp:'2003-06-15 23:59:59' },
+      ]
+    });
+  }
+}
+
+function renderSecretData(data) {
+  document.getElementById('archive-panel').classList.add('unlocked');
+  document.getElementById('secret-content').innerHTML = `
+    <div style="font-family:'Press Start 2P';font-size:7px;color:#333;margin-bottom:8px;letter-spacing:1px;">
+      ${esc(data.classification||'AUTHENTICATED')} · USER: ${esc(data.username||currentUser)}
+    </div>
+    ${data.note?`<div style="color:#2a1a00;font-size:0.9rem;font-style:italic;margin-bottom:8px;">${esc(data.note)}</div>`:''}
+    ${(data.records||[]).map(r=>`
+      <div class="secret-entry">
+        <span class="sk">${esc(r.id)}</span> · <span class="sv">${esc(r.subject)}</span><br>
+        <span style="font-size:0.85rem;color:#333;">
+          status: <span style="color:${statusColor[r.status]||'#888'}">${esc(r.status)}</span>
+          &nbsp;&nbsp;${esc(r.timestamp)}
+        </span>
+      </div>
+    `).join('')}
+  `;
+}
+</script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/22 04:00:23 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/24 02:53:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,6 +123,12 @@ void	Body::reset()
 		}
 		this->fileWriter = NULL;
 	}
+	this->fileWriter = NULL;
+	this->isStreaming = false;
+	this->expectedSize = 0;
+	this->receivedSize = 0;
+	this->destinationPath = "";
+	this->isFinished = false;
 }
 
 bool	Body::getIsStreaming() const
