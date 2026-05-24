@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/19 18:19:30 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/24 16:01:43 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ TCPServer::TCPServer(const Config::EngineConfig& engine_config) : connectionPool
 	this->epollfd = ::epoll_create(MAX_CLIENTS);
 	if (this->epollfd == -1)
 		throw std::runtime_error("Unable to init epoll :" + std::string(strerror(errno)));
+	this->deletableConnections.reserve(4946);
 	void *ptr = this->connectionPool.acquire();
 	this->connectionPool.releaseRaw(ptr);
 }

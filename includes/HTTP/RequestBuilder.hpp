@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RequestFactory.hpp                                 :+:      :+:    :+:   */
+/*   RequestBuilder.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 00:40:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/05/24 12:51:48 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef _REQUESTFACTORY_H
-# define _REQUESTFACTORY_H
+#ifndef _RequestBuilder_H
+# define _RequestBuilder_H
 
 # include <iostream>
 # include <vector>
@@ -29,7 +29,7 @@
 
 # define MAX_HEADER_SIZE 4096
 
-class RequestFactory
+class RequestBuilder
 {
 private:
 	uint8_t					raw_buffer[MAX_HEADER_SIZE];
@@ -61,7 +61,7 @@ private:
 
 public:
 
-	RequestFactory();
+	RequestBuilder();
 	void		feed(const uint8_t *fragment, size_t length);
 	void		check();
 	void		reset();
@@ -78,4 +78,4 @@ public:
 };
 
 
-#endif // _REQUESTFACTORY_H
+#endif // _RequestBuilder_H

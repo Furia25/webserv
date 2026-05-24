@@ -18,7 +18,7 @@
 # include "Config/Config.hpp"
 
 # include "HTTP/HTTPHandler.hpp"
-# include "HTTP/RequestFactory.hpp"
+# include "HTTP/RequestBuilder.hpp"
 # include "HTTP/Router.hpp"
 # include "HTTP/AHandler.hpp"
 # include "HTTP/Handler/ErrorHandler.hpp"
@@ -76,7 +76,7 @@ private:
 
 	struct ClientData
 	{
-		RequestFactory			builder;
+		RequestBuilder			builder;
 		Request					request;
 		Body					body;
 		Router::RouteResult 	routeRes;

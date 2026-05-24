@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
+#    By: antoine <antoine@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/22 04:28:19 by vdurand          ###   ########.fr        #
+#    Updated: 2026/05/24 16:12:33 by antoine          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -70,7 +70,7 @@ SRC_FILES = \
 	Config/TOML/TOMLParser.cpp \
 	Config/TOML/TOMLToken.cpp \
 	Config/TOML/TOMLTokenizer.cpp \
-	HTTP/RequestFactory.cpp \
+	HTTP/RequestBuilder.cpp \
 	HTTP/Request.cpp \
 	HTTP/HTTPHandler.cpp \
 	HTTP/Router.cpp \
@@ -100,7 +100,7 @@ LIBS_INCLUDE_DIRS :=
 
 # Compiler & flags
 CXX = c++
-CXXFLAGS = -O3 -Wall -Wextra -Werror -std=c++98 -g3
+CXXFLAGS = -O3 -Wall -Wextra -Werror -std=c++98 
 
 INC_FLAGS = -I$(INC_DIR) $(addprefix -I,$(LIBS_DIRS)) $(addprefix -I,$(LIBS_INCLUDE_DIRS))
 LDFLAGS =

@@ -1,28 +1,28 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   RequestFactory.cpp                                 :+:      :+:    :+:   */
+/*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 13:12:36 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/05/24 17:17:59 by antoine          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/RequestFactory.hpp"
+# include "HTTP/RequestBuilder.hpp"
 # include <algorithm>
 # include "HTTP/HTTPTypes.hpp"
 # include "HTTP/Utils/FileWriter.hpp"
 # include "Utils/IntegerUtils.hpp"
 # include "HTTP/Utils/HeaderParser.hpp"
 
-RequestFactory::RequestFactory() 
+RequestBuilder::RequestBuilder() 
 	: buffer_size(0), is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
 }
 
-void	RequestFactory::reset()
+void	RequestBuilder::reset()
 {
 	std::memset(raw_buffer, '\0', buffer_size);
 	this->is_parsing_complete = false;
@@ -35,7 +35,7 @@ void	RequestFactory::reset()
 	this->protocol.clear();
 }
 
-void	RequestFactory::feed(const uint8_t *fragment, size_t length)
+void	RequestBuilder::feed(const uint8_t *fragment, size_t length)
 {
 	if (!is_header_parsed && (buffer_size + length > MAX_HEADER_SIZE))
 		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
@@ -52,7 +52,7 @@ void	RequestFactory::feed(const uint8_t *fragment, size_t length)
 	}
 }
 
-size_t	RequestFactory::findHeaderEnd()
+size_t	RequestBuilder::findHeaderEnd()
 {
 	if (buffer_size < 4) 
 		return std::string::npos;
@@ -65,14 +65,14 @@ size_t	RequestFactory::findHeaderEnd()
 	return std::string::npos;
 }
 
-size_t	RequestFactory::findNewline(const uint8_t* buffer, size_t start, size_t max)
+size_t	RequestBuilder::findNewline(const uint8_t* buffer, size_t start, size_t max)
 {
 	for (size_t i = start; i <= max && i <	buffer_size - 1; ++i)
 		if (buffer[i] == '\r' && buffer[i+1] == '\n') return i;
 	return std::string::npos;
 }
 
-void	RequestFactory::parseAllHeaders(const uint8_t* buffer, size_t size)
+void	RequestBuilder::parseAllHeaders(const uint8_t* buffer, size_t size)
 {
 	size_t i = 0;
 	while (i < size && buffer[i] != '\n')
@@ -99,7 +99,7 @@ void	RequestFactory::parseAllHeaders(const uint8_t* buffer, size_t size)
 	}
 }
 
-void	RequestFactory::parseRequestLine(std::string &line)
+void	RequestBuilder::parseRequestLine(std::string &line)
 {
 	std::istringstream iss(line);
 	iss >> method >> request_path >> protocol;
@@ -112,7 +112,7 @@ void	RequestFactory::parseRequestLine(std::string &line)
 	}
 }
 
-void	RequestFactory::parseHeaderLine(std::string &line)
+void	RequestBuilder::parseHeaderLine(std::string &line)
 {
 	if (line.empty())
 		return ;
@@ -131,31 +131,31 @@ void	RequestFactory::parseHeaderLine(std::string &line)
 		throw std::invalid_argument("Malformed header line: missing colon");
 }
 
-void	RequestFactory::toLowerCase(std::string &str)
+void	RequestBuilder::toLowerCase(std::string &str)
 {
 	for (size_t i = 0; i < str.length(); ++i)
 		str[i] = std::tolower(str[i]);
 }
 
-void	RequestFactory::validateMethod() const
+void	RequestBuilder::validateMethod() const
 {
 	if (method.empty())
 		throw HTTPException(HTTPCode::BAD_REQUEST); 
 }
 
-void	RequestFactory::validateProtocol() const
+void	RequestBuilder::validateProtocol() const
 {
 	if (protocol != HTTP_VERSION)
 		throw HTTPException(HTTPCode::HTTP_VERSION_NOT_SUPPORTED);
 }
 
-void	RequestFactory::validatePath()
+void	RequestBuilder::validatePath()
 {
 	if (request_path.empty() || request_path[0] != '/')
 		throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void	RequestFactory::validateHeader() const
+void	RequestBuilder::validateHeader() const
 {
 	Headers::const_iterator it = headers.find(HEADER_HOST);
 	if (it == headers.end())
@@ -164,21 +164,23 @@ void	RequestFactory::validateHeader() const
 	}
 }
 
-void	RequestFactory::invalidPath()
+void	RequestBuilder::invalidPath()
 {
 	throw HTTPException(HTTPCode::BAD_REQUEST);
 }
 
-void	RequestFactory::check()
+void	RequestBuilder::check()
 {
 	validateProtocol();
 	validateMethod();
 	validatePath();
 	validateHeader();
+	if (this->method == "GET")
+		this->is_parsing_complete = true; 
 	is_validated = true;
 }
 
-void	RequestFactory::print() const 
+void	RequestBuilder::print() const 
 {
 	std::cout << "--- REQUEST DEBUG ---" << '\n';
 	std::cout << "Method: [" << method << "]" << '\n';
@@ -192,7 +194,7 @@ void	RequestFactory::print() const
 	std::cout << "---------------------" << std::endl;
 }
 
-std::vector<uint8_t>	RequestFactory::getExtraData()
+std::vector<uint8_t>	RequestBuilder::getExtraData()
 {
 	size_t header_end = findHeaderEnd();
 	if (header_end == std::string::npos)
@@ -205,15 +207,15 @@ std::vector<uint8_t>	RequestFactory::getExtraData()
 	return extra;
 }
 
-const bool& RequestFactory::getCompleteStatus() const { return is_parsing_complete; }
+const bool& RequestBuilder::getCompleteStatus() const { return is_parsing_complete; }
 
-const bool& RequestFactory::get_header_parsed() const { return is_header_parsed; }
+const bool& RequestBuilder::get_header_parsed() const { return is_header_parsed; }
 
-const bool& RequestFactory::isValidated() const { return is_validated; }
+const bool& RequestBuilder::isValidated() const { return is_validated; }
 
-void RequestFactory::setValidateStatus(int status) { is_validated = status; }
+void RequestBuilder::setValidateStatus(int status) { is_validated = status; }
 
-const std::string *RequestFactory::getHeader(const std::string& key) const
+const std::string *RequestBuilder::getHeader(const std::string& key) const
 {
 	Headers::const_iterator it = this->headers.find(key);
 	return it != this->headers.end() ? &it->second : NULL;
@@ -284,7 +286,7 @@ static HandlerMap buildHandlerMap()
 	return m;
 }
 
-Request	RequestFactory::build() const
+Request	RequestBuilder::build() const
 {
 	static const HandlerMap handlers = buildHandlerMap();
 	Request result;
