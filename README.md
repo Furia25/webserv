@@ -2,8 +2,6 @@
 
 > A high-performance, non-blocking HTTP/1.1 server written from scratch in C++98 — no threads, no frameworks, no shortcuts.
 
-*This project has been created as part of the 42 curriculum b [vdurand](https://github.com/vdurand) and [antbonin](https://github.com/Antoine-Bonin).*
-
 ---
 
 ## Table of Contents
@@ -64,7 +62,7 @@ make
 
 `webserv` uses a [**TOML/1.1.0**](https://toml.io/en/) configuration format, parsed by a hand-written tokenizer and parser that strictly validates the standards.
 
-The full reference with every available key, its type, valid range, and default is in [`config/reference.config.toml`](config/reference.config.toml). Below is a quick overview of the structure.
+The full reference with every available key, its type, valid range, and default is available on the wiki page [`Configuration`](https://github.com/Furia25/webserv/wiki/Configuration). Below is a quick overview of the structure.
 
 ### Top-level sections
 
@@ -206,6 +204,9 @@ A C++98-compatible `Optional<T>` (backed by aligned storage) replaces pointer-ba
 **Design & systems**
 - [Refactoring Guru - RAII, State Machine, Factory](https://refactoring.guru/)
 - [Free List allocator (CppCon)](https://www.youtube.com/watch?v=MxgnS9Lwv0k)
+
+---
+*This project has been created as part of the 42 curriculum by [vdurand](https://github.com/vdurand) and [antbonin](https://github.com/Antoine-Bonin).*
 
 ---
 
