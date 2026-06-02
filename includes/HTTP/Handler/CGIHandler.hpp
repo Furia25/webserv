@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/23 23:29:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/02 19:26:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,13 +66,6 @@ public:
 
 	void	handleWrite(TCPServer& server);
 
-	void	parseCGIHeader();
-	void	proxyBody();
-
-	void	initPaths();
-	void	initEnvironment();
-	void	initProcessVariables(const char *argv[3], std::vector<const char *>& envp);
-
 private:
 	const Config::CGIConfig&	CGIConfig;
 
@@ -101,6 +94,14 @@ private:
 	bool						firstHeader;
 	bool						isHeaderParsed;
 	bool						isCGICompleted;
+
+	void	parseCGIHeader();
+	void	proxyBody();
+
+	void	sendHeaders();
+	void	initPaths();
+	void	initEnvironment();
+	void	initProcessVariables(const char *argv[3], std::vector<const char *>& envp);
 
 	CGIHandler(const CGIHandler& other);
 	CGIHandler&	operator=(const CGIHandler& other);

@@ -428,7 +428,8 @@ void HTTPHandler::onDisconnection(Connection& connection)
 
 void HTTPHandler::onError(Connection& connection, uint32_t error_event)
 {
-	(void) error_event;
+	if (error_event & EPOLLHUP || error_event & EPOLLRDHUP)
+		return ;
 
 	int			error_code = 0;
 	socklen_t	len = sizeof(error_code);

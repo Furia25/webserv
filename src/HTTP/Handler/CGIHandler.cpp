@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/24 01:32:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/02 19:28:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -265,6 +265,26 @@ void CGIHandler::onExecute()
 	}
 }
 
+void CGIHandler::sendHeaders()
+{
+	if (this->response.hasStatus())
+		return ;
+	Headers::iterator it = this->headers.find("status");
+	if (it != this->headers.end())
+	{
+		this->response.sendStatusLine(it->second);
+		this->headers.erase(it);
+	}
+	else
+		this->response.sendStatusLine(HTTPCode::OK);
+	this->response.sendDefaults(this->request, &this->CGIConfig);
+	this->response.sendHeaders(this->headers);
+	this->response.setChunked();
+	if (this->readedSize > 0)
+		this->response.sendChunk(this->buffer, this->readedSize);
+	this->isCGICompleted = true;
+}
+
 void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 {
 	if (this->statusCode != HTTPCode::OK)
@@ -279,25 +299,11 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 			return ;
 		}
 
-		if (!this->response.hasStatus())
-		{
-			Headers::iterator it = this->headers.find("status");
-			if (it != this->headers.end())
-			{
-				this->response.sendStatusLine(it->second);
-				this->headers.erase(it);
-			}
-			else
-				this->response.sendStatusLine(HTTPCode::OK);
-			this->response.sendDefaults(this->request, &this->CGIConfig);
-			this->response.sendHeaders(this->headers);
-			this->response.setChunked();
-			if (this->readedSize > 0)
-				this->response.sendChunk(this->buffer, this->readedSize);
-			this->isCGICompleted = true;
-		}
+		this->sendHeaders();
 		return ;
 	}
+	if (this->isHeaderParsed)
+		this->sendHeaders();
 
 	if (events & EPOLLOUT)
 		this->handleWrite(server);

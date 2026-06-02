@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/23 23:36:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/02 19:15:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ public:
 
 	bool		hasStatus() const { return this->state != Response::STATUS; };
 
+	bool		isBodyChunked() const { return this->isChunked; };
 	void		setBuffering(bool enable) { this->isBuffered = enable; };
 
 	inline Response&	sendHeader(const std::string& key, const std::string& value)
