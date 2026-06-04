@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/21 13:51:20 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 03:51:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/02 18:54:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 # include <stdint.h>
 # include <sys/time.h>
 
-# define WHEEL_SIZE	8
+# define WHEEL_SIZE	128
 
 typedef int64_t timestamp_ms;
 

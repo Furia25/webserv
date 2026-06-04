@@ -1,1 +1,0 @@
-siege -c 50 -b -t 10S http://localhost:8080/

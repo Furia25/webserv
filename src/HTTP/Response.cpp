@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/22 05:54:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/02 19:10:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,8 +210,10 @@ Response& Response::sendChunk(const std::string& body)
 
 Response& Response::sendChunk(const uint8_t *body, size_t length)
 {
-	if (!this->isChunked || this->state == Response::END)
-		throw std::runtime_error("Can't send chunk invalid state");
+	if (!this->isChunked)
+		throw std::runtime_error("Can't send chunk to non chunked response");
+	if (this->state == Response::END)
+		throw std::runtime_error("Can't send body chunk already ended");
 	if (state == Response::HEADER)
 		this->sendData(HTTP_NEWLINE);
 	this->state = Response::BODY;

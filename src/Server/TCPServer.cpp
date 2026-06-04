@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/24 16:01:43 by antoine          ###   ########.fr       */
+/*   Updated: 2026/06/02 18:55:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ void TCPServer::run(void)
 	this->startTime = time(NULL);
 
 	std::vector<epoll_event>	events_vec;
-	events_vec.reserve(this->engineConfig.max_events);
+	events_vec.resize(this->engineConfig.max_events);
 
 	epoll_event	*events = events_vec.data();
 
