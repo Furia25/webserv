@@ -37,7 +37,7 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	HashMap<size_t, ClientData *>::iterator it = clientsData.find(connection.getClientID());
 	
-	if (it == clientsData.end())
+	if (it == clientsData.end() || code == HTTPCode::HEADER_FIELDS_TOO_LARGE)
 	{
 		Response response(connection, code);
 			response.sendKeepAlive(false)

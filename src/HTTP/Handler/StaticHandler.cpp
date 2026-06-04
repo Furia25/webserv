@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 00:35:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/01 20:27:32 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,8 +49,10 @@ void StaticHandler::onCreation()
 	break;
 
 	case Method::DELETE:
+	{
 		if (!FileSystem::exists(physicalPath))
 			throw HTTPException(HTTPCode::NOT_FOUND);
+	}
 		break;
 
 	default:
