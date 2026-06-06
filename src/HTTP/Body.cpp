@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Body.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/24 02:53:52 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/06 17:50:20 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 #define _IS_ONE_MO_ 1048576
 
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), destinationPath(""), isFinished(false)
+Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), destinationPath(""), isFinished(false), chunkState(CHUNK_SIZE), neededBytes(0), maxBodySize(0)
 {
 }
 
@@ -27,6 +27,10 @@ Body::Body(const Body& other)
 	this->isFinished = other.isFinished;
 	this->destinationPath = other.destinationPath;
 	this->fileWriter = other.fileWriter;
+	this->chunkState = other.chunkState;
+	this->neededBytes = other.neededBytes;
+	this->sizeBuffer = other.sizeBuffer;
+	this->maxBodySize = other.maxBodySize;
 	const_cast<Body&>(other).fileWriter = NULL; 
 }
 
@@ -44,21 +48,26 @@ Body&	Body::operator=(const Body& other)
 		this->destinationPath = other.destinationPath;
 		this->fileWriter = other.fileWriter;
 		const_cast<Body&>(other).fileWriter = NULL; 
+		this->chunkState = other.chunkState;
+		this->neededBytes = other.neededBytes;
+		this->sizeBuffer = other.sizeBuffer;
+		this->maxBodySize = other.maxBodySize;
 	}
 	return *this;
 }
 
-void	Body::init(size_t expected, const std::string& path, bool stream)
+void	Body::init(size_t expected, const std::string& path, bool stream, size_t maxBody)
 {
 	this->expectedSize = expected;
 	this->isStreaming = stream;
 	this->destinationPath = path;
 	this->isFinished = false;
+	this->maxBodySize = maxBody;
 
 	if (this->isStreaming)
 	{
 		std::string destination_temp = this->destinationPath + ".tmp";
-		this->fileWriter = new FileWriter(); //bruh ??? pourquoi ??
+		this->fileWriter = new FileWriter(); //bruh ??? pourquoi ?? // tkt chef prcq
 		this->fileWriter->open(destination_temp);
 	}
 	else
@@ -129,6 +138,85 @@ void	Body::reset()
 	this->receivedSize = 0;
 	this->destinationPath = "";
 	this->isFinished = false;
+	this->chunkState = CHUNK_SIZE;
+	this->neededBytes = 0;
+	this->sizeBuffer.clear();
+}
+
+void	Body::handleChunkSize(const uint8_t* fragment, size_t& i)
+{
+	char c = fragment[i++];
+	if (c == '\r') 
+		return;
+	if (c == '\n') 
+	{
+		this->neededBytes = std::strtoul(this->sizeBuffer.c_str(), NULL, 16);
+		if (this->maxBodySize > 0 && this->neededBytes > this->maxBodySize)
+			throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
+		this->sizeBuffer.clear();
+		this->chunkState = (this->neededBytes == 0) ? CHUNK_COMPLETE : CHUNK_DATA;
+	}
+	else
+		this->sizeBuffer += c;
+}
+
+void	Body::handleChunkData(const uint8_t* fragment, size_t& i, size_t size)
+{
+	size_t remainingInFragment = size - i;
+	size_t toWrite = (remainingInFragment < this->neededBytes) ? remainingInFragment : this->neededBytes;
+
+	if (toWrite > 0) 
+	{
+		this->feed(fragment + i, toWrite); 
+		i += toWrite;
+		this->neededBytes -= toWrite;
+	}
+	if (this->neededBytes == 0)
+		this->chunkState = CHUNK_TRAILER;
+}
+
+void	Body::handleChunkTrailer(const uint8_t* fragment, size_t& i)
+{
+	char c = fragment[i++];
+	if (c == '\n')
+		this->chunkState = CHUNK_SIZE;
+}
+
+bool	Body::hasFinished() const
+{
+	return this->isFinished;
+}
+
+void	Body::feedChunked(const uint8_t* fragment, size_t size)
+{
+	size_t i = 0;
+	while (i < size && !this->hasFinished())
+	{
+		switch (this->chunkState)
+		{
+			case CHUNK_SIZE:
+			{
+				this->handleChunkSize(fragment, i);
+				break;
+			}
+			case CHUNK_DATA:
+			{
+				this->handleChunkData(fragment, i, size);
+				break;
+			}
+			case CHUNK_TRAILER:
+			{
+				this->handleChunkTrailer(fragment, i);
+				break;
+			}
+			case CHUNK_COMPLETE:
+			{
+				this->setIsFinished(true);
+				i++;
+				return;
+			}
+		}
+	}
 }
 
 bool	Body::getIsStreaming() const

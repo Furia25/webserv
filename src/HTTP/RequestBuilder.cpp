@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/24 17:17:59 by antoine          ###   ########.fr       */
+/*   Updated: 2026/06/06 18:03:03 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,13 @@
 RequestBuilder::RequestBuilder() 
 	: buffer_size(0), is_parsing_complete(false), is_header_parsed(false), is_validated(false)
 {
+	std::memset(raw_buffer, 0, MAX_HEADER_SIZE);
 }
 
 void	RequestBuilder::reset()
 {
 	std::memset(raw_buffer, '\0', buffer_size);
+	this->buffer_size = 0;
 	this->is_parsing_complete = false;
 	this->is_header_parsed = false;
 	this->is_validated = true;
@@ -39,14 +41,14 @@ void	RequestBuilder::feed(const uint8_t *fragment, size_t length)
 {
 	if (!is_header_parsed && (buffer_size + length > MAX_HEADER_SIZE))
 		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
-	std::memcpy(raw_buffer, fragment, length);
+	std::memcpy(raw_buffer + buffer_size, fragment, length);
 	buffer_size += length;
 	if (!is_header_parsed)
 	{
 		size_t header_end = findHeaderEnd();
 		if (header_end != std::string::npos)
 		{
-			parseAllHeaders(raw_buffer, header_end);
+			parseAllHeaders(raw_buffer, header_end + 2);
 			is_header_parsed = true;
 		}
 	}

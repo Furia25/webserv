@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPTypes.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/02 19:03:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/04 19:19:36 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ ENUM_CLASS(HandlerType, _HANDLERTYPES_, ENUM_BASIC,
 );
 # undef _HANDLERTYPES_
 
-# define _METHODS_ (GET, POST, DELETE, HEAD, PUT, UNKNOWN)
+# define _METHODS_ (GET, POST, DELETE, HEAD, UNKNOWN)
 ENUM_CLASS(Method, _METHODS_, ENUM_BASIC, ENUM_LITERALS(_METHODS_, ENUM_BASIC, ENUM_BASIC); public: Method() : _t(UNKNOWN) {});
 # undef _METHODS_
 

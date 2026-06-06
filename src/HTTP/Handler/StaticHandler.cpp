@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/01 20:27:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/04 19:08:29 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,6 @@ void StaticHandler::onCreation()
 		if (!this->staticConfig.index.empty() && FileSystem::exists(index_file))
 			this->physicalPath = index_file;
 	}
-
 	switch (this->request.method)
 	{
 	case Method::GET:

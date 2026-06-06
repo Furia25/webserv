@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/22 04:21:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/04 19:32:19 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #include "Server/TCPServer.hpp"
 #include "Server/IJob.hpp"
 
-size_t Connection::last_id = 0;
+size_t Connection::last_id = 1;
 
 Connection::Connection(TCPServer& server, Socket& server_socket, port_t origin_port) : server(server), bytes_sended(0),
 	bytes_received(0), state(CONNECTED), alarmTimeout(this, connection_timeout_callback), originPort(origin_port), engineConfig(server.engineConfig), actualJob(NULL)

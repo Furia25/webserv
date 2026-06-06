@@ -43,6 +43,14 @@ max_body_size = 150000000
 		max_age = 2592000
 
 	[[servers.routes]]
+	path = "/get"
+	methods = ["GET"]
+	handler = "STATIC"
+	alias = "/site1/upload"
+	index = "index.html"
+	autoindex = false
+
+	[[servers.routes]]
 	path = "/upload"
 	methods = ["POST"]
 	handler = "UPLOAD"

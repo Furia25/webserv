@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/19 15:49:52 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/06 15:26:04 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,30 +20,73 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 
-bool	isExtensionAllowed(const std::string& filename, const std::vector<MIME>& allowed_exts) 
+void	UploadHandler::onCreation()
 {
-	if (allowed_exts.empty()) 
-		return true;
-	size_t dotPos = filename.find_last_of('.');
-	if (dotPos == std::string::npos) 
-		return false;
-	std::string ext = filename.substr(dotPos + 1);
-	for (size_t i = 0; i < allowed_exts.size(); ++i) 
+	if (this->request.content_length == 0 && !this->request.is_chunked)
 	{
-		if (MIME::from_extension(ext) == allowed_exts[i])
-			return true;
+		Logger::ERROR() << "Upload Failed 0 bytes sent";
+		if (this->body.getIsStreaming() && this->body.getFileWriter())
+		{
+			std::string path = this->body.getFileWriter()->getFilePath();
+			this->body.getFileWriter()->close();
+			if (!path.empty())
+				FileSystem::removeFile(path);
+		}
+		throw HTTPException(HTTPCode::BAD_REQUEST);
 	}
-	return false;
+	if (this->uploadConfig.max_body_size > 0 && this->request.content_length > this->uploadConfig.max_body_size)
+	{
+		Logger::ERROR() << "Upload Payload too large in headers";
+		if (body.getIsStreaming()) 
+			std::remove(body.getFilePath().c_str());
+		throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
+	}
 }
 
-void    UploadHandler::onExecute()
+bool	isExtensionAllowed(const std::string& filename, const std::string& contentType, const std::vector<MIME>& allowed_exts) 
+{
+	if (allowed_exts.empty())
+		return true;
+	bool is_ok = false;
+	if (!contentType.empty())
+	{
+		std::string clean_type = contentType;
+		size_t semi_colon = clean_type.find(";");
+		if (semi_colon != std::string::npos)
+			clean_type = clean_type.substr(0, semi_colon);
+		MIME content_mime = MIME::from_extension(clean_type);
+		for (size_t i = 0; i < allowed_exts.size(); ++i)
+		{
+			if (content_mime == allowed_exts[i])
+				is_ok = true;
+		}
+		if (!is_ok)
+			return false;
+	}
+	size_t dotPos = filename.find_last_of('.');
+	if (dotPos == std::string::npos)
+		return false;
+	std::string ext = filename.substr(dotPos + 1);
+	MIME file_mime = MIME::from_extension(ext);
+	for (size_t i = 0; i < allowed_exts.size(); ++i) 
+	{
+		if (file_mime == allowed_exts[i])
+			is_ok = true;
+	}
+	return is_ok;
+}
+
+void	UploadHandler::onExecute()
 {
 	std::string current_filepath = body.getFilePath();
 	std::string final_filepath = current_filepath;
-
+	std::string content_type_val;
 	if (body.getIsStreaming() && current_filepath.size() > 4 && current_filepath.substr(current_filepath.size() - 4) == ".tmp") 
 		final_filepath = current_filepath.substr(0, current_filepath.size() - 4);
-	if (!isExtensionAllowed(final_filepath, this->uploadConfig.allowed_extensions)) 
+	HashMap<std::string, std::string>::const_iterator it = this->request.getHeaders().find("content-type");
+	if (it != this->request.getHeaders().end())
+    	content_type_val = it->second;
+	if (!isExtensionAllowed(final_filepath, content_type_val ,this->uploadConfig.allowed_extensions)) 
 	{
 		if (body.getIsStreaming()) std::remove(current_filepath.c_str());
 		throw HTTPException(HTTPCode::UNSUPPORTED_MEDIA);

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/19 15:10:49 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/06 15:22:01 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ public:
 		uploadConfig(static_cast<const Config::UploadConfig&>(*route_result.route)) {};
 
 	void	onExecute();
+	void	onCreation();
 private:
 	const Config::UploadConfig&	uploadConfig;
 };
