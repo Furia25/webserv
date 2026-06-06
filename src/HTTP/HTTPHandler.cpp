@@ -84,6 +84,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 	switch (client.routeRes.route->handler)
 	{
 	case HandlerType::STATIC :
+
 		handler = this->createHandler<StaticHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::REDIRECT :

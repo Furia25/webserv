@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 03:54:42 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/06 20:31:27 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -106,5 +106,7 @@ private:
 	void	registerConnection(Connection *connection);
 	void	dropConnection(Connection* connection);
 };
+
+class ForkException { };
 
 #endif // _TCPSERVER_H

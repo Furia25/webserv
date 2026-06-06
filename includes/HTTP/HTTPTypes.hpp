@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/02 19:03:18 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/05 18:09:00 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 # include "Config/ConfigDefault.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-# define HTTP_DEBUG	false
+# define HTTP_DEBUG	true
 
 # define HTTP_VERSION "HTTP/1.1"
 # define CGI_VERSION	"CGI/1.1"

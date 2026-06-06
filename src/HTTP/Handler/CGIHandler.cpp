@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/02 19:28:31 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/06 20:49:46 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 
 CGIHandler::~CGIHandler()
 {
+	this->connection.getServer().AlarmManager.cancel(this->alarmTimeout);
 	if (registered)
 	{
 		if (this->pipeIn[1] != -1)
@@ -34,12 +35,21 @@ CGIHandler::~CGIHandler()
 	SAFE_CLOSE(this->pipeOut[0]);
 	SAFE_CLOSE(this->pipeOut[1]);
 
-	if (childPID != -1)
+	if (this->childPID == -1)
+		return ;
+
+	int status;
+	pid_t result = waitpid(childPID, &status, WNOHANG);
+		
+	if (result == 0) 
 	{
 		::kill(this->childPID, SIGKILL);
 		waitpid(this->childPID, NULL, 0);
 	}
-	
+	else if (result == childPID)
+		;
+	else if (result == -1) 
+		Logger::ERROR() << "Error in CGI child termination";
 }
 
 static inline std::string	to_env_key(const std::string& header);
@@ -86,20 +96,19 @@ void CGIHandler::onCreation()
 		::close(this->pipeOut[0]);
 
 		if (::dup2(this->pipeIn[0], 0) == -1 || ::dup2(this->pipeOut[1], 1) == -1)
-		{
-			::close(this->pipeIn[0]);
-			::close(this->pipeOut[1]);
-			_exit(EXIT_FAILURE);
-		}
+			goto error;
 
 		::close(this->pipeIn[0]);
 		::close(this->pipeOut[1]);
 
 		if (::chdir(this->routeResult.basePath.c_str()) == -1)
-			_exit(EXIT_FAILURE);
+			goto error;
+		
 		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
-		_exit(EXIT_FAILURE);
-		break;
+	error:
+		close(0);
+		close(1);
+		throw ForkException();
 	}
 	default: //Parent
 	{
@@ -114,6 +123,7 @@ void CGIHandler::onCreation()
 		this->registered = true;
 		server.addPollEvent(*this, this->pipeIn[1],  EPOLLERR | EPOLLHUP | EPOLLOUT);
 		server.addPollEvent(*this, this->pipeOut[0], EPOLLERR | EPOLLHUP | EPOLLIN);
+		server.AlarmManager.schedule(this->alarmTimeout, this->CGIConfig.timeout);
 	}
 	break;
 	case -1: //Error
@@ -141,9 +151,9 @@ void CGIHandler::initPaths()
 		isExplicitScript = this->CGIConfig.interpreters.contain(ext) > 0;
 	}
 
+	this->scriptName = firstSegment;
 	if (isExplicitScript)
 	{
-		this->scriptName = firstSegment;
 		if (slash != std::string::npos)
 			this->pathInfo = remainder.substr(slash);
 	}
@@ -232,7 +242,7 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 	else
 		this->interpreter = it->second;
 
-	argv[0] = this->isBinary ? this->scriptName.c_str() : this->interpreter.c_str();
+	argv[0] = this->isBinary ? this->scriptFilename.c_str() : this->interpreter.c_str();
 	argv[1] = this->isBinary ? NULL : this->scriptName.c_str();
 	argv[2] = NULL;
 

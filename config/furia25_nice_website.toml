@@ -23,16 +23,22 @@ root        = "www/furia25_nice_website"
   handler   = "STATIC"
   path      = "/"
   alias     = "/static/"
-  methods   = ["GET"]
+  methods   = ["GET", "DELETE"]
   index     = "index.html"
+
+  [[servers.routes]]
+  handler   = "UPLOAD"
+  path      = "/static"
+  alias     = "/static/"
+  methods   = ["GET", "POST"]
+  allowed_extensions = []
 
   [[servers.routes]]
   path        = "/api"
   handler     = "CGI"
-  methods     = ["GET", "POST"]
-  default_bin = "auth.py"
-  interpreters = { py = "/usr/bin/python3" }
-  cgi_timeout  = 10
+  methods     = ["GET", "POST", "DELETE"]
+  interpreters = {}
+  cgi_timeout  = 5
 
     [servers.routes.env]
     HTTPS                = "off"
