@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 20:56:04 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 20:58:35 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,32 +132,29 @@ void	UploadHandler::onExecute()
 	case COPYING:
 	{
 		const size_t CHUNK_SIZE = 65536;
-		
 		this->srcFile.read(buffer, CHUNK_SIZE);
-            std::streamsize bytesRead = this->srcFile.gcount();
-			
-            if (bytesRead > 0)
-            {
-				this->dstFile.write(buffer, bytesRead);
-                if (this->dstFile.fail())
-                {
-					this->srcFile.close();
-                    this->dstFile.close();
-                    std::remove(this->tempPath.c_str());
-                    throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-                }
-            }
-			
-            if (this->srcFile.eof())
-            {
+		std::streamsize bytesRead = this->srcFile.gcount();
+		if (bytesRead > 0)
+		{
+			this->dstFile.write(buffer, bytesRead);
+			if (this->dstFile.fail())
+			{
+				this->srcFile.close();
+				this->dstFile.close();
+				std::remove(this->tempPath.c_str());
+				throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+			}
+			}
+			if (this->srcFile.eof())
+			{
 				Logger::DEBUG() << "Copie asynchrone terminée avec succès !";
-                this->srcFile.close();
-                this->dstFile.close();
-                std::remove(this->tempPath.c_str());
-				
-                response.sendStatusLine(HTTPCode::CREATED).sendContentLength(0).sendEnd();
-                this->setFinished();
-                body.setFilePath("");
+				this->srcFile.close();
+				this->dstFile.close();
+				std::remove(this->tempPath.c_str());
+
+				response.sendStatusLine(HTTPCode::CREATED).sendContentLength(0).sendEnd();
+				this->setFinished();
+				body.setFilePath("");
             }
             break;
         }
