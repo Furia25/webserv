@@ -51,6 +51,13 @@ max_body_size = 150000000
 	index = ""
 
 	[[servers.routes]]
+	path = "/delete"
+	methods = ["DELETE"]
+	handler = "STATIC"
+	alias = "./www/site1/upload"
+	index = ""
+
+	[[servers.routes]]
 	path = "/directory"
 	methods = ["GET"]
 	handler = "STATIC"

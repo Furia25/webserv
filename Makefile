@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/06/05 17:33:38 by antbonin         ###   ########.fr        #
+#    Updated: 2026/06/08 14:49:25 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -74,6 +74,7 @@ SRC_FILES = \
 	HTTP/Request.cpp \
 	HTTP/HTTPHandler.cpp \
 	HTTP/Router.cpp \
+	HTTP/RouterException.cpp \
     HTTP/AHandler.cpp \
     HTTP/Handler/StaticHandler.cpp \
 	HTTP/Handler/ErrorHandler.cpp \

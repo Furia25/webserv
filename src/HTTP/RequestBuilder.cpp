@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/06 18:03:03 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 16:00:15 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 # include "HTTP/Utils/HeaderParser.hpp"
 
 RequestBuilder::RequestBuilder() 
-	: buffer_size(0), is_parsing_complete(false), is_header_parsed(false), is_validated(false)
+	: buffer_size(0), is_validated(false),  is_header_parsed(false), is_parsing_complete(false)
 {
 	std::memset(raw_buffer, 0, MAX_HEADER_SIZE);
 }
@@ -40,7 +40,7 @@ void	RequestBuilder::reset()
 void	RequestBuilder::feed(const uint8_t *fragment, size_t length)
 {
 	if (!is_header_parsed && (buffer_size + length > MAX_HEADER_SIZE))
-		throw std::overflow_error("Header size exceeded MAX_HEADER_SIZE");
+		throw HTTPException(HTTPCode::HEADER_FIELDS_TOO_LARGE);
 	std::memcpy(raw_buffer + buffer_size, fragment, length);
 	buffer_size += length;
 	if (!is_header_parsed)

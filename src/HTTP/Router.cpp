@@ -6,12 +6,13 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/06 20:27:38 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 14:46:58 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTP/Router.hpp"
-#include "Utils/IntegerUtils.hpp"
+# include "HTTP/Router.hpp"
+# include "Utils/IntegerUtils.hpp"
+# include "HTTP/RouterException.hpp"
 
 inline void extract_host(const Request &request, std::string& host)
 {

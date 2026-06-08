@@ -34,6 +34,11 @@ HTTPHandler::~HTTPHandler()
 	}
 }
 
+size_t	HTTPHandler::getTotalRequests() const
+{
+	return this->totalRequests;
+}
+
 void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	HashMap<size_t, ClientData *>::iterator it = clientsData.find(connection.getClientID());
@@ -195,11 +200,10 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
 {
 	try { client.builder.feed(fragment, size); }
-	catch (const std::overflow_error& e)
+	catch (const HTTPException& e)
 	{
-		Logger::ERROR() << "Header DoS Attempt blocked: " << e.what();
-		dispatchError(connection, HTTPCode::HEADER_FIELDS_TOO_LARGE); 
-		return false;
+		dispatchError(connection, e.getStatusCode());
+		return true;
 	}
 
 	if (!client.builder.get_header_parsed())
@@ -249,14 +253,14 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 }
 
 bool	HTTPHandler::handleHeaderPhase(Connection& connection, ClientData& client)
+{
+	if (!processHeaders(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize())) 
 	{
-		if (!processHeaders(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize())) 
-			{
-				connection.consumeReadData(connection.getReadBufferSize());
-				return false;
-			}
-			return true;
+		connection.consumeReadData(connection.getReadBufferSize());
+		return false;
 	}
+	return true;
+}
 
 void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& client)
 {
@@ -290,7 +294,13 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
 
-	if (client.actualHandler != NULL || client.builder.getCompleteStatus())
+	if (client.actualHandler != NULL)
+	{
+		connection.consumeReadData(connection.getReadBufferSize());
+		return;
+	}
+
+	if (client.builder.getCompleteStatus())
 	{
 		this->resetClient(client);
 		connection.setJob(NULL);
@@ -302,6 +312,11 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		{
 			if (!handleHeaderPhase(connection, client)) 
 				return;
+			if (client.actualHandler != NULL)
+			{
+				connection.consumeReadData(connection.getReadBufferSize());
+				return;
+			}
 			switchToBodyReception(connection, client);
 			connection.consumeReadData(connection.getReadBufferSize());
 			checkCompletion(connection, client);

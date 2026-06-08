@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/15 20:52:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:40:57 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,13 @@
 class Request
 {
 public:
-	Method			method;
 	std::string		path;
-	std::string		query_string;
+	Method			method;
 	std::string		protocol;
-	size_t			content_length;
 	bool			is_chunked;
 	bool			keep_alive;
+	size_t			content_length;
+	std::string		query_string;
 
 	Request();
 

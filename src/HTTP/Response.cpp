@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/02 19:10:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:54:39 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,9 @@
 # include "HTTP/HTTPTypes.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-Response::Response(Connection& connection) : connection(connection), state(Response::STATUS), isChunked(false), isBuffered(false) {}
+Response::Response(Connection& connection) : state(Response::STATUS), isChunked(false), connection(connection), isBuffered(false){}
 
-Response::Response(Connection& connection, HTTPCode code) : connection(connection), state(Response::STATUS), isChunked(false), isBuffered(false)
+Response::Response(Connection& connection, HTTPCode code) : state(Response::STATUS), isChunked(false), connection(connection), isBuffered(false)
 {
 	this->sendStatusLine(code);
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:01:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/22 05:03:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:51:54 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,29 +26,19 @@ namespace Router
 	{
 		const Config::ServerConfig	*host;
 		const Config::RouteConfig	*route;
-		std::string					basePath;
-		std::string					pathRemainder;
-		std::string					fullPath;
 		std::string					hostStr;
-		HTTPCode					errorCode;
 		bool						success;
+		std::string					basePath;
+		std::string					fullPath;
+		HTTPCode					errorCode;
+		std::string					pathRemainder;
 
-		RouteResult() : host(NULL), route(NULL), errorCode(HTTPCode::OK), success(false) {}
+		RouteResult() : host(NULL), route(NULL), success(false), errorCode(HTTPCode::OK) {}
 	};
 
-	RouteResult					resolve(const Connection& connection,
-									const Config::AppConfig &config, const Request &req);
-	const Config::ServerConfig&	findDefaultServer(port_t port, const Config::AppConfig &config);
+	RouteResult						resolve(const Connection& connection, const Config::AppConfig &config, const Request &req);
+	const Config::ServerConfig&		findDefaultServer(port_t port, const Config::AppConfig &config);
 };
 
-class RouterException : public std::exception 
-{
-private:
-	HTTPCode code;
-public:
-	RouterException(HTTPCode code) : code(code) {}
-	virtual ~RouterException() throw() {}
-	HTTPCode getCode() const { return code; }
-};
 
 #endif // _ROUTER_H

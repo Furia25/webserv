@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/04 19:19:36 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 16:05:11 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,17 +26,17 @@
 # include "Config/ConfigDefault.hpp"
 # include "Utils/IntegerUtils.hpp"
 
-# define HTTP_DEBUG	false
+# define HTTP_DEBUG	true
 
-# define HTTP_VERSION "HTTP/1.1"
-# define CGI_VERSION	"CGI/1.1"
+# define CGI_VERSION		"CGI/1.1"
+# define HTTP_VERSION		"HTTP/1.1"
 
-# define HEADER_CONTENT_TYPE	"content-type"
-# define HEADER_CONTENT_LENGTH "content-length"
-# define HEADER_COOKIE	"cookie"
-# define HEADER_HOST "host"
+# define HEADER_HOST 				"host"
+# define HEADER_COOKIE				"cookie"
+# define HEADER_CONNECTION			"connection"
+# define HEADER_CONTENT_TYPE		"content-type"
+# define HEADER_CONTENT_LENGTH 		"content-length"
 # define HEADER_TRANSFER_ENCODING	"transfer-encoding"
-# define HEADER_CONNECTION	"connection"
 
 # define HTTP_NEWLINE	"\r\n"
 
