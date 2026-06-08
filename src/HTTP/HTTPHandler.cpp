@@ -16,6 +16,7 @@
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"
 # include "Utils/IntegerUtils.hpp"
+# include "HTTP/Utils/GenerateUniqueFilename.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 	: clientPool(256), handlerPool(), config(config), totalRequests(0)
@@ -37,7 +38,7 @@ void	HTTPHandler::dispatchError(Connection& connection, HTTPCode code)
 {
 	HashMap<size_t, ClientData *>::iterator it = clientsData.find(connection.getClientID());
 	
-	if (it == clientsData.end() || code == HTTPCode::HEADER_FIELDS_TOO_LARGE)
+	if (it == clientsData.end())
 	{
 		Response response(connection, code);
 			response.sendKeepAlive(false)
@@ -126,7 +127,7 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	bool is_request_finished = false;
 	if (client.request.is_chunked)
 	{
-		if (client.chunkState == CHUNK_COMPLETE)
+		if (client.body.hasFinished())
 			is_request_finished = true;
 	}
 	else
@@ -142,18 +143,6 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	}
 	if (is_request_finished) 
 	{
-		if (bodyLength == 0 && client.routeRes.route->handler == HandlerType::UPLOAD)
-		{
-			if (client.body.getIsStreaming() && client.body.getFileWriter())
-			{
-				std::string path = client.body.getFileWriter()->getFilePath();
-				client.body.getFileWriter()->close();
-				FileSystem::removeFile(path);
-			}
-			Logger::ERROR() << "Upload Failed 0 bytes sent";
-			dispatchError(connection, HTTPCode::BAD_REQUEST);
-			return ;
-		}
 		client.body.finish();
 		this->launchHandler(connection, client);
 	}
@@ -191,7 +180,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 		if (fileName.empty())
 			fileName = "uploaded_file";
 		std::stringstream pathBuilder;
-		pathBuilder << uploadConfig.upload_store << "/" << fileName << "_" << connection.getHash();
+		pathBuilder << uploadConfig.upload_store << "/" << GenerateUniqueFilename(fileName);
 		path = pathBuilder.str();
 	}
 	else if (isStreaming) 
@@ -200,7 +189,7 @@ bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& cl
 		pathBuilder << TEMP_FILE_PATH << connection.getHash();
 		path = pathBuilder.str();
 	}
-	client.body.init(client.request.content_length, path, isStreaming);
+	client.body.init(client.request.content_length, path, isStreaming, client.routeRes.route->max_body_size);
 	return true;
 }
 
@@ -260,74 +249,6 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 	return true;
 }
 
-void	HTTPHandler::handleChunkSize(ClientData& client, const uint8_t* fragment, size_t& i)
-{
-	char c = fragment[i++];
-	if (c == '\r') 
-		return;
-	if (c == '\n') 
-	{
-		client.neededBytes = std::strtoul(client.sizeBuffer.c_str(), NULL, 16);
-		if (client.neededBytes > 10485760) throw HTTPException(HTTPCode::PAYLOAD_TOO_LARGE);
-			client.sizeBuffer.clear();
-		client.chunkState = (client.neededBytes == 0) ? CHUNK_COMPLETE : CHUNK_DATA;
-	}
-	else
-	{
-		client.sizeBuffer += c;
-	}
-	return ;
-}
-
-void	HTTPHandler::handleChunkData(ClientData& client, const uint8_t* fragment, size_t& i, size_t size)
-{
-	size_t remainingInFragment = size - i;
-	size_t toWrite = (remainingInFragment < client.neededBytes) ? remainingInFragment : client.neededBytes;
-	if (toWrite > 0) 
-	{
-		receiveBodyChunk(client, fragment + i, toWrite);
-		i += toWrite;
-		client.neededBytes -= toWrite;
-	}
-	if (client.neededBytes == 0)
-		client.chunkState = CHUNK_TRAILER;
-	return ;
-}
-
-void	HTTPHandler::handleChunkTrailer(ClientData& client, const uint8_t* fragment, size_t& i)
-{
-	char c = fragment[i++];
-	if ( c == '\n')
-		client.chunkState = CHUNK_SIZE;
-	return ;
-}
-
-void	HTTPHandler::handleChunkComplete(Connection& connection, ClientData& client, const uint8_t* fragment, size_t& i)
-{
-	client.body.setIsFinished(true);
-	if (fragment[i++] == '\n')
-		checkCompletion(connection, client);
-}
-
-void	HTTPHandler::processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size)
-{
-	size_t i = 0;
-	while (i < size)
-	{
-		switch (client.chunkState)
-		{
-			case CHUNK_SIZE:
-				handleChunkSize(client, fragment, i); break;
-			case CHUNK_DATA:
-				handleChunkData(client, fragment, i, size); break;
-			case CHUNK_TRAILER:
-				handleChunkTrailer(client, fragment, i); break;
-			case CHUNK_COMPLETE:
-				handleChunkComplete(connection, client, fragment, i); return;
-		}
-	}
-}
-
 bool	HTTPHandler::handleHeaderPhase(Connection& connection, ClientData& client)
 	{
 		if (!processHeaders(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize())) 
@@ -350,7 +271,7 @@ void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& clie
 	if (!extra.empty()) 
 	{
 		if (client.request.is_chunked)
-			processChunkedData(connection, client, extra.data(), extra.size());
+			client.body.feedChunked(extra.data(), extra.size());
 		else
 			receiveBodyChunk(client, extra.data(), extra.size());
 	}
@@ -358,10 +279,12 @@ void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& clie
 
 void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
 {
+	const uint8_t*	data = connection.getReadBufferPtr();
+	size_t			size = connection.getReadBufferSize();
 	if (client.request.is_chunked)
-		processChunkedData(connection, client, connection.getReadBufferPtr(), connection.getReadBufferSize());
+		client.body.feedChunked(data, size);
 	else
-		receiveBodyChunk(client, connection.getReadBufferPtr(), connection.getReadBufferSize());
+		receiveBodyChunk(client, data, size);
 }
 
 void	HTTPHandler::onDataReceived(Connection& connection)
@@ -451,6 +374,5 @@ void HTTPHandler::resetClient(ClientData &client)
 	client.builder.reset();
 	client.body.reset();
 	client.request = Request();
-	client.chunkState = CHUNK_SIZE;
 	client.neededBytes = 0;
 }

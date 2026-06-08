@@ -1,5 +1,6 @@
-# webserv
+*This project has been created as part of the 42 curriculum by [vdurand](https://github.com/vdurand) and [antbonin](https://github.com/Antoine-Bonin).*
 
+# webserv
 > A high-performance, non-blocking HTTP/1.1 server written from scratch in C++98 — no threads, no frameworks, no shortcuts.
 
 ---

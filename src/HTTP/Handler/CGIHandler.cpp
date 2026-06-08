@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/06 20:49:46 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 15:44:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ void CGIHandler::onCreation()
 	error:
 		close(0);
 		close(1);
-		throw ForkException();
+		_exit(EXIT_FAILURE);
 	}
 	default: //Parent
 	{

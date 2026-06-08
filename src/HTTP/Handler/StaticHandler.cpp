@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/01 20:27:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/06 19:41:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,44 +18,37 @@
 
 void StaticHandler::onCreation()
 {
-	const std::string separator = (physicalPath.empty() || physicalPath[physicalPath.length() - 1] == '/') ? "" : "/";
-
-	if (this->physicalPath == this->routeResult.basePath)
+	if (FileSystem::isDirectory(this->physicalPath))
 	{
-		std::string index_file = physicalPath + separator + this->staticConfig.index;
+		const std::string separator = (physicalPath.empty() || physicalPath[physicalPath.length() - 1] == '/') ? "" : "/";
+		std::string index_file = this->physicalPath + separator + this->staticConfig.index;
 		if (!this->staticConfig.index.empty() && FileSystem::exists(index_file))
 			this->physicalPath = index_file;
 	}
-
 	switch (this->request.method)
 	{
-	case Method::GET:
-	case Method::HEAD:
-	{
-		if (FileSystem::isDirectory(physicalPath))
+		case Method::GET:
+		case Method::HEAD:
 		{
-			if (!this->staticConfig.autoindex)
-				throw HTTPException(HTTPCode::FORBIDDEN); // 403
+			if (FileSystem::isDirectory(physicalPath))
+			{
+				if (!this->staticConfig.autoindex)
+					throw HTTPException(HTTPCode::NOT_FOUND);
+			}
+			else 
+			{
+				if (!FileSystem::exists(physicalPath))
+					throw HTTPException(HTTPCode::NOT_FOUND);
+				if (!FileSystem::isReadable(physicalPath))
+					throw HTTPException(HTTPCode::FORBIDDEN);
+			}
 		}
-		else 
-		{
+			break;
+		case Method::DELETE:
 			if (!FileSystem::exists(physicalPath))
 				throw HTTPException(HTTPCode::NOT_FOUND);
-
-			if (!FileSystem::isReadable(physicalPath))
-				throw HTTPException(HTTPCode::FORBIDDEN);
-		}
-	}
-	break;
-
-	case Method::DELETE:
-	{
-		if (!FileSystem::exists(physicalPath))
-			throw HTTPException(HTTPCode::NOT_FOUND);
-	}
-		break;
-
-	default:
+			break;
+		default:
 		throw HTTPException(HTTPCode::METHOD_NOT_ALLOWED);
 	}
 }

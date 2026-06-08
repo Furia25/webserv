@@ -34,13 +34,43 @@ max_body_size = 150000000
 	[[servers.routes]]
 	handler = "STATIC"
 	path = "/"
-	methods = ["GET", "POST"]
-	index = "index.html"
+	methods = ["GET"]
+	index = "/routes/test/index.html"
     autoindex = false
 
 		[servers.routes.cookies.theme]
 		default_value = "dark"
 		max_age = 2592000
+
+
+	[[servers.routes]]
+	path = "/post_body"
+	methods = ["POST"]
+	handler = "STATIC"
+	max_body_size = 100
+	index = ""
+
+	[[servers.routes]]
+	path = "/directory"
+	methods = ["GET"]
+	handler = "STATIC"
+	alias = "./YoupiBanane"
+	index = "youpi.bad_extension"
+
+	[[servers.routes]]
+	path = "*.bla" 
+	methods = ["POST"]
+	handler = "CGI"
+	default_bin = "./cgi_tester"
+	cgi_timeout = 10
+
+	[[servers.routes]]
+	path = "/get"
+	methods = ["GET"]
+	handler = "STATIC"
+	alias = "/site1/upload"
+	index = "index.html"
+	autoindex = false
 
 	[[servers.routes]]
 	path = "/upload"

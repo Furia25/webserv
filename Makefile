@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antoine <antoine@student.42.fr>            +#+  +:+       +#+         #
+#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/05/24 16:12:33 by antoine          ###   ########.fr        #
+#    Updated: 2026/06/05 17:33:38 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -85,6 +85,7 @@ SRC_FILES = \
 	HTTP/Response.cpp \
 	HTTP/Utils/FileReader.cpp \
 	HTTP/Utils/FileWriter.cpp \
+	HTTP/Utils/GenerateRandomFilename.cpp \
 	Logger.cpp \
 	main.cpp
 

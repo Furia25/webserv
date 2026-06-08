@@ -51,15 +51,6 @@ public:
 	size_t		getTotalRequests(void) const { return this->totalRequests; };
 protected:
 private:
-
-	enum ChunkState
-	{
-		CHUNK_SIZE,
-		CHUNK_DATA,
-		CHUNK_TRAILER,
-		CHUNK_COMPLETE
-	};
-
 	struct HandlerSlot
 	{
 		union
@@ -81,11 +72,10 @@ private:
 		Body					body;
 		Router::RouteResult 	routeRes;
 		HandlerSlot				*actualHandler;
-		ChunkState				chunkState;
 		size_t					neededBytes;
 		std::string				sizeBuffer;
 
-		ClientData(): actualHandler(NULL), chunkState(CHUNK_SIZE), neededBytes(0) {};
+		ClientData(): actualHandler(NULL), neededBytes(0) {};
 	};
 
 	HashMap<size_t, ClientData *>	clientsData;
@@ -94,7 +84,6 @@ private:
 	const Config::AppConfig&		config;
 	size_t							totalRequests;
 
-	void	processChunkedData(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 	bool	initializeBodyReception(Connection& connection, ClientData& client);
 	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
@@ -111,11 +100,6 @@ private:
 			Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
 	
 	void	resetClient(ClientData& client);
-
-	void				handleChunkSize(ClientData& client, const uint8_t* fragment, size_t& i);
-	void				handleChunkData(ClientData& client, const uint8_t* fragment, size_t& i, size_t size);
-	inline void			handleChunkTrailer(ClientData& client, const uint8_t* fragment, size_t& i);
-	inline void			handleChunkComplete(Connection& connection, ClientData& client, const uint8_t* fragment, size_t& i);
 
 	bool		handleHeaderPhase(Connection& connection, ClientData& client);
 	void 		switchToBodyReception(Connection& connection, ClientData& client);
