@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/02 19:26:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 20:35:52 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,9 +50,6 @@ public:
 	isHeaderParsed(false),
 	isCGICompleted(false)
 	{
-		this->pipeIn[0] = -1;
-		this->pipeIn[1] = -1;
-
 		this->pipeOut[0] = -1;
 		this->pipeOut[1] = -1;
 	};
@@ -63,8 +60,6 @@ public:
 
 	void	onExecute();
 	void	handleEvent(TCPServer& server, uint32_t events);
-
-	void	handleWrite(TCPServer& server);
 
 private:
 	const Config::CGIConfig&	CGIConfig;
@@ -80,7 +75,6 @@ private:
 	std::string					interpreter;
 
 	bool						registered;
-	int							pipeIn[2];
 	int							pipeOut[2];
 	int							bodyFD;
 	pid_t						childPID;

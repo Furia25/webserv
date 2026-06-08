@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/08 15:44:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 20:39:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,27 +20,21 @@
 CGIHandler::~CGIHandler()
 {
 	this->connection.getServer().AlarmManager.cancel(this->alarmTimeout);
-	if (registered)
-	{
-		if (this->pipeIn[1] != -1)
-			this->connection.getServer().removePollEvent(*this, this->pipeIn[1]);
-		if (this->pipeOut[0] != -1)
+
+	if (registered && this->pipeOut[0] != -1)
 			this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
-	}
 
 	SAFE_CLOSE(this->bodyFD);
 
-	SAFE_CLOSE(this->pipeIn[0]);
-	SAFE_CLOSE(this->pipeIn[1]);
 	SAFE_CLOSE(this->pipeOut[0]);
 	SAFE_CLOSE(this->pipeOut[1]);
 
-	if (this->childPID == -1)
+	if (this->childPID == -1 || this->childPID == 0)
 		return ;
 
 	int status;
 	pid_t result = waitpid(childPID, &status, WNOHANG);
-		
+
 	if (result == 0) 
 	{
 		::kill(this->childPID, SIGKILL);
@@ -76,15 +70,12 @@ void CGIHandler::onCreation()
 
 	this->initProcessVariables(argv, envp);
 
-	if (this->body.getIsStreaming())
-	{
-		this->bodyFD = open(this->body.getFilePath().c_str(), 0);
-		if (this->bodyFD == -1)
-			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
-	}
+	this->bodyFD = open(this->body.getFilePath().c_str(), 0);
+	if (this->bodyFD == -1)
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 
 	/*Open pipes for inter process comunication*/
-	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
+	if (::pipe(this->pipeOut) == -1)
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 
 	this->childPID = fork();
@@ -92,38 +83,37 @@ void CGIHandler::onCreation()
 	{
 	case 0: //Child
 	{
-		::close(this->pipeIn[1]);
 		::close(this->pipeOut[0]);
 
-		if (::dup2(this->pipeIn[0], 0) == -1 || ::dup2(this->pipeOut[1], 1) == -1)
+		if (::dup2(this->bodyFD, 0) == -1 || ::dup2(this->pipeOut[1], 1) == -1)
 			goto error;
 
-		::close(this->pipeIn[0]);
+		::close(this->bodyFD);
 		::close(this->pipeOut[1]);
 
 		if (::chdir(this->routeResult.basePath.c_str()) == -1)
 			goto error;
-		
+
 		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
+		std::cerr << "\n\nTESt\n\n";
 	error:
 		close(0);
 		close(1);
+		std::cerr << "Error on CGI execution, child terminated\n";
 		_exit(EXIT_FAILURE);
 	}
 	default: //Parent
 	{
-		::close(this->pipeIn[0]); this->pipeIn[0] = -1;
-		::close(this->pipeOut[1]); this->pipeOut[1] = -1;
+		TCPServer& server = this->connection.getServer();
+		server.AlarmManager.schedule(this->alarmTimeout, this->CGIConfig.timeout);
+		SAFE_CLOSE(this->bodyFD);
+		SAFE_CLOSE(this->pipeOut[1]);
 
-		if (::fcntl(this->pipeIn[1], F_SETFL, O_NONBLOCK) == -1
-				|| ::fcntl(this->pipeOut[0], F_SETFL, O_NONBLOCK) == -1)
+		if (::fcntl(this->pipeOut[0], F_SETFL, O_NONBLOCK) == -1)
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 
-		TCPServer& server = this->connection.getServer();
 		this->registered = true;
-		server.addPollEvent(*this, this->pipeIn[1],  EPOLLERR | EPOLLHUP | EPOLLOUT);
 		server.addPollEvent(*this, this->pipeOut[0], EPOLLERR | EPOLLHUP | EPOLLIN);
-		server.AlarmManager.schedule(this->alarmTimeout, this->CGIConfig.timeout);
 	}
 	break;
 	case -1: //Error
@@ -134,16 +124,15 @@ void CGIHandler::onCreation()
 
 void CGIHandler::initPaths()
 {
-	const std::string&	remainder = routeResult.pathRemainder;
-	size_t				slash = remainder.find('/', 1);
+	const std::string& remainder = routeResult.pathRemainder;
+	size_t slash = remainder.find('/', 1);
 
 	std::string firstSegment;
-
 	if (remainder.size() > 1)
-		firstSegment = remainder.substr(1, slash == std::string::npos ? std::string::npos : slash - 1);
+		firstSegment = remainder.substr(1, slash == std::string::npos
+			? std::string::npos : slash - 1);
 
 	bool isExplicitScript = false;
-
 	size_t dot = firstSegment.rfind('.');
 	if (dot != std::string::npos)
 	{
@@ -151,9 +140,10 @@ void CGIHandler::initPaths()
 		isExplicitScript = this->CGIConfig.interpreters.contain(ext) > 0;
 	}
 
-	this->scriptName = firstSegment;
-	if (isExplicitScript)
+	this->pathInfo = "";
+	if (isExplicitScript || (!firstSegment.empty() && CGIConfig.default_bin.empty()))
 	{
+		this->scriptName = firstSegment;
 		if (slash != std::string::npos)
 			this->pathInfo = remainder.substr(slash);
 	}
@@ -181,8 +171,9 @@ inline void CGIHandler::initEnvironment()
 	env.insert("REQUEST_METHOD", Method::toString(this->request.method));
 	env.insert("PATH_INFO", this->pathInfo);
 
-	env.insert("PATH_TRANSLATED", this->pathInfo.empty() ? ""
-		: this->routeResult.basePath + this->pathInfo);
+	if (!this->pathInfo.empty())
+		env.insert("PATH_TRANSLATED",
+			this->routeResult.route->root + this->pathInfo);
 
 	env.insert("SCRIPT_NAME", this->CGIConfig.path + "/" + this->scriptName);
 
@@ -242,7 +233,7 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 	else
 		this->interpreter = it->second;
 
-	argv[0] = this->isBinary ? this->scriptFilename.c_str() : this->interpreter.c_str();
+	argv[0] = this->isBinary ? this->scriptName.c_str() : this->interpreter.c_str();
 	argv[1] = this->isBinary ? NULL : this->scriptName.c_str();
 	argv[2] = NULL;
 
@@ -292,31 +283,21 @@ void CGIHandler::sendHeaders()
 	this->response.setChunked();
 	if (this->readedSize > 0)
 		this->response.sendChunk(this->buffer, this->readedSize);
-	this->isCGICompleted = true;
 }
 
 void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 {
+	(void) server;
+
 	if (this->statusCode != HTTPCode::OK)
-		return ;
+		return;
 
-	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
+	if (events & EPOLLERR)
 	{
-		if (events & EPOLLERR)
-		{
-			Logger::ERROR() << "CGI pipe errored";
-			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-			return ;
-		}
-
-		this->sendHeaders();
-		return ;
+		Logger::ERROR() << "CGI pipe errored";
+		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		return;
 	}
-	if (this->isHeaderParsed)
-		this->sendHeaders();
-
-	if (events & EPOLLOUT)
-		this->handleWrite(server);
 
 	if (events & EPOLLIN)
 	{
@@ -325,56 +306,15 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 		else
 			this->proxyBody();
 	}
-}
 
-void CGIHandler::handleWrite(TCPServer& server)
-{
-	if (this->bodyFD == -1)
+	if (this->isHeaderParsed)
+		this->sendHeaders();
+
+	if (events & (EPOLLHUP | EPOLLRDHUP))
 	{
-		size_t  size = this->body.getSize();
-
-		ssize_t writed = ::write(this->pipeIn[1],
-			this->body.getMemoryBuffer().data() + this->writedSize,
-			size - this->writedSize);
-
-		if (writed == -1)
-		{
-			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-			return ;
-		}
-
-		if (writed == 0 || this->writedSize + writed >= size)
-		{
-			server.removePollEvent(*this, this->pipeIn[1]);
-			return ;
-		}
-
-		this->writedSize += writed;
-		return ;
+		this->sendHeaders();
+		this->isCGICompleted = true;
 	}
-
-	loff_t offset = static_cast<loff_t>(this->writedSize);
-
-	ssize_t writed = splice(
-		this->bodyFD, &offset,
-		this->pipeIn[1], NULL,
-		65536,
-		SPLICE_F_MOVE
-	);
-
-	if (writed == -1)
-	{
-		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-		return ;
-	}
-
-	if (writed == 0)
-	{
-		server.removePollEvent(*this, this->pipeIn[1]);
-		return ;
-	}
-
-	this->writedSize += writed;
 }
 
 void CGIHandler::parseCGIHeader()

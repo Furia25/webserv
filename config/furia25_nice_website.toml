@@ -37,8 +37,8 @@ root        = "www/furia25_nice_website"
   path        = "/api"
   handler     = "CGI"
   methods     = ["GET", "POST", "DELETE"]
-  interpreters = {}
-  cgi_timeout  = 5
+  interpreters = {py = "/usr/bin/python3"}
+  cgi_timeout  = 100
 
     [servers.routes.env]
     HTTPS                = "off"
