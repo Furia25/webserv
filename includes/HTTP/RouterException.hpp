@@ -1,25 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
+/*   RouterException.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 16:23:11 by antbonin         ###   ########.fr       */
+/*   Created: 2026/06/08 14:45:23 by antbonin          #+#    #+#             */
+/*   Updated: 2026/06/08 14:48:42 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/Handler/ErrorHandler.hpp"
-# include "Utils/FileSystem.hpp"
-# include <string>
 
-void ErrorHandler::onCreation() 
-{
-	throw HTTPException(this->statusCode);
-}
+#ifndef _ROUTEREXCEPTION_H
+# define _ROUTEREXCEPTION_H
 
-void ErrorHandler::onExecute()
+# include "HTTP/HTTPTypes.hpp"
+# include <stdexcept>
+
+class RouterException : public std::exception 
 {
-	throw HTTPException(this->statusCode);
-}
+private:
+	HTTPCode code;
+public:
+	RouterException(HTTPCode code);
+	virtual ~RouterException() throw();
+	HTTPCode getCode() const;
+};
+
+#endif // _ROUTEREXCEPTION_H

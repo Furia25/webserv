@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/06 15:22:01 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 20:53:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,20 @@ public:
 		const Router::RouteResult& route_result,
 		HTTPCode status_code = HTTPCode::OK)
 	: AHandler(handler, connection, request, body, route_result, status_code), 
-		uploadConfig(static_cast<const Config::UploadConfig&>(*route_result.route)) {};
+		uploadConfig(static_cast<const Config::UploadConfig&>(*route_result.route)), copyState(INIT) {};
 
 	void	onExecute();
 	void	onCreation();
 private:
+	enum CopyState
+	{
+		INIT,
+		COPYING,
+	};
+	CopyState	copyState;
+	std::ifstream	srcFile;
+	std::ofstream	dstFile;
+	std::string		tempPath;
 	const Config::UploadConfig&	uploadConfig;
 };
 

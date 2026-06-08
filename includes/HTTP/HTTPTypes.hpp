@@ -6,7 +6,11 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/06/08 20:03:16 by vdurand          ###   ########.fr       */
+=======
+/*   Updated: 2026/06/08 17:21:04 by antbonin         ###   ########.fr       */
+>>>>>>> b25766c6a24c54ae94fef0ae428334291c920a1b
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,15 +33,15 @@
 
 # define HTTP_DEBUG	true
 
-# define HTTP_VERSION "HTTP/1.1"
-# define CGI_VERSION	"CGI/1.1"
+# define CGI_VERSION		"CGI/1.1"
+# define HTTP_VERSION		"HTTP/1.1"
 
-# define HEADER_CONTENT_TYPE	"content-type"
-# define HEADER_CONTENT_LENGTH "content-length"
-# define HEADER_COOKIE	"cookie"
-# define HEADER_HOST "host"
+# define HEADER_HOST 				"host"
+# define HEADER_COOKIE				"cookie"
+# define HEADER_CONNECTION			"connection"
+# define HEADER_CONTENT_TYPE		"content-type"
+# define HEADER_CONTENT_LENGTH 		"content-length"
 # define HEADER_TRANSFER_ENCODING	"transfer-encoding"
-# define HEADER_CONNECTION	"connection"
 
 # define HTTP_NEWLINE	"\r\n"
 

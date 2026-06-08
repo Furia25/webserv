@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/06 17:50:20 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/08 20:30:32 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,12 @@
 
 #define _IS_ONE_MO_ 1048576
 
-Body::Body() : fileWriter(NULL), isStreaming(false), expectedSize(0), receivedSize(0), destinationPath(""), isFinished(false), chunkState(CHUNK_SIZE), neededBytes(0), maxBodySize(0)
+Body::Body() : fileWriter(NULL), expectedSize(0), receivedSize(0), destinationPath(""), isFinished(false), chunkState(CHUNK_SIZE), neededBytes(0), maxBodySize(0)
 {
 }
 
 Body::Body(const Body& other) 
 {
-	this->isStreaming = other.isStreaming;
 	this->isFinished = other.isFinished;
 	this->destinationPath = other.destinationPath;
 	this->fileWriter = other.fileWriter;
@@ -43,7 +42,6 @@ Body&	Body::operator=(const Body& other)
 			delete this->fileWriter;
 			this->fileWriter = NULL;
 		}
-		this->isStreaming = other.isStreaming;
 		this->isFinished = other.isFinished;
 		this->destinationPath = other.destinationPath;
 		this->fileWriter = other.fileWriter;
@@ -56,33 +54,23 @@ Body&	Body::operator=(const Body& other)
 	return *this;
 }
 
-void	Body::init(size_t expected, const std::string& path, bool stream, size_t maxBody)
+void	Body::init(size_t expected, const std::string& path, size_t maxBody)
 {
 	this->expectedSize = expected;
-	this->isStreaming = stream;
 	this->destinationPath = path;
 	this->isFinished = false;
 	this->maxBodySize = maxBody;
 
-	if (this->isStreaming)
-	{
-		std::string destination_temp = this->destinationPath + ".tmp";
-		this->fileWriter = new FileWriter(); //bruh ??? pourquoi ?? // tkt chef prcq
-		this->fileWriter->open(destination_temp);
-	}
-	else
-		memoryBuffer.reserve(expectedSize);
+	std::string destination_temp = this->destinationPath;
+	this->fileWriter = new FileWriter(); //bruh ??? pourquoi ?? // tkt chef prcq
+	this->fileWriter->open(destination_temp);
 }
 
 void    Body::feed(const uint8_t* data, size_t size)
 {
 	if (size == 0)
 		return ;
-	
-	if (this->isStreaming)
-		fileWriter->writeChunk(data, size);
-	else
-		memoryBuffer.insert(memoryBuffer.end(), data, data + size);
+	fileWriter->writeChunk(data, size);
 	receivedSize += size;
 }
 
@@ -93,15 +81,9 @@ void	Body::setIsFinished(bool status)
 
 bool	Body::isComplete() const 
 {
-	if (this->isStreaming && this->expectedSize == 0)
+	if (this->expectedSize == 0)
 		return this->isFinished;
-	
 	return this->receivedSize >= this->expectedSize;
-}
-
-bool    Body::isLessThanOneMO()const
-{
-	return this->expectedSize < _IS_ONE_MO_;
 }
 
 size_t  Body::getSize()const 
@@ -125,15 +107,11 @@ void	Body::reset()
 {
 	if (this->fileWriter) 
 	{
-		if (this->isStreaming)
-		{
-			this->fileWriter->close();
-			delete this->fileWriter;
-		}
+		this->fileWriter->close();
+		delete this->fileWriter;
 		this->fileWriter = NULL;
 	}
 	this->fileWriter = NULL;
-	this->isStreaming = false;
 	this->expectedSize = 0;
 	this->receivedSize = 0;
 	this->destinationPath = "";
@@ -219,17 +197,6 @@ void	Body::feedChunked(const uint8_t* fragment, size_t size)
 	}
 }
 
-bool	Body::getIsStreaming() const
-{
-	return this->isStreaming;
-}
-
-
-const	std::vector<uint8_t>&	Body::getMemoryBuffer() const
-{
-	return this->memoryBuffer;
-}
-
 const std::string&	Body::getFilePath() const
 {
 	return this->destinationPath;
@@ -245,11 +212,6 @@ void	Body::setFilePath(const std::string& path)
 	this->destinationPath = path;
 }
 
-void	Body::setIsStreaming(bool stream)
-{
-	this->isStreaming = stream;
-}
-
 FileWriter*	Body::getFileWriter()const 
 {
 	return this->fileWriter;
@@ -259,7 +221,7 @@ Body::~Body()
 {
 	if (this->fileWriter) 
 	{
-		if (isStreaming && FileSystem::exists(this->destinationPath)) 
+		if (FileSystem::exists(this->destinationPath)) 
         std::remove(this->destinationPath.c_str());
 		delete this->fileWriter;
 		this->fileWriter = NULL;

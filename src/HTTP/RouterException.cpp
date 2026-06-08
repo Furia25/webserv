@@ -1,25 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ErrorHandler.cpp                                   :+:      :+:    :+:   */
+/*   RouterException.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/04/28 14:39:49 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 16:23:11 by antbonin         ###   ########.fr       */
+/*   Created: 2026/06/08 14:47:13 by antbonin          #+#    #+#             */
+/*   Updated: 2026/06/08 14:57:32 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "HTTP/Handler/ErrorHandler.hpp"
-# include "Utils/FileSystem.hpp"
-# include <string>
+# include "HTTP/RouterException.hpp"
 
-void ErrorHandler::onCreation() 
+RouterException::RouterException(HTTPCode code) : code(code)
 {
-	throw HTTPException(this->statusCode);
 }
 
-void ErrorHandler::onExecute()
+RouterException::~RouterException() throw()
 {
-	throw HTTPException(this->statusCode);
+}
+
+HTTPCode RouterException::getCode() const
+{
+	return this->code;
 }

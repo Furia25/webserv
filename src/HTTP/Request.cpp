@@ -3,22 +3,22 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/05/16 02:32:36 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:51:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "HTTP/Request.hpp"
 
-Request::Request() : method(Method::GET),
-		path("/"),
-		query_string(""),
+Request::Request() : path("/"),
+		method(Method::GET),
 		protocol(""),
-		content_length(0),
 		is_chunked(false),
-		keep_alive(false)
+		keep_alive(false),
+		content_length(0),
+		query_string("")
 {}
 
 const std::string	*Request::operator[](const std::string &key) const

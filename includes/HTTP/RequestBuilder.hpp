@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/24 12:51:48 by antoine          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:43:46 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,49 +32,51 @@
 class RequestBuilder
 {
 private:
-	uint8_t					raw_buffer[MAX_HEADER_SIZE];
 	size_t					buffer_size;
-	bool					is_parsing_complete;
-	bool					is_header_parsed;
 	bool					is_validated;
+	bool					is_header_parsed;
+	bool					is_parsing_complete;
+	uint8_t					raw_buffer[MAX_HEADER_SIZE];
 
 	std::string				method;
+	std::string				protocol;
 	std::string				request_path;
 	std::string				query_string;
-	std::string				protocol;
-
+	
 	Headers					headers;
 
-	size_t		findNewline(const uint8_t* buffer, size_t start, size_t max);
 	size_t		findHeaderEnd();
-	void		parseAllHeaders(const uint8_t* buffer, size_t pos);
-	void		parseRequestLine(std::string &line);
-	void		parseHeaderLine(std::string &line);
 	void		toLowerCase(std::string &str);
-	void		validateMethod() const;
-	void		validateProtocol() const;
-	void		validatePath();
-	void		validateHeader() const;
+	void		parseHeaderLine(std::string &line);
+	void		parseRequestLine(std::string &line);
+	void		parseAllHeaders(const uint8_t* buffer, size_t pos);
+	size_t		findNewline(const uint8_t* buffer, size_t start, size_t max);
+	
 	void		invalidPath();
+	void		validatePath();
+	void		validateMethod() 	const;
+	void		validateHeader() 	const;
+	void		validateProtocol() 	const;
 
 	const std::string *getHeader(const std::string& key) const;
 
 public:
 
 	RequestBuilder();
-	void		feed(const uint8_t *fragment, size_t length);
+	
 	void		check();
 	void		reset();
+	void		setValidateStatus(int status);
+	void		feed(const uint8_t *fragment, size_t length);
+	
 	Request		build() const;
-
-	void		print() const;
-
+	
+	
+	void					print() 				const;
+	const bool&				isValidated() 			const;
+	const bool&				getCompleteStatus() 	const;
+	const bool&				get_header_parsed() 	const;
 	std::vector<uint8_t>	getExtraData();
-
-	const bool&		getCompleteStatus() 	const;
-	const bool&		get_header_parsed() 	const;
-	const bool&		isValidated() 			const;
-	void			setValidateStatus(int status);
 };
 
 

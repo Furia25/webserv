@@ -41,15 +41,17 @@
 class HTTPHandler : public IRequestHandler
 {
 public:
+
 	HTTPHandler(const Config::AppConfig& config);
 	~HTTPHandler();
+
 	void		onDataReceived(Connection& connection);
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
 	void		onError(Connection& connection, uint32_t error_event);
 
-	size_t		getTotalRequests(void) const { return this->totalRequests; };
-protected:
+	size_t		getTotalRequests(void) const;
+
 private:
 	struct HandlerSlot
 	{
@@ -84,9 +86,9 @@ private:
 	const Config::AppConfig&		config;
 	size_t							totalRequests;
 
-	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
-	bool	initializeBodyReception(Connection& connection, ClientData& client);
+	bool	initializeBodyReception(ClientData& client);
 	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
+	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 
 	void 	launchHandler(Connection &connection, ClientData &client);
 	void	checkCompletion(Connection& connection, ClientData& clientData);
@@ -95,11 +97,9 @@ private:
 	AHandler	*createHandler(Connection &connection, const Request &request,
 					Body &body, const Router::RouteResult &route_result, HTTPCode status_code);
 
-	void	dispatchError(Connection& connection, HTTPCode error_code);
-	void	dispatchError(ClientData& client, Connection& connection, const Request& request,
-			Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
-	
-	void	resetClient(ClientData& client);
+	void		dispatchError(Connection& connection, HTTPCode error_code);
+	void		dispatchError(ClientData& client, Connection& connection, const Request& request, Body& body, const Router::RouteResult& route_result, HTTPCode error_code);
+	void		resetClient(ClientData& client);
 
 	bool		handleHeaderPhase(Connection& connection, ClientData& client);
 	void 		switchToBodyReception(Connection& connection, ClientData& client);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/02 19:15:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 14:44:14 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,12 +67,12 @@ public:
 private:
 	enum State	{STATUS, HEADER, BODY, END};
 
-	Connection&				connection;
 	enum State				state;
 	bool					isChunked;
+	Connection&				connection;
 
-	bool					isBuffered;
 	std::vector<uint8_t>	buffer;
+	bool					isBuffered;
 
 	inline void	sendData(const uint8_t *data, size_t len)
 	{
