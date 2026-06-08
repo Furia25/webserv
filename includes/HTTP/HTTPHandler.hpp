@@ -86,7 +86,7 @@ private:
 	const Config::AppConfig&		config;
 	size_t							totalRequests;
 
-	bool	initializeBodyReception(Connection& connection, ClientData& client);
+	bool	initializeBodyReception(ClientData& client);
 	void	receiveBodyChunk(ClientData& client, const uint8_t* fragment, size_t size);
 	bool	processHeaders(Connection& connection, ClientData& client, const uint8_t* fragment, size_t size);
 

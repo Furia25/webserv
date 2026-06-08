@@ -100,7 +100,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-		handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		// handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 	break;
 	case HandlerType::UPLOAD :
 		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
@@ -114,14 +114,9 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	if (!client.routeRes.route)
 		return;
 	size_t bodyLength = 0;
-	if (client.body.getIsStreaming()) 
-	{
-		if (!client.body.getFileWriter())
-			return;
-		bodyLength = client.body.getFileWriter()->getBytesWritten();
-	}
-	else 
-		bodyLength = client.body.getSize();
+	if (!client.body.getFileWriter())
+		return;
+	bodyLength = client.body.getFileWriter()->getBytesWritten();
 	size_t limit = client.routeRes.route->max_body_size;
 	if (limit > 0 && bodyLength > limit)
 	{
@@ -167,34 +162,14 @@ void	HTTPHandler::receiveBodyChunk(ClientData& client, const uint8_t* fragment, 
 		client.body.feed(fragment, toProcess);
 }
 
-bool	HTTPHandler::initializeBodyReception(Connection& connection, ClientData& client)
+bool	HTTPHandler::initializeBodyReception(ClientData& client)
 {
-	if (!client.routeRes.route)
-		return false;
-	bool isStreaming = !client.body.isLessThanOneMO();
 	std::string path = "";
-
-	if (client.routeRes.route->handler == HandlerType::UPLOAD) 
-	{
-		const Config::UploadConfig& uploadConfig = static_cast<const Config::UploadConfig&>(*client.routeRes.route);
-		std::string	fileName = client.request.path;
-		size_t		pos = fileName.find_last_of('/');
-
-		if (pos != std::string::npos)
-			fileName = fileName.substr(pos + 1);
-		if (fileName.empty())
-			fileName = "uploaded_file";
-		std::stringstream pathBuilder;
-		pathBuilder << uploadConfig.upload_store << "/" << GenerateUniqueFilename(fileName);
-		path = pathBuilder.str();
-	}
-	else if (isStreaming) 
-	{
-		std::stringstream pathBuilder;
-		pathBuilder << TEMP_FILE_PATH << connection.getHash();
-		path = pathBuilder.str();
-	}
-	client.body.init(client.request.content_length, path, isStreaming, client.routeRes.route->max_body_size);
+	std::stringstream pathBuilder;
+	pathBuilder << GenerateUniqueFilename(TEMP_FILE_PATH);
+	path = pathBuilder.str();
+	std::cout << "filename : "<< path << std::endl;
+	client.body.init(client.request.content_length, path, client.routeRes.route->max_body_size);
 	return true;
 }
 
@@ -265,7 +240,7 @@ bool	HTTPHandler::handleHeaderPhase(Connection& connection, ClientData& client)
 
 void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& client)
 {
-	initializeBodyReception(connection, client);
+	initializeBodyReception(client);
 	
 	const HashMap<std::string, std::string>& headers = client.request.getHeaders();
 	if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 

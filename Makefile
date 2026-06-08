@@ -6,7 +6,7 @@
 #    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/06/08 14:49:25 by antbonin         ###   ########.fr        #
+#    Updated: 2026/06/08 20:10:50 by antbonin         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -80,7 +80,6 @@ SRC_FILES = \
 	HTTP/Handler/ErrorHandler.cpp \
 	HTTP/Handler/UploadHandler.cpp \
 	HTTP/Handler/StatusHandler.cpp \
-	HTTP/Handler/CGIHandler.cpp \
 	HTTP/Handler/RedirectHandler.cpp \
 	HTTP/Body.cpp \
 	HTTP/Response.cpp \

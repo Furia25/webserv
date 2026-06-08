@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/08 15:44:20 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/08 20:09:37 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,12 +76,9 @@ void CGIHandler::onCreation()
 
 	this->initProcessVariables(argv, envp);
 
-	if (this->body.getIsStreaming())
-	{
-		this->bodyFD = open(this->body.getFilePath().c_str(), 0);
-		if (this->bodyFD == -1)
-			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
-	}
+	this->bodyFD = open(this->body.getFilePath().c_str(), 0);
+	if (this->bodyFD == -1)
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR, strerror(errno));
 
 	/*Open pipes for inter process comunication*/
 	if (::pipe(this->pipeIn) == -1 || ::pipe(this->pipeOut) == -1)
