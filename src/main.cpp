@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/20 15:48:58 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/06 20:39:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,6 @@ int main(int argc, char **argv)
 		if (::signal(SIGINT, SIG_IGN) == SIG_ERR)
 			throw std::runtime_error("Couldn't set handler for signal");
 		if (::signal(SIGPIPE, SIG_IGN) == SIG_ERR)
-			throw std::runtime_error("Couldn't set handler for signal");
-		if (::signal(SIGCHLD, SIG_IGN) == SIG_ERR)
 			throw std::runtime_error("Couldn't set handler for signal");
 
 		if (argc != 2)
@@ -75,6 +73,10 @@ int main(int argc, char **argv)
 		catch (const std::exception& e)
 		{
 			Logger::FATAL() << "Fatal error during execution: " << e.what();
+			return EXIT_FAILURE;
+		}
+		catch (const ForkException& e)
+		{
 			return EXIT_FAILURE;
 		}
 	}

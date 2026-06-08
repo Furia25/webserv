@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 20:21:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/16 19:25:17 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/05 18:45:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ void Socket::open(int type, int domain, int protocol)
 {
 	if (this->state != CLOSED)
 		throw SocketException("Socket already opened");
-	int	temp_fd = socket(domain, type, protocol);
+	int	temp_fd = socket(domain, type | SOCK_CLOEXEC, protocol);
 	if (temp_fd == -1)
 		throw SocketException("Open", strerror(errno));
 	this->socket_fd = temp_fd;
