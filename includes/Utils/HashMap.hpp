@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HashMap.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antoine <antoine@student.42.fr>            +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/23 00:38:53 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/24 16:21:59 by antoine          ###   ########.fr       */
+/*   Updated: 2026/06/09 20:52:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -365,6 +365,8 @@ inline void _HashMapDef_::clear(void)
 		}
 		this->meta[index] = _HashMap_::Meta::EMPTY;
 	}
+	this->slot_used = 0;
+    this->tombstone_count = 0;
 }
 
 _HashMapTemplate_

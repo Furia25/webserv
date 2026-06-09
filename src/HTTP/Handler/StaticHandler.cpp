@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 20:22:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 20:45:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,9 +66,7 @@ void	StaticHandler::handleDelete()
 		if (std::remove(physicalPath.c_str()) == 0)
 			Response(this->connection, HTTPCode::NO_CONTENT).sendEnd();
 		else
-		{
 			throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-		}
 	}
 	this->setFinished();
 }

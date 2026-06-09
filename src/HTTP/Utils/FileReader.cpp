@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 20:03:22 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 21:14:14 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,20 +23,26 @@ FileReader::~FileReader()
 
 void FileReader::open(const std::string& path)
 {
+	if (this->fileStream.is_open())
+		this->fileStream.close();
+
+	this->fileStream.clear();
+
 	if (!FileSystem::exists(path) || !FileSystem::isFile(path) || !FileSystem::isReadable(path))
 		throw HTTPException(HTTPCode::NOT_FOUND);
 
 	this->filePath = path;
-	this->fileStream.open(path.c_str(), std::ios::binary | std::ios::ate);
-	
-	if (!this->fileStream.is_open())
-	{
-		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
-	}
 
-	this->fileSize = this->fileStream.tellg();
-	this->fileStream.seekg(0, std::ios::beg);
-	
+	struct stat stat_buf;
+	if (stat(path.c_str(), &stat_buf) != 0)
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+
+	this->fileSize = stat_buf.st_size;
+	this->fileStream.open(path.c_str(), std::ios::in | std::ios::binary);
+
+	if (!this->fileStream.is_open())
+		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+
 	this->bytesReadTotal = 0;
 	this->isEOF = false;
 }

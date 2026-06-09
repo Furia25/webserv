@@ -268,7 +268,9 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
 
-	if (client.builder.getCompleteStatus())
+	if (connection.getJob() != NULL)
+		connection.consumeReadData(connection.getReadBufferSize());
+	else if (client.actualHandler != NULL)
 	{
 		this->resetClient(client);
 		connection.setJob(NULL);
@@ -357,4 +359,5 @@ void HTTPHandler::resetClient(ClientData &client)
 	client.body.reset();
 	client.request = Request();
 	client.neededBytes = 0;
+	client.sizeBuffer.clear();
 }
