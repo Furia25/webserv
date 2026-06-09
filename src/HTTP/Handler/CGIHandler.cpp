@@ -3,17 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/08 21:41:33 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Utils/FileSystem.hpp"
-#include "HTTP/Handler/CGIHandler.hpp"
-#include "Server/TCPServer.hpp"
-#include <sys/wait.h>
+# include "Utils/FileSystem.hpp"
+# include "HTTP/Handler/CGIHandler.hpp"
+# include "Server/TCPServer.hpp"
+# include <sys/wait.h>
 
 #define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd); fd = -1;}} while (0)
 

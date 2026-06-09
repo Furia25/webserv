@@ -6,13 +6,13 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/19 18:19:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config/Config.hpp"
-#include "Utils/IntegerUtils.hpp"
-#include <sstream>
+# include "Config/Config.hpp"
+# include "Utils/IntegerUtils.hpp"
+# include <sstream>
 
 Config::AppConfig::AppConfig(const std::string& path)
 {

@@ -3,15 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLParser.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/10 15:58:56 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/04 15:47:44 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config/TOML/TOMLParser.hpp"
-#include <cstdlib>
+# include "Config/TOML/TOMLParser.hpp"
+# include <cstdlib>
 
 toml::TOMLParser::TOMLParser(std::istream& stream, toml::Document& document, toml::TOMLErrorManager& errorManager) :
 	currentNode(&document.getRoot()),
@@ -321,8 +321,8 @@ bool toml::TOMLParser::handleKeywords(const std::string& literal)
 	return (false);
 }
 
-#include <ios>
-#include "stdlib.h"
+# include <ios>
+# include "stdlib.h"
 
 void toml::TOMLParser::handleNumbers(const Token& token, std::stringstream& literal)
 {

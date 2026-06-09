@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MIME.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:00:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 18:36:46 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 # define _MIME_H
 
 # include "EnumClass.hpp"
+# include <map>
 
 # define MIME_TYPE (\
 	(txt, text/plain), \
@@ -42,7 +43,7 @@
 	(tar, application/x-tar), \
 	(gz, application/gzip), \
 	(bz2, application/x-bzip2), \
-	(sevenz, application/x-7z-compressed), \
+	(7z, application/x-7z-compressed), \
 	(rar, application/x-rar-compressed), \
 	(bin, application/octet-stream), \
 	(swf, application/x-shockwave-flash), \

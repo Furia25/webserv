@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   AddressResolver.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/06 02:55:13 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/06 02:50:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server/AddressResolver.hpp"
+# include "Server/AddressResolver.hpp"
 
 static std::vector<Address> init_address(const std::string& host, const std::string& service, int type)
 {

@@ -166,9 +166,8 @@ bool	HTTPHandler::initializeBodyReception(ClientData& client)
 {
 	std::string path = "";
 	std::stringstream pathBuilder;
-	pathBuilder << GenerateUniqueFilename(TEMP_FILE_PATH);
+	pathBuilder << GenerateUniqueFilename(client.routeRes.host.tmp_path + TEMP_FILE_NAME);
 	path = pathBuilder.str();
-	std::cout << "filename : "<< path << std::endl;
 	client.body.init(client.request.content_length, path, client.routeRes.route->max_body_size);
 	return true;
 }

@@ -3,26 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/06 20:39:01 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <iostream>
-#include <vector>
-#include "Config/Config.hpp"
-#include "Server/Address.hpp"
-#include "Server/AddressResolver.hpp"
-#include "Server/TCPServer.hpp"
-#include "HeaderParam.hpp"
-#include "Logger.hpp"
-#include "HTTP/HTTPTypes.hpp"
-#include "HTTP/HTTPHandler.hpp"
-#include "Utils/FileSystem.hpp"
+# include <iostream>
+# include <vector>
+# include "Config/Config.hpp"
+# include "Server/Address.hpp"
+# include "Server/AddressResolver.hpp"
+# include "Server/TCPServer.hpp"
+# include "HeaderParam.hpp"
+# include "Logger.hpp"
+# include "HTTP/HTTPTypes.hpp"
+# include "HTTP/HTTPHandler.hpp"
+# include "Utils/FileSystem.hpp"
 
-#include <cstdlib>
+# include <cstdlib>
 
 int main(int argc, char **argv)
 {

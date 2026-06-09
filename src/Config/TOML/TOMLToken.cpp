@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   TOMLToken.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/08 13:47:04 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/19 00:14:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Config/TOML/TOMLToken.hpp"
+# include "Config/TOML/TOMLToken.hpp"
 
 void toml::Token::swap(Token& other)
 {
