@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 18:00:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 18:54:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,8 +102,8 @@ public:
 
 		if (!ext_init)
 		{
-			#define _ENUM_CLASS_EXT_INSERT(el, ...) ext_tree.insert(M_STR(X(el)), X(el));
-			M_TUPLE_FOREACH(MIME_TYPE, _ENUM_CLASS_EXT_INSERT)
+			#define _X_INSERT(el, ...) ext_tree.insert(M_STR(X(el)), X(el));
+			M_TUPLE_FOREACH(MIME_TYPE, _X_INSERT)
 
 			ext_init = true;
 		}
@@ -113,6 +113,15 @@ public:
 		return MIME::bin;
 	}
 
+	static const char *get_extension(MIME type)
+	{
+		switch (type)
+		{
+			#define _X_SWITCH(el, ...) case X(el): return M_STR(X(el));
+			M_TUPLE_FOREACH(MIME_TYPE, _X_SWITCH)
+		}
+	};
+
 	static MIME from_extension(const std::string& str)
 	{
 		if (str.empty())
@@ -120,6 +129,7 @@ public:
 		return from_extension(str.c_str());
 	}
 );
+
 # undef X
 # undef X_STRING
 # undef MIME_TYPE
