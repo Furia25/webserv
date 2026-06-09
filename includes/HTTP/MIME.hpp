@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 18:36:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 18:41:57 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@
 	(tar, application/x-tar), \
 	(gz, application/gzip), \
 	(bz2, application/x-bzip2), \
-	(7z, application/x-7z-compressed), \
+	(sevenz, application/x-7z-compressed), \
 	(rar, application/x-rar-compressed), \
 	(bin, application/octet-stream), \
 	(swf, application/x-shockwave-flash), \
