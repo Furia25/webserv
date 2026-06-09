@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/15 18:25:39 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 14:44:14 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 21:26:47 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ class Response
 public:
 	Response(Connection& connection);
 	Response(Connection& connection, HTTPCode code);
+	~Response();
 
 	Response&	sendStatusLine(HTTPCode code);
 	Response&	sendStatusLine(size_t code);

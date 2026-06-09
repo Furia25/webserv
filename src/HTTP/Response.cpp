@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Response.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/21 15:59:45 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 14:54:39 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 21:27:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,13 @@ Response::Response(Connection& connection, HTTPCode code) : state(Response::STAT
 	this->sendStatusLine(code);
 }
 
-Response& Response::sendHeaders(const Headers& headers)
+Response::~Response()
+{
+	if (this->state != Response::STATUS)
+		this->sendEnd();
+}
+
+Response &Response::sendHeaders(const Headers &headers)
 {
 	if (state != Response::HEADER)
 		throw std::runtime_error("Can't add headers");
