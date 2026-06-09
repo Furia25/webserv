@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 19:40:57 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,6 +114,7 @@ void Config::ServerConfig::load(toml::Variant& table, Config::Loader& loader)
 	loader.value_or(table, "root", this->root, std::string("./"));
 	loader.value_limited_or(table, "max_body_size", this->max_body_size, CONFIG_BODY_SIZE, 0, UINT64_MAX);
 
+	this->tmp_dir_path = this->root + "/" + ".tmp/";
 	this->loadBindings(bindings_array, loader);
 	this->loadErrors(errors_table, loader);
 	loadCookies(this->cookies, table, loader);

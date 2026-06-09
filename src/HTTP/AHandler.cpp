@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/24 01:31:14 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 20:15:48 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,9 +75,6 @@ void AHandler::sendFullDefaultError()
 		"</head>\n"
 		"<body>\n"
 		"  <h1>" + codeStr + " " + codeMsg + "</h1>\n"
-		"  <div class=\"sep\"></div>\n"
-		"  <p>The requested URL <span class=\"url\">" + this->request.path + "</span>"
-		" was not found on this server.</p>\n"
 		"  <hr>\n"
 		"  <footer>" SERV_NAME "/" SERV_VERSION "</footer>\n"
 		"</body>\n"
@@ -133,11 +130,11 @@ void AHandler::handleError()
 
 	case SEND_BODY:
 	{
-		std::vector<uint8_t> buffer;
+		char buffer[8192];
 		size_t bytes_read = this->fileReader.readChunk(buffer, 8192);
 
 		if (bytes_read > 0)
-			response.sendBody(buffer.data(), bytes_read);
+			response.sendBody((uint8_t *)buffer, bytes_read);
 
 		if (this->fileReader.hasFinished())
 		{

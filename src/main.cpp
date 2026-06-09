@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 19:41:25 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,9 @@
 # include "Utils/FileSystem.hpp"
 
 # include <cstdlib>
+
+static void remove_temp_directories(std::vector<Config::ServerConfig *>& servers);
+static void	init_temp_directories(std::vector<Config::ServerConfig *>& servers);
 
 int main(int argc, char **argv)
 {
@@ -44,6 +47,9 @@ int main(int argc, char **argv)
 		Config::AppConfig	config(argv[1]);
 		TCPServer			server(config.engineConfig);
 		HTTPHandler			handler(config);
+
+		remove_temp_directories(config.servers);
+		init_temp_directories(config.servers);
 
 		if (config.loggingConfig.log_file == "")
 			Logger::setDefaultStream(std::cout);
@@ -87,3 +93,24 @@ int main(int argc, char **argv)
 	}
 	return EXIT_SUCCESS;
 }
+
+static void	init_temp_directories(std::vector<Config::ServerConfig *>& servers)
+{
+	for (size_t index = 0; index < servers.size(); index++)
+	{
+		Config::ServerConfig& server_config = *servers[index];
+			
+		if (::mkdir(server_config.tmp_dir_path.c_str(), 0755) == -1) 
+			throw std::runtime_error(std::string("Unable to create temp directories :") + strerror(errno));
+	}
+}
+
+static void remove_temp_directories(std::vector<Config::ServerConfig *>& servers)
+{
+	for (size_t index = 0; index < servers.size(); index++)
+	{
+		Config::ServerConfig& server_config = *servers[index];
+		FileSystem::removeDirectoryRecursive(server_config.tmp_dir_path);
+	}
+}
+

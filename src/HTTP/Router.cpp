@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Router.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 11:02:50 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 14:46:58 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 20:22:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,33 +80,34 @@ static inline void	validate_constraints(Router::RouteResult& result, const Reque
 	}
 }
 
-static inline void	build_physical_path(Router::RouteResult& result, const std::string& current_path)
+static inline void build_physical_path(Router::RouteResult& result, const std::string& current_path)
 {
-	const Config::ServerConfig	*host = result.host;
-	const Config::RouteConfig	*route = result.route;
+	const Config::ServerConfig  *host = result.host;
+	const Config::RouteConfig   *route = result.route;
+
 	RadixTree<Config::RouteConfig *>::const_iterator route_it = host->routes.find_prefix(current_path);
 	const std::string&	found_path = route_it->first;
 	std::string			remainder = current_path.substr(found_path.size());
-	if (!remainder.empty() && remainder[0] == '/' && !found_path.empty() && found_path[found_path.size() - 1] == '/')
+
+	if (!remainder.empty() && remainder[0] == '/'
+			&& !found_path.empty() && found_path[found_path.size() - 1] == '/')
 		remainder = remainder.substr(1);
+
 	std::string base_physical_path;
-	std::string jail_dir;
+
 	if (!route->alias.empty())
-	{
-		base_physical_path = route->alias; 
-		jail_dir = route->alias;           
-	}
+		base_physical_path = route->root + route->alias;
 	else
-	{
 		base_physical_path = route->root + found_path;
-		jail_dir = route->root;
-	}
 	base_physical_path = URIUtils::normalizePath(base_physical_path);
-	std::string root_jail = URIUtils::normalizePath(jail_dir); 
+
+	std::string root_jail = URIUtils::normalizePath(route->root);
 	result.fullPath = base_physical_path + remainder;
+
 	result.fullPath = URIUtils::normalizePath(result.fullPath);
 	if (result.fullPath.find(root_jail) != 0)
 		throw RouterException(HTTPCode::FORBIDDEN);
+
 	result.basePath = base_physical_path;
 	result.pathRemainder = remainder;
 }

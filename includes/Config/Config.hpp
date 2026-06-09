@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/18 20:36:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:10:39 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,6 +144,7 @@ struct ServerConfig
 	std::string		name;
 	std::string		root;
 	uint64_t		max_body_size;
+	std::string		tmp_dir_path;
 
 	std::vector<std::pair<std::string, port_t> >	bindings;
 	RadixTree<RouteConfig *>						routes;

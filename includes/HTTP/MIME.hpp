@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:01:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:08:05 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -116,11 +116,14 @@ public:
 
 	static const char *get_extension(MIME type)
 	{
+		if (type == MIME::sevenz)
+			return "7z";
 		switch (type)
 		{
 			#define _X_SWITCH(el, ...) case X(el): return M_STR(X(el));
 			M_TUPLE_FOREACH(MIME_TYPE, _X_SWITCH)
 		}
+		return "bin";
 	};
 
 	static MIME from_extension(const std::string& str)

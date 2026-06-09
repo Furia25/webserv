@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Body.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:07:09 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/08 19:43:21 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 19:56:07 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,12 +18,6 @@
 class Body
 {
 private:
-	FileWriter				*fileWriter;
-	size_t					expectedSize;
-	size_t					receivedSize;
-	std::string				destinationPath;
-	bool					isFinished;
-
 	enum ChunkState
 	{
 		CHUNK_SIZE,
@@ -31,6 +25,13 @@ private:
 		CHUNK_TRAILER,
 		CHUNK_COMPLETE
 	};
+
+	FileWriter				*fileWriter;
+	size_t					expectedSize;
+	size_t					receivedSize;
+	std::string				destinationPath;
+	bool					isFinished;
+
 	ChunkState				chunkState;
 	size_t					neededBytes;
 	std::string				sizeBuffer;

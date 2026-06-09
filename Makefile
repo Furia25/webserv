@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+         #
+#    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/06/08 20:10:50 by antbonin         ###   ########.fr        #
+#    Updated: 2026/06/09 20:09:26 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -81,11 +81,11 @@ SRC_FILES = \
 	HTTP/Handler/UploadHandler.cpp \
 	HTTP/Handler/StatusHandler.cpp \
 	HTTP/Handler/RedirectHandler.cpp \
+	HTTP/Handler/CGIHandler.cpp \
 	HTTP/Body.cpp \
 	HTTP/Response.cpp \
 	HTTP/Utils/FileReader.cpp \
 	HTTP/Utils/FileWriter.cpp \
-	HTTP/Utils/GenerateRandomFilename.cpp \
 	Logger.cpp \
 	main.cpp
 

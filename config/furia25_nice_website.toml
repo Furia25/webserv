@@ -23,7 +23,7 @@ root        = "www/furia25_nice_website"
   handler   = "STATIC"
   path      = "/"
   alias     = "/static/"
-  methods   = ["GET", "DELETE"]
+  methods   = ["GET"]
   index     = "index.html"
 
   [[servers.routes]]

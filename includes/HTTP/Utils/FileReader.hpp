@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 11:36:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 22:52:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 20:05:53 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ public:
 	~FileReader();
 	
 	void	open(const std::string &path);
-	size_t	readChunk(std::vector<uint8_t>& buffer, size_t chunkSize = 8192);
+	size_t	readChunk(char *buffer, size_t chunkSize);
 
 	size_t		getFileSize() const;
 	bool		hasFinished() const;

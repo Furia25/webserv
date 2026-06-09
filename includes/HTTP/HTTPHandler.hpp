@@ -36,7 +36,7 @@
 # include "HTTP/Body.hpp"
 # include "Utils/FreeList.hpp"
 
-# define TEMP_FILE_NAME	SERV_NAME "_upload_"
+# define TEMP_FILE_NAME	SERV_NAME "_body_"
 
 class HTTPHandler : public IRequestHandler
 {

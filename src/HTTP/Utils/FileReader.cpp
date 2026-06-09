@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 22:55:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 20:03:22 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,24 +41,16 @@ void FileReader::open(const std::string& path)
 	this->isEOF = false;
 }
 
-size_t FileReader::readChunk(std::vector<uint8_t>& buffer, size_t chunkSize)
+size_t FileReader::readChunk(char *buffer, size_t chunkSize)
 {
 	if (!this->fileStream.is_open() || this->isEOF)
 		return 0;
-	
-	if (chunkSize > 8192)
-		chunkSize = 8192;
-	uint8_t buffer_tmp[chunkSize];
-	this->fileStream.read((char *)buffer_tmp, chunkSize);
 
+	this->fileStream.read(buffer, chunkSize);
 	std::streamsize bytesRead = this->fileStream.gcount();
 
-	if (bytesRead > 0)
-	{
-		buffer.insert(buffer.end(), buffer_tmp, buffer_tmp + bytesRead);
-		this->bytesReadTotal += bytesRead;
-	}
-	
+	this->bytesReadTotal += bytesRead;
+
 	if (this->fileStream.eof() || bytesRead == 0)
 		this->isEOF = true;
 	return bytesRead;

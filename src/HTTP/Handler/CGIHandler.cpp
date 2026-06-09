@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:01:06 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:06:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,6 @@
 CGIHandler::~CGIHandler()
 {
 	this->connection.getServer().AlarmManager.cancel(this->alarmTimeout);
-
-	if (registered && this->pipeOut[0] != -1)
-			this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
 
 	SAFE_CLOSE(this->bodyFD);
 

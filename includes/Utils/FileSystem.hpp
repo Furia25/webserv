@@ -6,12 +6,12 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 16:51:11 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/18 02:26:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:49:01 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-# ifndef _FILESYSTEM_H
+#ifndef _FILESYSTEM_H
 # define _FILESYSTEM_H
 
 # include <iostream>
@@ -22,6 +22,10 @@
 # include <cstring>
 # include <cstdio>
 # include <stdexcept>
+# include <ctime>
+# include <sstream>
+# include <cstdlib>
+# include <sys/time.h>
 
 namespace FileSystem
 {
@@ -99,6 +103,65 @@ namespace FileSystem
 			std::string errorMsg = "FileSystem::removeFile failed for '" + path + "': " + std::strerror(errno);
 			throw std::runtime_error(errorMsg);
 		}
+	}
+
+	static inline int removeDirectoryRecursive(const std::string& path)
+	{
+		DIR *dir = opendir(path.c_str());
+		if (!dir)
+			return (errno == ENOENT) ? 0 : -1;
+
+		struct dirent	*entry;
+		int				result = 0;
+
+		while ((entry = readdir(dir)) != NULL)
+		{
+			std::string name = entry->d_name;
+
+			if (name == "." || name == "..")
+				continue;
+
+			std::string full_path = path + "/" + name;
+			struct stat st;
+
+			if (lstat(full_path.c_str(), &st) == -1)
+				continue;
+
+			if (S_ISDIR(st.st_mode))
+			{
+				if (removeDirectoryRecursive(full_path) == -1)
+					result = -1;
+			}
+			else
+			{
+				if (unlink(full_path.c_str()) == -1)
+					result = -1;
+			}
+		}
+
+		closedir(dir);
+
+		if (rmdir(path.c_str()) == -1)
+			result = -1;
+
+		return result;
+	}
+
+	static inline std::string	GenerateUniqueFilename(const std::string& baseName);std::string	GenerateUniqueFilename(const std::string& baseName)
+	{
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		std::stringstream ss;
+
+		if (!baseName.empty())
+			ss << baseName << "_";
+		ss << tv.tv_sec << tv.tv_usec << "_";
+		const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		for (int i = 0; i < 3; ++i)
+		{
+			ss << charset[rand() % (sizeof(charset) - 1)];
+		}
+		return ss.str();
 	}
 };
 

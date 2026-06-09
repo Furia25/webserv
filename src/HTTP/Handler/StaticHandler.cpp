@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/06 19:41:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 20:22:50 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,19 +171,19 @@ void StaticHandler::onExecute()
 	
 	case SEND_BODY:
 	{
-		std::vector<uint8_t> buffer;
+		char buffer[8192];
 		size_t bytes_read = this->fileReader.readChunk(buffer, 8192);
-		
+
 		if (bytes_read > 0)
-			response.sendBody(buffer.data(), bytes_read);
-		
+			response.sendBody((uint8_t *)buffer, bytes_read);
+
 		if (this->fileReader.hasFinished())
 		{
 			this->fileReader.close();
-			state = FINISHED;
+			this->state = FINISHED;
 		}
+		break;
 	}
-	break;
 
 	case FINISHED:
 		response.sendEnd();	

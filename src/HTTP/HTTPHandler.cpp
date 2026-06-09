@@ -16,7 +16,6 @@
 # include "HTTP/Response.hpp"
 # include "Utils/FileSystem.hpp"
 # include "Utils/IntegerUtils.hpp"
-# include "HTTP/Utils/GenerateUniqueFilename.hpp"
 
 HTTPHandler::HTTPHandler(const Config::AppConfig &config)
 	: clientPool(256), handlerPool(), config(config), totalRequests(0)
@@ -100,7 +99,7 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 		handler = this->createHandler<StatusHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 		break;
 	case HandlerType::CGI :
-		// handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
+		handler = this->createHandler<CGIHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
 	break;
 	case HandlerType::UPLOAD :
 		handler = this->createHandler<UploadHandler>(connection, client.request, client.body, client.routeRes, HTTPCode::OK);
@@ -166,7 +165,7 @@ bool	HTTPHandler::initializeBodyReception(ClientData& client)
 {
 	std::string path = "";
 	std::stringstream pathBuilder;
-	pathBuilder << GenerateUniqueFilename(client.routeRes.host.tmp_path + TEMP_FILE_NAME);
+	pathBuilder << FileSystem::GenerateUniqueFilename(client.routeRes.host->tmp_dir_path + TEMP_FILE_NAME);
 	path = pathBuilder.str();
 	client.body.init(client.request.content_length, path, client.routeRes.route->max_body_size);
 	return true;
@@ -268,12 +267,6 @@ void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
 void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
-
-	if (client.actualHandler != NULL)
-	{
-		connection.consumeReadData(connection.getReadBufferSize());
-		return;
-	}
 
 	if (client.builder.getCompleteStatus())
 	{

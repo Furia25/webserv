@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/09 19:06:16 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,37 +118,12 @@ void TCPServer::dropConnection(Connection *connection)
 
 	this->connections.erase(fd);
 	this->handler->onDisconnection(*connection);
-	this->removePollEvent(*connection, fd);
 	this->deletableConnections.push_back(connection);
 	#if HTTP_DEBUG == true
 	Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
 	#endif
 	this->actualConnections--;
 }
-
-/*TODO : LOGGING FOR BETTER RECOVERY BECAUSE ITS A SUICIDE FUNCTION FOR THE LISTENER
- REALLY REALLY UNSAFE IDK WHY I DO THAT, I AM A FOOL
-void TCPServer::recoverListener(Listener& listener)
-{
-	bool		on_heap = false;
-	Socket&		listener_socket = listener.getSocket();
-
-	std::vector<Listener *>::iterator it = this->listeners.begin();
-	for (; it != this->listeners.end(); ++it)
-	{
-		if ((*it)->getSocket().getFd() == listener_socket.getFd())
-		{
-			this->listeners.erase(it);
-			on_heap = true;
-			break ;
-		}
-	}
-	const Address	address = listener_socket.getAddress();
-	this->removePollEvent(listener, );
-	if (on_heap)
-		delete &listener;
-	this->openListener(address.getHost(), address.getService());
-}*/
 
 void TCPServer::setPollEvent(IEpollHandler &event_handler, int fd, uint32_t events)
 {
