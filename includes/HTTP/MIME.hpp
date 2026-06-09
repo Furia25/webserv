@@ -3,10 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   MIME.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/03 14:19:43 by vdurand           #+#    #+#             */
+<<<<<<< HEAD
 /*   Updated: 2026/06/09 18:54:48 by vdurand          ###   ########.fr       */
+=======
+/*   Updated: 2026/06/09 18:41:57 by antbonin         ###   ########.fr       */
+>>>>>>> 2bfc077a1e33c3c0fd869a3f199a4f44e3809dbe
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +19,7 @@
 # define _MIME_H
 
 # include "EnumClass.hpp"
+# include <map>
 
 # define MIME_TYPE (\
 	(txt, text/plain), \

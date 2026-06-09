@@ -3,19 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   HeaderParser.hpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/21 13:02:54 by antbonin          #+#    #+#             */
-/*   Updated: 2026/05/21 21:22:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef HEADERPARSER_HPP
 #define HEADERPARSER_HPP
 
-#include <string>
-#include <stdexcept>
-#include <cctype>
+# include <string>
+# include <stdexcept>
+# include <cctype>
 
 namespace HeaderParser
 {

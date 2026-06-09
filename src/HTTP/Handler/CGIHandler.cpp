@@ -6,14 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 18:37:12 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:01:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Utils/FileSystem.hpp"
-#include "HTTP/Handler/CGIHandler.hpp"
-#include "Server/TCPServer.hpp"
-#include <sys/wait.h>
+# include "Utils/FileSystem.hpp"
+# include "HTTP/Handler/CGIHandler.hpp"
+# include "Server/TCPServer.hpp"
+# include <sys/wait.h>
 
 #define SAFE_CLOSE(fd) do {if (fd != -1) {close(fd); fd = -1;}} while (0)
 

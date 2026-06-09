@@ -6,10 +6,9 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:56:01 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 18:51:07 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/09 19:01:20 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #ifndef _HTTPTYPES_H
 # define _HTTPTYPES_H
