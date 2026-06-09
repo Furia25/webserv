@@ -6,12 +6,14 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 19:41:25 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 01:20:09 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include <iostream>
 # include <vector>
+# include <cstdlib>
+
 # include "Config/Config.hpp"
 # include "Server/Address.hpp"
 # include "Server/AddressResolver.hpp"
@@ -22,13 +24,35 @@
 # include "HTTP/HTTPHandler.hpp"
 # include "Utils/FileSystem.hpp"
 
-# include <cstdlib>
+# define DEFAULT_CONFIG_PATH	"./config/default.toml"
+# define DEFAULT_FALLBACK_CONFIG_NAME "DEFAULT"
 
-static void remove_temp_directories(std::vector<Config::ServerConfig *>& servers);
+static const char* DEFAULT_FALLBACK_CONFIG =
+	"[[servers]]\n"
+	"server_name = \"main\"\n"
+	"root = \"www/\"\n"
+	"\n"
+	"	[[servers.bindings]]\n"
+	"	host = \"localhost\"\n"
+	"	service = \"8080\"\n"
+	"\n"
+	"	[[servers.routes]]\n"
+	"	handler = \"STATIC\"\n"
+	"	path = \"/\"\n"
+	"	methods = [\"GET\"]\n"
+	"	index = \"index.html\"\n"
+	"	autoindex = true\n";
+
+static void	get_default_config(std::ifstream& config_file, std::istringstream& fallback,
+				std::istream*& active_stream, std::string& config_path);
+static void	open_listeners(TCPServer& server, std::vector<Config::ServerConfig *>& server_configs);
+static void	remove_temp_directories(std::vector<Config::ServerConfig *>& servers);
 static void	init_temp_directories(std::vector<Config::ServerConfig *>& servers);
 
 int main(int argc, char **argv)
 {
+	bool started = false;
+
 	try
 	{
 		if (::signal(SIGINT, SIG_IGN) == SIG_ERR)
@@ -36,18 +60,32 @@ int main(int argc, char **argv)
 		if (::signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 			throw std::runtime_error("Couldn't set handler for signal");
 
-		if (argc != 2)
-			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Specified config in TOML format needed, see documentation");
+		std::ifstream		config_file;
+		std::istringstream  fallback_stream;
+		std::istream		*config_active_stream = NULL;
+		std::string			config_path;
 
-		std::string			config_path = argv[1];
+		if (argc == 1)
+			get_default_config(config_file, fallback_stream, config_active_stream, config_path);
+		else if (argc == 2)
+		{
+			config_path = argv[1];
+			if (!FileSystem::exists(config_path) || FileSystem::isDirectory(config_path))
+				throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Must be a valid readable file");
+			config_file.open(config_path.c_str());
+			config_active_stream = &config_file;
+		}
+		else
+			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Too many arguments");
 
-		if (!FileSystem::exists(config_path) || FileSystem::isDirectory(config_path))
-			throw std::runtime_error("usage ./" SERV_NAME " [config.toml] -> Must be a valid file");
+		if (!config_active_stream || !(*config_active_stream))
+			throw std::runtime_error("Couldn't open config stream");
 
-		Config::AppConfig	config(argv[1]);
+		Config::AppConfig	config(*config_active_stream, config_path);
 		TCPServer			server(config.engineConfig);
 		HTTPHandler			handler(config);
 
+		config_file.close();
 		remove_temp_directories(config.servers);
 		init_temp_directories(config.servers);
 
@@ -60,38 +98,62 @@ int main(int argc, char **argv)
 		Logger::setTickInterval(config.loggingConfig.tick_interval);
 		Logger::setTickCallback(&TCPServer::tickCallback, &server);
 
-		for (size_t i = 0; i < config.servers.size(); ++i)
-		{
-			const Config::ServerConfig&	server_config = *config.servers[i];
-			std::stringstream			ss;
-			ss << "Virtual Server \"" << server_config.name << "\" initialized with:\n";
-			for (RadixTree<Config::RouteConfig *>::const_iterator it = server_config.routes.begin(); it != server_config.routes.end(); ++it)
-				ss << "	Route: " << it->second->path << '\n';
-			Logger::INFO() << ss.str();
-			for (size_t y = 0; y < server_config.bindings.size(); ++y)
-			{
-				const std::pair<std::string, port_t>& binding = server_config.bindings[y];
-				server.openListener(binding.first, binding.second);
-			}
-		}
+		open_listeners(server, config.servers);
 		server.bindHandler(handler);
+
+		started = true;
+
 		try { server.run(); }
-		catch (const std::exception& e)
-		{
-			Logger::FATAL() << "Fatal error during execution: " << e.what();
-			return EXIT_FAILURE;
-		}
-		catch (const ForkException& e)
-		{
-			return EXIT_FAILURE;
-		}
+		catch (const ForkException& e) { return EXIT_FAILURE; }
 	}
 	catch (const std::exception& e)
 	{
-		Logger::FATAL() << "Couldn't launch server: " << e.what();
+		if (started)
+			Logger::FATAL() << "Fatal error during execution: " << e.what();
+		else
+			Logger::FATAL() << "Unable to launch server: " << e.what();
 		return EXIT_FAILURE;
 	}
+
 	return EXIT_SUCCESS;
+}
+
+static void	get_default_config(std::ifstream& config_file, std::istringstream& fallback,
+				std::istream*& active_stream, std::string& config_path)
+{
+	if (FileSystem::exists(DEFAULT_CONFIG_PATH))
+	{
+		config_path = DEFAULT_CONFIG_PATH;
+		config_file.open(DEFAULT_CONFIG_PATH);
+		active_stream = &config_file;
+	}
+	else
+	{
+		config_path = DEFAULT_FALLBACK_CONFIG_NAME;
+		fallback.str(DEFAULT_FALLBACK_CONFIG);
+		active_stream = &fallback;
+		Logger::INFO() << "No default config file found (" DEFAULT_CONFIG_PATH "), using built-in defaults";
+	}
+}
+
+static void open_listeners(TCPServer& server, std::vector<Config::ServerConfig *>& server_configs)
+{
+	for (size_t i = 0; i < server_configs.size(); ++i)
+	{
+		const Config::ServerConfig&	server_config = *server_configs[i];
+		std::stringstream			ss;
+
+		ss << "Virtual Server \"" << server_config.name << "\" initialized with:\n";
+		for (RadixTree<Config::RouteConfig *>::const_iterator it = server_config.routes.begin(); it != server_config.routes.end(); ++it)
+			ss << "	Route: " << it->second->path << '\n';
+		Logger::INFO() << ss.str();
+
+		for (size_t y = 0; y < server_config.bindings.size(); ++y)
+		{
+			const std::pair<std::string, port_t>& binding = server_config.bindings[y];
+			server.openListener(binding.first, binding.second);
+		}
+	}
 }
 
 static void	init_temp_directories(std::vector<Config::ServerConfig *>& servers)

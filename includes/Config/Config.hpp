@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:10:39 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 00:56:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -186,11 +186,15 @@ struct LoggingConfig
 
 struct AppConfig
 {
-	AppConfig(const std::string& filename);
+	AppConfig(const char *filename);
+	AppConfig(std::istream& stream, const std::string& name);
+
 	EngineConfig								engineConfig;
 	LoggingConfig								loggingConfig;
 	HashMap<port_t, RadixTree<ServerConfig *> >	serversMap;
 	std::vector<ServerConfig *>					servers;
+
+	void	init(toml::Document& document);
 
 	~AppConfig();
 };

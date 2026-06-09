@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:40:57 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 00:56:32 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,11 +14,24 @@
 # include "Utils/IntegerUtils.hpp"
 # include <sstream>
 
-Config::AppConfig::AppConfig(const std::string& path)
+Config::AppConfig::AppConfig(const char *filename)
+{
+	toml::Document	document(filename);
+
+	init(document);
+}
+
+Config::AppConfig::AppConfig(std::istream& stream, const std::string& name)
+{
+	toml::Document	document(stream, name);
+
+	init(document);
+}
+
+void Config::AppConfig::init(toml::Document& document)
 {
 	Config::Loader loader;
 
-	toml::Document	document(path);
 	toml::Variant	root = document.getRoot();
 	toml::Array		server_array;
 
@@ -65,7 +78,7 @@ Config::AppConfig::AppConfig(const std::string& path)
 	}
 }
 
-Config::AppConfig::~AppConfig()
+Config::AppConfig::~AppConfig() 
 {
 	for (std::vector<ServerConfig *>::iterator it = this->servers.begin(); it != this->servers.end(); ++it)
 		delete *it;
