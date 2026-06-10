@@ -245,23 +245,28 @@ void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& clie
 		Response(connection, HTTPCode::CONTINUE).sendEnd();
 
 	std::vector<uint8_t> extra = client.builder.getExtraData();
-	if (!extra.empty()) 
-	{
-		if (client.request.is_chunked)
-			client.body.feedChunked(extra.data(), extra.size());
-		else
-			receiveBodyChunk(client, extra.data(), extra.size());
-	}
+	size_t header_size = connection.getReadBufferSize() - extra.size();
+	connection.consumeReadData(header_size);
 }
 
 void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
 {
 	const uint8_t*	data = connection.getReadBufferPtr();
 	size_t			size = connection.getReadBufferSize();
-	if (client.request.is_chunked)
-		client.body.feedChunked(data, size);
-	else
-		receiveBodyChunk(client, data, size);
+	size_t          toProcess = size;
+	if (!client.request.is_chunked)
+	{
+		size_t remaining = client.request.content_length - client.body.getSize();
+		toProcess = (size < remaining) ? size : remaining;
+	}
+	if (toProcess > 0)
+	{
+		if (client.request.is_chunked)
+			client.body.feedChunked(data, toProcess); 
+		else
+			receiveBodyChunk(client, data, toProcess);
+	}
+	connection.consumeReadData(toProcess);
 }
 
 void	HTTPHandler::onDataReceived(Connection& connection)
@@ -283,13 +288,13 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 			if (!handleHeaderPhase(connection, client)) 
 				return;
 			switchToBodyReception(connection, client);
-			connection.consumeReadData(connection.getReadBufferSize());
-			checkCompletion(connection, client);
-			return;
+			// checkCompletion(connection, client);
+			// connection.consumeReadData(connection.getReadBufferSize());
+			// return;
 		}
 		streamBodyFragment(connection, client);
 		checkCompletion(connection, client);
-		connection.consumeReadData(connection.getReadBufferSize());
+		// connection.consumeReadData(connection.getReadBufferSize());
 	}
 	catch (const std::exception &e) 
 	{
