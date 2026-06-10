@@ -44,7 +44,7 @@ def get_db() -> sqlite3.Connection:
             name       TEXT    NOT NULL DEFAULT 'anonymous',
             website    TEXT    NOT NULL DEFAULT '',
             text       TEXT    NOT NULL DEFAULT '',
-            created_at TEXT    NOT NULL DEFAULT (strftime('%I:%M %p', 'now')),
+            created_at TEXT    NOT NULL DEFAULT (datetime('now')),
             username   TEXT    DEFAULT NULL
         )
     """)
@@ -175,6 +175,7 @@ def action_list(form: dict) -> None:
         "total_accounts": total_accounts,
     })
 
+import datetime
 
 def action_post(form: dict) -> None:
     name    = (form.get("name",    "") or "anonymous").strip()[:MAX_NAME_LEN]
@@ -190,13 +191,14 @@ def action_post(form: dict) -> None:
 
     # Determine if poster is an authenticated registered user
     username = get_authed_user()  # None if not logged in
+    created_at = datetime.datetime.utcnow().strftime("%I:%M %p")
 
     try:
         with get_db() as conn:
             cur = conn.execute("""
                 INSERT INTO guestbook (name, website, text, created_at, username)
-                VALUES (?, ?, ?, strftime('%I:%M %p', 'now'), ?)
-            """, (name, website, text, username))
+                VALUES (?, ?, ?, ?, ?)
+            """, (name, website, text, created_at, username))
             new_id = cur.lastrowid
             # seed reaction rows at zero
             for reaction in VALID_REACTIONS:
