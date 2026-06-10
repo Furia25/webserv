@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/08 20:30:32 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/10 17:23:38 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,6 +110,7 @@ void	Body::reset()
 		this->fileWriter->close();
 		delete this->fileWriter;
 		this->fileWriter = NULL;
+		std::remove(this->destinationPath.c_str());
 	}
 	this->fileWriter = NULL;
 	this->expectedSize = 0;
@@ -222,7 +223,7 @@ Body::~Body()
 	if (this->fileWriter) 
 	{
 		if (FileSystem::exists(this->destinationPath)) 
-        std::remove(this->destinationPath.c_str());
+			std::remove(this->destinationPath.c_str());
 		delete this->fileWriter;
 		this->fileWriter = NULL;
 	}

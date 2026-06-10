@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:06:16 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 18:19:31 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,11 +63,12 @@ void TCPServer::run(void)
 		{
 			if (errno == EINTR)
 				continue ;
-			Logger::FATAL() << "Epoll wait returned -1" << strerror(errno);
-			break ;
+			throw std::runtime_error(std::string("Epoll wait returned -1") + strerror(errno));
 		}
 		for (int i = 0; i < n; ++i)
 		{
+			if (events->data.ptr == NULL)
+				continue ;
 			IEpollHandler *event_handler = reinterpret_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
 		}
@@ -119,6 +120,7 @@ void TCPServer::dropConnection(Connection *connection)
 	this->connections.erase(fd);
 	this->handler->onDisconnection(*connection);
 	this->deletableConnections.push_back(connection);
+	this->removePollEvent(*connection, connection->getSocket().getFd());
 	#if HTTP_DEBUG == true
 	Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
 	#endif
