@@ -268,10 +268,10 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 {
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
 
-	if (connection.getJob() != NULL)
-		connection.consumeReadData(connection.getReadBufferSize());
-	else if (client.actualHandler != NULL)
+	if (client.actualHandler != NULL)
 	{
+		if (client.actualHandler->active == NULL || !client.actualHandler->active->isFinished())
+			return ;
 		this->resetClient(client);
 		connection.setJob(NULL);
 	}
@@ -282,11 +282,6 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		{
 			if (!handleHeaderPhase(connection, client)) 
 				return;
-			if (client.actualHandler != NULL)
-			{
-				connection.consumeReadData(connection.getReadBufferSize());
-				return;
-			}
 			switchToBodyReception(connection, client);
 			connection.consumeReadData(connection.getReadBufferSize());
 			checkCompletion(connection, client);

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 21:19:51 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 16:08:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,12 @@ bool AHandler::execute()
 
 	if (this->errored)
 	{
-		this->handleError();
+		try { this->handleError(); }
+		catch (const std::exception& e)
+		{
+			Logger::ERROR() << "Unable to handle error cleanly in route handler";
+			this->setFinished();
+		};
 		return !this->finished;
 	}
 
@@ -41,7 +46,7 @@ bool AHandler::execute()
 		this->statusCode = http_exception.getStatusCode();
 		this->errored = true;
 	}
-	catch (...)
+	catch (const std::exception& exception)
 	{
 		this->first = false;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;

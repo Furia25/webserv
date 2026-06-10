@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/10 01:20:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 16:23:30 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 
 		try { server.run(); }
 		catch (const ForkException& e) { return EXIT_FAILURE; }
+		remove_temp_directories(config.servers);
 	}
 	catch (const std::exception& e)
 	{
@@ -114,7 +115,6 @@ int main(int argc, char **argv)
 			Logger::FATAL() << "Unable to launch server: " << e.what();
 		return EXIT_FAILURE;
 	}
-
 	return EXIT_SUCCESS;
 }
 
@@ -172,7 +172,8 @@ static void remove_temp_directories(std::vector<Config::ServerConfig *>& servers
 	for (size_t index = 0; index < servers.size(); index++)
 	{
 		Config::ServerConfig& server_config = *servers[index];
-		FileSystem::removeDirectoryRecursive(server_config.tmp_dir_path);
+		if (FileSystem::removeDirectoryRecursive(server_config.tmp_dir_path) == -1)
+			throw std::runtime_error("Unable to remove temp directories");
 	}
 }
 

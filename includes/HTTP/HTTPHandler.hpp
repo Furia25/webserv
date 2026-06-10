@@ -64,7 +64,8 @@ private:
 			AlignedBuffer<StatusHandler>::type		status_handler;
 			AlignedBuffer<UploadHandler>::type		upload_handler;
 		};
-		~HandlerSlot() { reinterpret_cast<IJob *>(this)->~IJob(); };
+		AHandler	*active;
+		~HandlerSlot() { if (active) active->~AHandler(); };
 	};
 
 	struct ClientData
@@ -112,31 +113,34 @@ inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Reques
 {
 	ClientData&	client_data = *this->clientsData.at(connection.getClientID());
 	AHandler	*handler = NULL;
-	void		*ptr = this->handlerPool.acquire();
+	HandlerSlot	*slot = static_cast<HandlerSlot*>(this->handlerPool.acquire());
 
+	slot->active = NULL;
 	try
 	{
-		handler = new (ptr) T(*this, connection, request, body, route_result, status_code);
+		handler = new (slot) T(*this, connection, request, body, route_result, status_code);
+		slot->active = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		try
 		{
-			handler = new (ptr) ErrorHandler(*this, connection, request, body, route_result, status_code);
+			handler = new (slot) ErrorHandler(*this, connection, request, body, route_result, status_code);
+			slot->active = handler;
 		}
 		catch (...)
 		{
-			this->handlerPool.releaseRaw(ptr);
+			this->handlerPool.releaseRaw(slot);
 			throw ;
 		}
 	}
 	catch (...)
 	{
-		this->handlerPool.releaseRaw(ptr);
+		this->handlerPool.releaseRaw(slot);
 		throw;
 	}
 
-	client_data.actualHandler = reinterpret_cast<HandlerSlot*>(ptr);
+	client_data.actualHandler = slot;
 	return handler;
 }
 

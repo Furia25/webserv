@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 19:06:45 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 16:13:11 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -394,6 +394,7 @@ void CGIHandler::proxyBody()
 
 	this->readedSize += readed;
 	this->response.sendChunk(this->buffer, readed);
+	
 }
 
 static inline std::string to_env_key(const std::string &header)
