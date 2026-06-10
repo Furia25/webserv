@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 16:08:24 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 17:48:13 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ bool AHandler::execute()
 	}
 	catch (const std::exception& exception)
 	{
+		Logger::ERROR() << "Exception " << exception.what();
 		this->first = false;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		this->errored = true;

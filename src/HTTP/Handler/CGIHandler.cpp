@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 16:13:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 17:54:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -305,7 +305,14 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 	}
 
 	if (this->isHeaderParsed)
-		this->sendHeaders();
+	{
+		try { this->sendHeaders(); }
+		catch (const std::exception& e)
+		{
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+			return ;
+		}
+	}
 
 	if (events & (EPOLLHUP | EPOLLRDHUP))
 	{
@@ -394,7 +401,6 @@ void CGIHandler::proxyBody()
 
 	this->readedSize += readed;
 	this->response.sendChunk(this->buffer, readed);
-	
 }
 
 static inline std::string to_env_key(const std::string &header)
