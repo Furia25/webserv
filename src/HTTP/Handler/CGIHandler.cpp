@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 18:57:02 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 20:09:45 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,12 +19,9 @@
 
 CGIHandler::~CGIHandler()
 {
-	Logger::DEBUG() << "\n\nfdsfdsfds\n\n";
 	this->connection.getServer().AlarmManager.cancel(this->alarmTimeout);
 		
 	SAFE_CLOSE(this->bodyFD);
-
-	this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
 
 	SAFE_CLOSE(this->pipeOut[0]);
 	SAFE_CLOSE(this->pipeOut[1]);
@@ -303,13 +300,20 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 		if (!this->isHeaderParsed)
 			this->parseCGIHeader();
 		else
-			this->proxyBody();
+		{
+			try { this->proxyBody(); }
+			catch (...)
+			{
+				this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+				return ;
+			}
+		}
 	}
 
 	if (this->isHeaderParsed)
 	{
 		try { this->sendHeaders(); }
-		catch (const std::exception& e)
+		catch (...)
 		{
 			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 			return ;
@@ -318,9 +322,15 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 
 	if (events & (EPOLLHUP | EPOLLRDHUP))
 	{
-		this->sendHeaders();
 		this->isCGICompleted = true;
+		try { this->sendHeaders(); }
+		catch (...)
+		{
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+			return ;
+		}
 	}
+	return ;
 }
 
 void CGIHandler::parseCGIHeader()
