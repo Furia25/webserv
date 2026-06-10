@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 14:55:27 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 14:43:46 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/10 20:57:25 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,6 @@ private:
 	
 	Headers					headers;
 
-	size_t		findHeaderEnd();
 	void		toLowerCase(std::string &str);
 	void		parseHeaderLine(std::string &line);
 	void		parseRequestLine(std::string &line);
@@ -59,13 +58,14 @@ private:
 	void		validateProtocol() 	const;
 
 	const std::string *getHeader(const std::string& key) const;
-
-public:
-
+	
+	public:
+	
 	RequestBuilder();
 	
 	void		check();
 	void		reset();
+	size_t		findHeaderEnd();
 	void		setValidateStatus(int status);
 	void		feed(const uint8_t *fragment, size_t length);
 	

@@ -115,15 +115,19 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 	size_t bodyLength = 0;
 	if (!client.body.getFileWriter())
 		return;
+
 	bodyLength = client.body.getFileWriter()->getBytesWritten();
 	size_t limit = client.routeRes.route->max_body_size;
+
 	if (limit > 0 && bodyLength > limit)
 	{
 		Logger::ERROR() << "Payload too large: " << bodyLength << " bytes (limit: " << limit << ")";
 		dispatchError(connection, HTTPCode::PAYLOAD_TOO_LARGE);
 		return;
 	}
+
 	bool is_request_finished = false;
+
 	if (client.request.is_chunked)
 	{
 		if (client.body.hasFinished())
@@ -140,10 +144,12 @@ void	HTTPHandler::checkCompletion(Connection& connection, ClientData &client)
 		if (bodyLength == requestLength) 
 			is_request_finished = true;
 	}
+
 	if (is_request_finished) 
 	{
 		client.body.finish();
 		this->launchHandler(connection, client);
+		connection.consumeReadData(connection.getReadBufferSize());
 	}
 }
 
@@ -244,9 +250,9 @@ void HTTPHandler::switchToBodyReception(Connection& connection, ClientData& clie
 	if (headers.contain("expect") && headers.at("expect").find("100-continue") != std::string::npos) 
 		Response(connection, HTTPCode::CONTINUE).sendEnd();
 
-	std::vector<uint8_t> extra = client.builder.getExtraData();
-	size_t header_size = connection.getReadBufferSize() - extra.size();
-	connection.consumeReadData(header_size);
+	size_t header_end = client.builder.findHeaderEnd();
+	if (header_end != std::string::npos)
+		connection.consumeReadData(header_end + 4); 
 }
 
 void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
@@ -254,15 +260,20 @@ void	HTTPHandler::streamBodyFragment(Connection& connection, ClientData& client)
 	const uint8_t*	data = connection.getReadBufferPtr();
 	size_t			size = connection.getReadBufferSize();
 	size_t          toProcess = size;
+
+	if (size == 0)
+		return ;
+
 	if (!client.request.is_chunked)
 	{
 		size_t remaining = client.request.content_length - client.body.getSize();
 		toProcess = (size < remaining) ? size : remaining;
 	}
+
 	if (toProcess > 0)
 	{
 		if (client.request.is_chunked)
-			client.body.feedChunked(data, toProcess); 
+			toProcess = client.body.feedChunked(data, toProcess);
 		else
 			receiveBodyChunk(client, data, toProcess);
 	}
@@ -281,7 +292,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		connection.setJob(NULL);
 	}
 
-	try 
+	try
 	{
 		if (!client.builder.get_header_parsed())
 		{

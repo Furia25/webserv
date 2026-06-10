@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestBuilder.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:27:34 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 20:51:00 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 20:48:48 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ void	RequestBuilder::feed(const uint8_t *fragment, size_t length)
 
 size_t	RequestBuilder::findHeaderEnd()
 {
-	if (buffer_size < 4) 
+	if (buffer_size < 4)
 		return std::string::npos;
 	for (size_t i = 0; i <= buffer_size - 4; ++i)
 	{

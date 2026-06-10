@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/10 17:23:38 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/10 20:57:05 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,14 +78,6 @@ void	Body::setIsFinished(bool status)
 {
 	this->isFinished = status;
 }
-
-bool	Body::isComplete() const 
-{
-	if (this->expectedSize == 0)
-		return this->isFinished;
-	return this->receivedSize >= this->expectedSize;
-}
-
 size_t  Body::getSize()const 
 {
 	return this->receivedSize;
@@ -166,7 +158,7 @@ bool	Body::hasFinished() const
 	return this->isFinished;
 }
 
-void	Body::feedChunked(const uint8_t* fragment, size_t size)
+size_t	Body::feedChunked(const uint8_t* fragment, size_t size)
 {
 	size_t i = 0;
 	while (i < size && !this->hasFinished())
@@ -192,10 +184,11 @@ void	Body::feedChunked(const uint8_t* fragment, size_t size)
 			{
 				this->setIsFinished(true);
 				i++;
-				return;
+				return i;
 			}
 		}
 	}
+	return i;
 }
 
 const std::string&	Body::getFilePath() const

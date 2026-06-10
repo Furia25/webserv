@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Body.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:07:09 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/09 19:56:07 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 20:57:08 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,12 @@ public:
 	void 			setIsFinished(bool status);
 	void			setFilePath(const std::string& path);
 	
-	void			feedChunked(const uint8_t* fragment, size_t size);
+	size_t			feedChunked(const uint8_t* fragment, size_t size);
 	void			handleChunkSize(const uint8_t* fragment, size_t& i);
 	void			handleChunkData(const uint8_t* fragment, size_t& i, size_t size);
 	void			handleChunkTrailer(const uint8_t* fragment, size_t& i);
 	
 	size_t							getSize()				const;
-	bool							isComplete()			const;
 	bool							hasFinished()			const;
 	const std::string&				getFilePath()			const;
 	FileWriter*						getFileWriter()			const;
