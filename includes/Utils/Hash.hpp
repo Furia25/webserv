@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Hash.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/22 20:09:28 by vdurand           #+#    #+#             */
-/*   Updated: 2026/04/23 03:46:56 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 17:24:30 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@ struct Hash
 	size_t	operator()(const Key& key) const;
 };
 
-#pragma region Helpers
 inline size_t fnv1a(const unsigned char* data, size_t len)
 {
 	size_t hash = 2166136261UL;
@@ -47,7 +46,6 @@ inline size_t hash_int(unsigned long long key)
 	// 2^64 / phi, phi = golden ratio
 	return static_cast<size_t>(key * 11400714819323198485ULL);
 }
-#pragma endregion
 
 # define HASH_INTEGRAL(type) \
 template <> struct Hash<type> \

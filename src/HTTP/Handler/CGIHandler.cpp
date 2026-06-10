@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CGIHandler.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 16:13:11 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/10 18:17:09 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,12 @@
 
 CGIHandler::~CGIHandler()
 {
+	Logger::DEBUG() << "\n\nfdsfdsfds\n\n";
 	this->connection.getServer().AlarmManager.cancel(this->alarmTimeout);
-
+		
 	SAFE_CLOSE(this->bodyFD);
+
+	this->connection.getServer().removePollEvent(*this, this->pipeOut[0]);
 
 	SAFE_CLOSE(this->pipeOut[0]);
 	SAFE_CLOSE(this->pipeOut[1]);
@@ -92,7 +95,6 @@ void CGIHandler::onCreation()
 			goto error;
 
 		::execve(argv[0], const_cast<char **>(argv), const_cast<char **>(envp.data()));
-		std::cerr << "\n\nTESt\n\n";
 	error:
 		close(0);
 		close(1);
