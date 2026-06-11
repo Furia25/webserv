@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 15:03:13 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/08 14:51:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 16:55:33 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,17 @@ Request::Request() : path("/"),
 		content_length(0),
 		query_string("")
 {}
+
+void	Request::reset()
+{
+	path = "/";
+	method = Method::GET;
+	protocol = "";
+	is_chunked = false;
+	keep_alive = false;
+	content_length = 0;
+	query_string = "";
+}
 
 const std::string	*Request::operator[](const std::string &key) const
 {

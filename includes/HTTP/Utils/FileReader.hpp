@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   FileReader.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 11:36:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 20:05:53 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/11 19:00:29 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,9 @@ public:
 	void	open(const std::string &path);
 	size_t	readChunk(char *buffer, size_t chunkSize);
 
-	size_t		getFileSize() const;
-	bool		hasFinished() const;
+	size_t		getFileSize()		const;
+	size_t 		getBytesReadTotal()	const;
+	bool		hasFinished()		const;
 	void		close();
 
 private:

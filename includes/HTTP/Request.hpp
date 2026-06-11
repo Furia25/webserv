@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 15:24:08 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/08 14:40:57 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 16:55:55 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ public:
 
 	void				setCookies(const Cookies& cookies);
 	void				setHeaders(const Headers& headers);
+	void				reset();
 
 private:
 	Headers			headers;

@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:06:01 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/10 20:57:05 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 16:50:33 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,39 +21,6 @@ Body::Body() : fileWriter(NULL), expectedSize(0), receivedSize(0), destinationPa
 {
 }
 
-Body::Body(const Body& other) 
-{
-	this->isFinished = other.isFinished;
-	this->destinationPath = other.destinationPath;
-	this->fileWriter = other.fileWriter;
-	this->chunkState = other.chunkState;
-	this->neededBytes = other.neededBytes;
-	this->sizeBuffer = other.sizeBuffer;
-	this->maxBodySize = other.maxBodySize;
-	const_cast<Body&>(other).fileWriter = NULL; 
-}
-
-Body&	Body::operator=(const Body& other) 
-{
-	if (this != &other) 
-	{
-		if (this->fileWriter) 
-		{
-			delete this->fileWriter;
-			this->fileWriter = NULL;
-		}
-		this->isFinished = other.isFinished;
-		this->destinationPath = other.destinationPath;
-		this->fileWriter = other.fileWriter;
-		const_cast<Body&>(other).fileWriter = NULL; 
-		this->chunkState = other.chunkState;
-		this->neededBytes = other.neededBytes;
-		this->sizeBuffer = other.sizeBuffer;
-		this->maxBodySize = other.maxBodySize;
-	}
-	return *this;
-}
-
 void	Body::init(size_t expected, const std::string& path, size_t maxBody)
 {
 	this->expectedSize = expected;
@@ -62,7 +29,7 @@ void	Body::init(size_t expected, const std::string& path, size_t maxBody)
 	this->maxBodySize = maxBody;
 
 	std::string destination_temp = this->destinationPath;
-	this->fileWriter = new FileWriter(); //bruh ??? pourquoi ?? // tkt chef prcq
+	this->fileWriter = new FileWriter();
 	this->fileWriter->open(destination_temp);
 }
 

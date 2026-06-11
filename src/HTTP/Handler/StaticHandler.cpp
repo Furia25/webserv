@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   StaticHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 10:50:35 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 21:25:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/11 19:09:26 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,32 +158,31 @@ void StaticHandler::onExecute()
 			.sendContentLength(fileSize);
 
 		if (request.method == Method::HEAD)
-		{
-			this->fileReader.close();
 			state = FINISHED;
-		}
 		else
 			state = SEND_BODY;
 	}
 	break;
 	
 	case SEND_BODY:
-	{
-		char buffer[8192];
-		size_t bytes_read = this->fileReader.readChunk(buffer, 8192);
+    {
+        char buffer[8192];
+        size_t bytes_read = this->fileReader.readChunk(buffer, 8192);
 
-		if (bytes_read > 0)
-			response.sendBody((uint8_t *)buffer, bytes_read);
+        if (bytes_read > 0)
+            response.sendBody((uint8_t *)buffer, bytes_read);
 
-		if (this->fileReader.hasFinished())
-		{
-			this->fileReader.close();
-			this->state = FINISHED;
-		}
-		break;
-	}
+        if (this->fileReader.hasFinished())
+        {
+            this->state = FINISHED;
+        }
+        break;
+    }
 
 	case FINISHED:
+		this->fileReader.close();
+		if (this->fileReader.getFileSize() > 0 && this->fileReader.getBytesReadTotal() < this->fileReader.getFileSize())
+			this->connection.setDeletable(); 
 		response.sendEnd();	
 		this->setFinished();
 		return ;

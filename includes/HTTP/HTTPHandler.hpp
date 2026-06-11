@@ -79,6 +79,15 @@ private:
 		std::string				sizeBuffer;
 
 		ClientData(): actualHandler(NULL), neededBytes(0) {};
+		void Reset()
+		{
+			this->builder.reset();
+			this->body.reset();
+			this->request.reset();
+			this->actualHandler = NULL;
+			this->neededBytes = 0;
+			this->sizeBuffer.clear();
+		};
 	};
 
 	HashMap<size_t, ClientData *>	clientsData;

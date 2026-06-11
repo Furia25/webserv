@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/12 17:07:09 by antoine           #+#    #+#             */
-/*   Updated: 2026/06/10 20:57:08 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 16:50:43 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,11 @@ private:
 	size_t					neededBytes;
 	std::string				sizeBuffer;
 	size_t					maxBodySize;
+	Body(const Body& other);
+	Body& operator=(const Body& other);
 
 public:
 	Body();
-	Body(const Body& other);
-	Body& operator=(const Body& other);
 	~Body();
 	
 	void			feed(const uint8_t* data, size_t size);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 17:48:13 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/11 17:09:22 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,6 +161,7 @@ void AHandler::handleError()
 	}
 
 	case FINISHED:
+		this->fileReader.close();
 		response.sendEnd();
 		this->setFinished();
 		break;

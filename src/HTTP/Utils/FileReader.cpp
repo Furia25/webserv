@@ -6,7 +6,7 @@
 /*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/28 12:27:28 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/10 17:20:47 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 18:59:56 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,8 +40,10 @@ void FileReader::open(const std::string& path)
 	this->fileSize = stat_buf.st_size;
 	this->fileStream.open(path.c_str(), std::ios::in | std::ios::binary);
 
-	if (!this->fileStream.is_open())
+	if (!this->fileStream.is_open() || this->fileStream.fail())
 		throw HTTPException(HTTPCode::INTERNAL_SERVER_ERROR);
+
+	this->fileStream.seekg(0, std::ios::beg);
 
 	this->bytesReadTotal = 0;
 	this->isEOF = false;
@@ -65,6 +67,11 @@ size_t FileReader::readChunk(char *buffer, size_t chunkSize)
 void FileReader::close()
 {
 	fileStream.close();
+}
+
+size_t FileReader::getBytesReadTotal() const
+{
+	return this->bytesReadTotal;
 }
 
 bool FileReader::hasFinished() const
