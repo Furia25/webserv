@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/11 20:07:55 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 18:47:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,6 +103,8 @@ void AHandler::handleError()
 			std::string errorFile = this->routeResult.host->error_fallbacks.at(statusCode);
 			physicalPath = this->routeResult.host->root + "/" + errorFile;
 		}
+		else
+			this->physicalPath = "";
 		if (!physicalPath.empty() && FileSystem::exists(physicalPath) && FileSystem::isFile(physicalPath))
 			this->state = SEND_HEADERS;
 		else

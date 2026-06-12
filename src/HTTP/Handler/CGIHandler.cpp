@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/12 18:12:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 18:48:54 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -436,6 +436,7 @@ static inline std::string	*get_header(const Headers& header, const std::string& 
 void cgi_timeout_callback(Alarm<CGIHandler *> &alarm, CGIHandler *handler)
 {
 	(void) alarm;
+	handler->state = CGIHandler::ERRORED;
 	handler->statusCode = HTTPCode::GATEWAY_TIMEOUT;
 	Logger::ERROR() << "CGI timeout on path " << handler->request.path;
 }
