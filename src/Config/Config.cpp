@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Config.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:35:29 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 00:56:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 16:35:49 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ void Config::AppConfig::init(toml::Document& document)
 	for (size_t index = 0; index < server_array.size(); ++index)
 	{
 		ServerConfig	*server_config = new ServerConfig();
+		server_config->name = "default_error";
 		try
 		{
 			std::stringstream	ss;
@@ -64,8 +65,8 @@ void Config::AppConfig::init(toml::Document& document)
 		}
 		catch (const std::exception& e)
 		{
-			delete server_config;
 			loader.push_error(server_config->name, e.what());
+			delete server_config;
 			break ;
 		}
 	}
