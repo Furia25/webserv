@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   UploadHandler.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
+/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/05 16:25:18 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/09 19:52:10 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 13:58:47 by antbonin         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,13 +93,16 @@ void UploadHandler::onExecute()
 
 	extension = MIME::get_extension(MIME::from_extension(content_type_val));
 		
-	std::string final_filepath = uploadConfig.alias;
+	std::string final_filepath = routeResult.basePath;
 
 	if (!final_filepath.empty() && final_filepath[final_filepath.length() - 1] != '/')
 		final_filepath += "/";
 
 	if (filename.empty())
-		filename = "file_" + FileSystem::GenerateUniqueFilename("") + extension;
+	{
+		std::string ext_with_dot = (extension.empty() || extension[0] == '.') ? extension : "." + extension;
+		filename = "file_" + FileSystem::GenerateUniqueFilename("") + ext_with_dot;
+	}
 
 	if (!isExtensionAllowed(content_type_val, this->uploadConfig.allowed_extensions))
 	{

@@ -85,7 +85,6 @@ void HTTPHandler::launchHandler(Connection &connection, ClientData &client)
 
 	AHandler	*handler = NULL;
 	this->totalRequests++;
-
 	switch (client.routeRes.route->handler)
 	{
 	case HandlerType::STATIC :
@@ -191,9 +190,9 @@ bool	HTTPHandler::processHeaders(Connection& connection, ClientData& client, con
 
 	try
 	{
-		// #if HTTP_DEBUG == true
-		// 	client.builder.print();
-		// #endif
+		#if HTTP_DEBUG == true
+			client.builder.print();
+		#endif
 		client.builder.check();
 	}
 	catch (const HTTPException& e)
