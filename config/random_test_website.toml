@@ -48,8 +48,8 @@ max_body_size = 150000000
 	max_body_size = 150000000
 	allowed_extensions = []
 	allow_overwrite = false
-	alias = "./www/site1/upload"
-	upload_store = "./www/site1/upload"
+	alias = "/www/site1/upload"
+	upload_store = "/www/site1/upload"
 
 		[servers.routes.cookies.session_id]
 		generate = true
