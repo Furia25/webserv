@@ -6,7 +6,7 @@
 #    By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/01/13 23:20:17 by val               #+#    #+#              #
-#    Updated: 2026/06/12 02:55:25 by vdurand          ###   ########.fr        #
+#    Updated: 2026/06/12 16:12:01 by vdurand          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -86,6 +86,7 @@ SRC_FILES = \
 	HTTP/Response.cpp \
 	HTTP/Utils/FileReader.cpp \
 	HTTP/Utils/FileWriter.cpp \
+	HTTP/HTTPHeartbeat.cpp \
 	Logger.cpp \
 	main.cpp
 

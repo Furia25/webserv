@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/12 02:04:59 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 15:44:24 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # include "Server/TCPServer.hpp"
 # include "Server/IJob.hpp"
 
-size_t Connection::last_id = 1;
+size_t Connection::last_id = 0;
 
 Connection::Connection(TCPServer& server, Socket& server_socket, port_t origin_port) : server(server), bytes_sended(0),
 	bytes_received(0), state(CONNECTED), alarmTimeout(this, connection_timeout_callback), originPort(origin_port), engineConfig(server.engineConfig), actualJob(NULL)

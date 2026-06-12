@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/12 02:54:38 by vdurand          ###   ########.fr       */
+/*   Created: 2026/06/12 16:09:14 by vdurand           #+#    #+#             */
+/*   Updated: 2026/06/12 16:14:31 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,14 +128,19 @@ void TCPServer::dropConnection(Connection *connection)
 {
 	int	fd = connection->getSocket().getFd();
 
-	this->connections.erase(fd);
-	this->handler->onDisconnection(*connection);
-	this->removePollEvent(*connection, fd);
 	this->deletableConnections.push_back(connection);
+	this->handler->onDisconnection(*connection);
+	this->actualConnections--;
+	this->connections.erase(fd);
+	try { this->removePollEvent(*connection, fd); }
+	catch (const std::exception& e)
+	{
+		Logger::ERROR() << e.what();
+	}
+
 	#if HTTP_DEBUG == true
 		Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
 	#endif
-	this->actualConnections--;
 }
 
 void TCPServer::setPollEvent(IEpollHandler &event_handler, int fd, uint32_t events)
@@ -159,7 +164,7 @@ void TCPServer::addPollEvent(IEpollHandler &event_handler, int fd, uint32_t even
 
 void TCPServer::removePollEvent(IEpollHandler &event_handler, int fd)
 {
-	(void)event_handler;
+	(void) event_handler;
 	errno = 0;
 	int result = epoll_ctl(this->epollfd, EPOLL_CTL_DEL, fd, NULL);
 	if (result == -1 && !(errno == ENOENT || errno == EBADF))
@@ -188,18 +193,4 @@ void TCPServer::bindHandler(IRequestHandler &handler)
 IRequestHandler& TCPServer::getHandler(void)
 {
 	return *this->handler;
-}
-
-void TCPServer::tickCallback(void *instance)
-{
-	TCPServer *server = static_cast<TCPServer *>(instance);
-	Logger::DEBUG() << "Heartbeat: Server is running...";
-	LogMessage debug = Logger::DEBUG();
-	debug << "Connections: ";
-	for (HashMap<int, Connection *>::iterator it = server->connections.begin(); it != server->connections.end(); ++it)
-	{
-		debug << (*(*it).second);
-		if (it != server->connections.end())
-			debug << ", ";
-	}
 }
