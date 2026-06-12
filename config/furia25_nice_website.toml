@@ -45,7 +45,7 @@ root        = "www/furia25_nice_website"
   path        = "/api"
   handler     = "CGI"
   methods     = ["GET", "POST", "DELETE"]
-  interpreters = {py = "/usr/bin/python3"}
+  interpreters = {py = "/usr/bin/python3", perl = "/usr/bin/perl"}
   cgi_timeout  = 4
 
     [servers.routes.env]

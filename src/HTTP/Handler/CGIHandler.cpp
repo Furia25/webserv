@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/12 18:00:34 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 18:12:58 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -288,7 +288,8 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 	if (events & EPOLLERR)
 	{
 		
-		this->state = ERRORED;Logger::ERROR() << "CGI pipe errored";
+		this->state = ERRORED;
+		Logger::ERROR() << "CGI pipe errored";
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		return;
 	}

@@ -43,10 +43,17 @@ def get_db() -> sqlite3.Connection:
             username   TEXT    NOT NULL UNIQUE COLLATE NOCASE,
             pw_hash    TEXT    NOT NULL,
             email      TEXT    DEFAULT '',
+            avatar_url TEXT    DEFAULT '',
             created_at TEXT    DEFAULT (datetime('now')),
             last_login TEXT
         )
     """)
+    # Migrate: add avatar_url if it doesn't exist yet (safe on existing DBs)
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN avatar_url TEXT DEFAULT ''")
+        conn.commit()
+    except Exception:
+        pass  # column already exists
     # Seed built-in accounts if they don't exist yet
     for uname, pwhash in _BUILTIN.items():
         conn.execute(
@@ -222,6 +229,65 @@ def action_verify(form: dict) -> None:
 def action_logout(form: dict) -> None:
     send_json({"ok": True}, extra_headers=[clear_cookie_header()])
 
+
+def action_set_avatar(form: dict) -> None:
+    """Save the RoboHash avatar URL for the authenticated user."""
+    token = get_cookie_token()
+    if not token:
+        return send_error("Non authentifié.", "401 Unauthorized")
+    result = verify_token(token)
+    if not result:
+        return send_error("Session expirée ou invalide.", "401 Unauthorized")
+    username, _ = result
+
+    avatar_url = form.get("avatar_url", "").strip()[:512]
+    # Only allow robohash URLs
+    if avatar_url and not avatar_url.startswith("https://robohash.org/"):
+        return send_error("Invalid avatar URL.")
+
+    try:
+        with get_db() as conn:
+            conn.execute(
+                "UPDATE users SET avatar_url=? WHERE username=? COLLATE NOCASE",
+                (avatar_url, username)
+            )
+    except Exception as exc:
+        return send_error(f"DB error: {exc}", "500 Internal Server Error")
+
+    send_json({"ok": True, "avatar_url": avatar_url})
+
+
+def action_get_profile(form: dict) -> None:
+    """Return profile info (including avatar_url) for the authenticated user."""
+    token = get_cookie_token()
+    if not token:
+        return send_error("Non authentifié.", "401 Unauthorized")
+    result = verify_token(token)
+    if not result:
+        return send_error("Session expirée ou invalide.", "401 Unauthorized")
+    username, ts = result
+
+    try:
+        with get_db() as conn:
+            row = conn.execute(
+                "SELECT username, email, avatar_url, created_at, last_login FROM users WHERE username=? COLLATE NOCASE",
+                (username,)
+            ).fetchone()
+            if not row:
+                return send_error("User not found.", "404 Not Found")
+    except Exception as exc:
+        return send_error(f"DB error: {exc}", "500 Internal Server Error")
+
+    send_json({
+        "ok":         True,
+        "username":   row["username"],
+        "email":      row["email"] or "",
+        "avatar_url": row["avatar_url"] or "",
+        "created_at": row["created_at"] or "",
+        "last_login": row["last_login"] or "",
+        "expires_in": SESSION_TTL - (int(time.time()) - ts),
+    })
+
 # ── Dispatch ───────────────────────────────────────────────
 
 def main() -> None:
@@ -233,6 +299,10 @@ def main() -> None:
         action_login(form)
     elif method == "POST" and action == "register":
         action_register(form)
+    elif method == "POST" and action == "set_avatar":
+        action_set_avatar(form)
+    elif action == "get_profile":
+        action_get_profile(form)
     elif action == "verify":
         action_verify(form)
     elif action == "logout":

@@ -150,9 +150,15 @@ def action_list(form: dict) -> None:
                     if rrow["reaction"] in reacts:
                         reacts[rrow["reaction"]] = rrow["count"]
                 # is this user a verified (registered) account?
-                verified = bool(row["username"] and conn.execute(
-                    "SELECT 1 FROM users WHERE username=? COLLATE NOCASE", (row["username"],)
-                ).fetchone())
+                verified = False
+                avatar_url = ""
+                if row["username"]:
+                    user_row = conn.execute(
+                        "SELECT avatar_url FROM users WHERE username=? COLLATE NOCASE", (row["username"],)
+                    ).fetchone()
+                    if user_row:
+                        verified = True
+                        avatar_url = user_row["avatar_url"] or ""
                 entries.append({
                     "id":         eid,
                     "name":       row["name"],
@@ -161,6 +167,7 @@ def action_list(form: dict) -> None:
                     "created_at": row["created_at"],
                     "reactions":  reacts,
                     "verified":   verified,
+                    "avatar_url": avatar_url,
                 })
 
             total_accounts = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]

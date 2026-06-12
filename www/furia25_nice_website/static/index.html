@@ -428,8 +428,79 @@ main {
 .sk { color:var(--pink); }
 .sv { color:#888; }
 
-/* ── LIMINAL NOTE ── */
-.liminal {
+/* ── ROBOT PROFILE PANEL ── */
+#profile-panel {
+  display: none;
+}
+.robot-profile-wrap {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.robot-avatar-box {
+  flex-shrink: 0;
+  border: 3px solid var(--teal);
+  box-shadow: 0 0 20px rgba(0,255,204,0.25), 0 0 6px rgba(0,255,204,0.1);
+  background: #000;
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.robot-avatar-box img {
+  width: 114px;
+  height: 114px;
+  display: block;
+  image-rendering: pixelated;
+}
+.robot-avatar-box .av-spinner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #1a3a30;
+  animation: bl 1.2s step-end infinite;
+}
+.robot-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+.robot-profile-info .rp-username {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: var(--teal);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.robot-profile-info .rp-verdict {
+  font-size: 1.1rem;
+  color: var(--orange);
+  margin: 6px 0 10px;
+  line-height: 1.5;
+}
+.robot-profile-info .rp-meta {
+  font-size: 0.85rem;
+  color: #1a3a30;
+  line-height: 2;
+}
+.robot-regen-btn {
+  margin-top: 10px;
+}
+
+/* robot avatars inside guestbook entries */
+.e-avatar img.robot-img {
+  width: 36px;
+  height: 36px;
+  display: block;
+  image-rendering: pixelated;
+}
+
+
   font-family: 'Special Elite', serif;
   font-size: 1rem;
   color: #1e2e1e;
@@ -598,6 +669,28 @@ footer {
     </div>
     <br>
     <button class="retro-btn pink" onclick="fetchSecretData()">[ REFRESH ]</button>
+  </div>
+
+  <!-- ── ROBOT PROFILE PANEL ── -->
+  <div class="panel panel-teal" id="profile-panel">
+    <div class="corner" style="background:var(--teal);"></div>
+    <div class="ptitle teal">:: UNIT PROFILE :: AUTHENTICATED IDENTITY ::</div>
+    <div class="robot-profile-wrap">
+      <div class="robot-avatar-box" id="robot-avatar-box">
+        <span class="av-spinner">...</span>
+      </div>
+      <div class="robot-profile-info">
+        <div class="rp-username" id="rp-username">—</div>
+        <div class="rp-verdict" id="rp-verdict" style="color:#1a3a30;">loading diagnostic...</div>
+        <div class="rp-meta" id="rp-meta"></div>
+        <button class="retro-btn cyan robot-regen-btn" onclick="loadRobotProfile(true)">[ REGEN VERDICT ]</button>
+        &nbsp;
+        <button class="retro-btn teal robot-regen-btn" onclick="saveRobotAvatar()">[ LOCK AVATAR TO PROFILE ]</button>
+      </div>
+    </div>
+    <div style="font-size:0.85rem;color:#0d2a22;margin-top:10px;font-style:italic;">
+      avatar generated via robohash.org · deterministic per username · verdict rotates
+    </div>
   </div>
 
   <!-- archive teaser -->
@@ -781,6 +874,11 @@ function renderEntry(e, i) {
   const verBadge = e.verified
     ? ` <span class="e-verified">✓ VERIFIED</span>` : '';
 
+  // Use robot avatar if the user has one, otherwise text initials
+  const avatarHtml = (e.verified && e.avatar_url)
+    ? `<img class="robot-img" src="${esc(e.avatar_url)}" alt="robot" style="width:36px;height:36px;display:block;image-rendering:pixelated;">`
+    : esc(initials(e.name));
+
   const reacts = [
     { key:'seen', label:'👁' },
     { key:'wtf',  label:'?!' },
@@ -795,7 +893,7 @@ function renderEntry(e, i) {
   }).join('');
 
   return `<div class="entry" id="entry-${i}">
-    <div class="e-avatar ${avCls}">${esc(initials(e.name))}</div>
+    <div class="e-avatar ${avCls}">${avatarHtml}</div>
     <div class="e-meta">
       <span class="e-name">${esc(e.name||'anonymous')}</span>${verBadge}${websiteHtml}
     </div>
@@ -875,6 +973,115 @@ async function postEntry() {
     setTimeout(()=>{ msgEl.textContent=''; },3500);
     renderAll();
     document.getElementById('gb-entries').scrollTop = 9999;
+  }
+}
+
+// ── ROBOT PROFILE ──
+
+async function loadRobotProfile(forceRegen) {
+  if (!currentUser) return;
+  const box     = document.getElementById('robot-avatar-box');
+  const verdict = document.getElementById('rp-verdict');
+  const metaEl  = document.getElementById('rp-meta');
+  document.getElementById('rp-username').textContent = '> ' + currentUser;
+
+  // If not forcing regen, check if a saved avatar_url exists in their profile
+  if (!forceRegen) {
+    try {
+      const pr = await fetch(`${CGI_BASE}/auth.py?action=get_profile`, { credentials:'include' });
+      const pd = await pr.json();
+      if (pd.ok && pd.avatar_url) {
+        renderRobotAvatar(box, pd.avatar_url, null, metaEl, pd);
+        return;
+      }
+    } catch(_) {}
+  }
+
+  // Call robot.perl with format=json to get avatar + verdict for current user
+  verdict.style.color = '#1a3a30';
+  verdict.textContent = 'running diagnostic...';
+  box.innerHTML = '<span class="av-spinner">...</span>';
+
+  try {
+    const r = await fetch(
+      `${CGI_BASE}/robot.perl?name=${encodeURIComponent(currentUser)}&format=json`,
+      { credentials:'include' }
+    );
+    const d = await r.json();
+    if (d.ok) {
+      renderRobotAvatar(box, d.avatar_url, d.verdict, metaEl, null);
+    }
+  } catch(_) {
+    // Fallback: build avatar URL client-side (robohash is public)
+    const sets = ['set1','set2','set3','set4'];
+    const set  = sets[currentUser.length % sets.length];
+    const url  = `https://robohash.org/${encodeURIComponent(currentUser)}?set=${set}&size=300x300`;
+    renderRobotAvatar(box, url, 'CGI unreachable · avatar deterministic.', metaEl, null);
+  }
+}
+
+function renderRobotAvatar(box, url, verdict, metaEl, profile) {
+  const img = document.createElement('img');
+  img.className = 'robot-img';
+  img.alt = 'robot avatar';
+  img.style.cssText = 'width:114px;height:114px;display:block;image-rendering:pixelated;';
+  img.src = url;
+  box.innerHTML = '';
+  box.appendChild(img);
+
+  if (verdict) {
+    const v = document.getElementById('rp-verdict');
+    v.style.color = 'var(--orange)';
+    v.textContent = verdict;
+  }
+
+  if (profile) {
+    const v = document.getElementById('rp-verdict');
+    v.style.color = 'var(--teal)';
+    v.textContent = 'avatar loaded from profile.';
+    if (profile.created_at) {
+      metaEl.innerHTML =
+        `<span style="color:#1a5a3a;">REGISTERED</span> · ${esc(profile.created_at)}<br>` +
+        (profile.last_login ? `<span style="color:#1a5a3a;">LAST LOGIN</span> · ${esc(profile.last_login)}` : '');
+    }
+  }
+}
+
+async function saveRobotAvatar() {
+  if (!currentUser) return;
+  // Re-fetch from robot.perl to get the definitive URL
+  let avatarUrl = '';
+  try {
+    const r = await fetch(
+      `${CGI_BASE}/robot.perl?name=${encodeURIComponent(currentUser)}&format=json`,
+      { credentials:'include' }
+    );
+    const d = await r.json();
+    if (d.ok) avatarUrl = d.avatar_url;
+  } catch(_) {
+    const sets = ['set1','set2','set3','set4'];
+    const set  = sets[currentUser.length % sets.length];
+    avatarUrl = `https://robohash.org/${encodeURIComponent(currentUser)}?set=${set}&size=300x300`;
+  }
+  if (!avatarUrl) return;
+
+  try {
+    const r = await fetch(`${CGI_BASE}/auth.py`, {
+      method: 'POST', credentials:'include',
+      headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: `action=set_avatar&avatar_url=${encodeURIComponent(avatarUrl)}`
+    });
+    const d = await r.json();
+    const v = document.getElementById('rp-verdict');
+    if (d.ok) {
+      v.style.color = 'var(--green)';
+      v.textContent = 'avatar locked to profile. it will appear in the guestbook.';
+    } else {
+      v.style.color = 'var(--red)';
+      v.textContent = d.error || 'failed to save.';
+    }
+  } catch(_) {
+    document.getElementById('rp-verdict').textContent = 'server unreachable (demo mode).';
   }
 }
 
@@ -961,7 +1168,8 @@ function setAuth(auth, user) {
   document.getElementById('auth-label').style.color = auth ? 'var(--green)' : 'var(--cyan)';
   document.getElementById('archive-panel').style.display  = auth ? 'block' : 'none';
   document.getElementById('archive-teaser').style.display = auth ? 'none'  : 'block';
-  if (auth) fetchSecretData();
+  document.getElementById('profile-panel').style.display  = auth ? 'block' : 'none';
+  if (auth) { fetchSecretData(); loadRobotProfile(false); }
 }
 
 function setMsg(t, cls) {
