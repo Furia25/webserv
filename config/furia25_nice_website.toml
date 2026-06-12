@@ -27,10 +27,18 @@ root        = "www/furia25_nice_website"
   index     = "index.html"
 
   [[servers.routes]]
-  handler   = "UPLOAD"
-  path      = "/static"
-  alias     = "/static/"
-  methods   = ["GET", "POST"]
+  handler      = "STATIC"
+  path         = "/static/"
+  alias        = "/site1/upload/"
+  methods      = ["GET"]
+  index        = ""
+
+  [[servers.routes]]
+  handler      = "UPLOAD"
+  path         = "/static"
+  alias        = "/site1/upload"
+	upload_store = "/site1/upload"
+  methods      = ["POST", "GET"]
   allowed_extensions = []
 
   [[servers.routes]]
