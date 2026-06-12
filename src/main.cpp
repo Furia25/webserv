@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/12 17:25:50 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 17:33:35 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,9 +164,14 @@ static void	init_temp_directories(std::vector<Config::ServerConfig *>& servers)
 	{
 		Config::ServerConfig& server_config = *servers[index];
 		if (FileSystem::exists(server_config.tmp_dir_path))
+		{
+			if (!FileSystem::isWritable(server_config.tmp_dir_path) || !FileSystem::isReadable(server_config.tmp_dir_path))
+				throw std::runtime_error("No permission to write and read on temp directories: " + server_config.tmp_dir_path);
 			return ;
+		}
+
 		if (::mkdir(server_config.tmp_dir_path.c_str(), 0755) == -1) 
-			throw std::runtime_error(std::string("Unable to create temp directories :") + strerror(errno));
+			throw std::runtime_error(std::string("Unable to create temp directories: ") + strerror(errno));
 	}
 }
 
