@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 17:08:05 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 20:23:58 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 01:06:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,7 @@ public:
 	readedSize(0),
 	writedSize(0),
 	firstHeader(false),
-	isHeaderParsed(false),
-	isCGICompleted(false)
+	state(PARSING_HEADERS)
 	{
 		this->pipeOut[0] = -1;
 		this->pipeOut[1] = -1;
@@ -62,6 +61,8 @@ public:
 	void	handleEvent(TCPServer& server, uint32_t events);
 
 private:
+	enum State {PARSING_HEADERS, STREAMING_BODY, COMPLETED, ERRORED};
+
 	const Config::CGIConfig&	CGIConfig;
 
 	std::vector<std::string>	envFlat;
@@ -86,8 +87,8 @@ private:
 	size_t						writedSize;
 
 	bool						firstHeader;
-	bool						isHeaderParsed;
-	bool						isCGICompleted;
+
+	State						state;
 
 	void	parseCGIHeader();
 	void	proxyBody();

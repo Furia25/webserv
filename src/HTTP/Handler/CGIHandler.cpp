@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 20:24:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 01:12:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -244,24 +244,16 @@ inline void CGIHandler::initProcessVariables(const char *argv[3], std::vector<co
 
 void CGIHandler::onExecute()
 {
-	if (this->statusCode != HTTPCode::OK)
+	switch (this->state)
 	{
-		if (this->response.hasStatus())
-		{
-			this->response
-				.sendDefaults(this->request, this->routeResult.route, true)
-				.sendEnd();
-			this->setFinished();
-			return ;
-		}
-		else
+		case ERRORED:
 			throw HTTPException(this->statusCode);
-	}
-
-	if (this->isCGICompleted)
-	{
-		this->response.sendEnd();
-		this->setFinished();
+		case COMPLETED:
+			this->response.sendEnd();
+			this->setFinished();
+			break;
+		default:
+			break;
 	}
 }
 
@@ -293,47 +285,41 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 
 	if (events & EPOLLERR)
 	{
-		Logger::ERROR() << "CGI pipe errored";
+		
+		this->state = ERRORED;Logger::ERROR() << "CGI pipe errored";
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		return;
 	}
 
 	if (events & EPOLLIN)
 	{
-		if (!this->isHeaderParsed)
-			this->parseCGIHeader();
-		else
+		switch (this->state)
 		{
-			try { this->proxyBody(); }
+		case PARSING_HEADERS:
+			this->parseCGIHeader();
+			if (this->state != STREAMING_BODY)
+				break ;
+			/* FALLTHRU */
+		case STREAMING_BODY:
+			try
+			{
+				this->sendHeaders();
+				this->proxyBody();
+			}
 			catch (...)
 			{
+				this->state = ERRORED;
 				this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-				return ;
+				return;
 			}
-		}
-	}
-
-	if (this->isHeaderParsed)
-	{
-		try { this->sendHeaders(); }
-		catch (...)
-		{
-			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-			return ;
+			break ;
+		default:
+			break ;
 		}
 	}
 
 	if (events & (EPOLLHUP | EPOLLRDHUP))
-	{
-		this->isCGICompleted = true;
-		try { this->sendHeaders(); }
-		catch (...)
-		{
-			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-			return ;
-		}
-	}
-	return ;
+		this->state = COMPLETED;
 }
 
 void CGIHandler::parseCGIHeader()
@@ -342,10 +328,14 @@ void CGIHandler::parseCGIHeader()
 		this->buffer + this->readedSize,
 		CGI_BUFFER_SIZE - this->readedSize);
 
+	if (readed == -1)
+		return ;
+
 	if (readed <= 0)
 	{
+		this->state = ERRORED;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-		return;
+		return ;
 	}
 
 	this->readedSize += readed;
@@ -355,10 +345,11 @@ void CGIHandler::parseCGIHeader()
 
 	while ((remaining = this->readedSize - total_parsed) > 0)
 	{
-		if (this->buffer[total_parsed] == '\n' || (remaining >= 2 && this->buffer[total_parsed] == '\r' && this->buffer[total_parsed + 1] == '\n'))
+		if (this->buffer[total_parsed] == '\n'
+			|| (remaining >= 2 && this->buffer[total_parsed] == '\r' && this->buffer[total_parsed + 1] == '\n'))
 		{
 			total_parsed += (this->buffer[total_parsed] == '\r') ? 2 : 1;
-			this->isHeaderParsed = true;
+			this->state = STREAMING_BODY;
 			break ;
 		}
 
@@ -374,6 +365,7 @@ void CGIHandler::parseCGIHeader()
 		}
 		catch (const std::exception& e)
 		{
+			this->state = ERRORED;
 			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 			return;
 		}
@@ -393,6 +385,7 @@ void CGIHandler::parseCGIHeader()
 
 	if (this->readedSize >= CGI_BUFFER_SIZE)
 	{
+		this->state = ERRORED;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		return;
 	}
@@ -403,14 +396,11 @@ void CGIHandler::proxyBody()
 	ssize_t readed = ::read(this->pipeOut[0], this->buffer, CGI_BUFFER_SIZE);
 
 	if (readed == -1)
-	{
-		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
-		return;
-	}
+		return ;
 
 	if (readed == 0)
 	{
-		this->isCGICompleted = true;
+		this->state = COMPLETED;
 		return ;
 	}
 

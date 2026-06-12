@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/22 23:26:37 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 00:56:35 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 02:20:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,9 +21,10 @@
 # include "ConfigLoader.hpp"
 # include "Config/toml.hpp"
 
+# include "HTTP/HTTPTypes.hpp"
+
 # include "EnumClass.hpp"
 # include "Utils/RadixTree.hpp"
-# include "HTTP/HTTPTypes.hpp"
 # include "Utils/HashedTimingWheel.hpp"
 # include "Utils/HashMap.hpp"
 # include "Logger.hpp"

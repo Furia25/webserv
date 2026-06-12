@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   AHandler.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/27 15:57:58 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/11 17:09:22 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 20:07:55 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ bool AHandler::execute()
 	}
 	catch (const std::exception& exception)
 	{
-		Logger::ERROR() << "Exception " << exception.what();
+		Logger::ERROR() << "Exception on Handler: " << exception.what();
 		this->first = false;
 		this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
 		this->errored = true;

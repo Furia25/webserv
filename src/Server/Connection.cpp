@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Connection.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/08 14:50:07 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 21:00:10 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/12 02:04:59 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,21 +35,12 @@ Connection::~Connection()
 
 void Connection::handleEvent(TCPServer &server, uint32_t events)
 {
-	(void) server;
-
 	if (events & EPOLLHUP || events & EPOLLRDHUP || events & EPOLLERR)
 	{
 		if (events & EPOLLERR)
-			this->server.getHandler().onError(*this, events);
+			server.getHandler().onError(*this, events);
 		this->setDeletable();
 		return ;
-	}
-
-	if (events & EPOLLIN && this->state == CONNECTED)
-	{
-		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.max_timeout);
-		this->handleRead();
-		server.getHandler().onDataReceived(*this);
 	}
 
 	if (events & EPOLLOUT && this->state != DELETABLE)
@@ -59,21 +50,28 @@ void Connection::handleEvent(TCPServer &server, uint32_t events)
 		if (this->actualJob != NULL)
 		{
 			if (!this->actualJob->execute())
-				this->actualJob = NULL;
+				this->setJob(NULL);
 		}
 		this->handleWrite();
+	}
+
+	if (events & EPOLLIN && this->state == CONNECTED)
+	{
+		TCPServer::AlarmManager.reschedule(this->alarmTimeout, this->engineConfig.max_timeout);
+		this->handleRead();
+		server.getHandler().onDataReceived(*this);
 	}
 }
 
 void Connection::setJob(IJob *job)
 {
+	if (job == NULL && this->actualJob != NULL)
+		this->getServer().handler->onConnectionJobFinished(*this);
 	this->actualJob = job;
-	
-	this->bytes_sended = 0; 
-	this->write_buffer.clear(); 
-
-	if (actualJob != NULL)
+	if (job != NULL)
 		this->setWritable(true);
+	else
+		this->setWritable(!this->write_buffer.empty());
 }
 
 void Connection::setWritable(bool writable)
@@ -99,7 +97,6 @@ void Connection::setClosing(void)
 void Connection::setDeletable(void)
 {
 	this->state = DELETABLE;
-	this->setWritable(false);
 	this->server.dropConnection(this);
 	TCPServer::AlarmManager.cancel(this->alarmTimeout);
 }

@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/24 16:18:13 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/10 16:23:30 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 02:25:06 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,8 @@ static const char* DEFAULT_FALLBACK_CONFIG =
 	"[[servers]]\n"
 	"server_name = \"main\"\n"
 	"root = \"www/\"\n"
+	"[logging]\n"
+	"level = \"DEBUG\"\n"
 	"\n"
 	"	[[servers.bindings]]\n"
 	"	host = \"localhost\"\n"

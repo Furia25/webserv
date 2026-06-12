@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   TCPServer.cpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 19:03:54 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/10 18:19:31 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/12 02:54:38 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,18 +59,29 @@ void TCPServer::run(void)
 		timestamp_ms next_timeout = AlarmManager.next_timeout_ms();
 		int timeout = next_timeout == 0 ? EPOLL_TIMEOUT : next_timeout;
 		int n = epoll_wait(this->epollfd, events, this->engineConfig.max_events, timeout);
+
 		if (n < 0)
 		{
 			if (errno == EINTR)
 				continue ;
 			throw std::runtime_error(std::string("Epoll wait returned -1") + strerror(errno));
 		}
+
 		for (int i = 0; i < n; ++i)
 		{
 			if (events->data.ptr == NULL)
 				continue ;
 			IEpollHandler *event_handler = reinterpret_cast<IEpollHandler *>(events[i].data.ptr);
 			event_handler->handleEvent(*this, events[i].events);
+
+			#if TCP_EPOLL_DEBUG == true
+			Logger::DEBUG() << "index" << i << " ptr: " << events[i].data.ptr << " | EPOLLIN: "  << !!(events[i].events & EPOLLIN)
+                << " | EPOLLOUT: " << !!(events[i].events & EPOLLOUT)
+                << " | EPOLLHUP: " << !!(events[i].events & EPOLLHUP)
+                << " | EPOLLRDHUP: " << !!(events[i].events & EPOLLRDHUP)
+                << " | EPOLLERR: " << !!(events[i].events & EPOLLERR);
+			#endif
+
 		}
 		Logger::tick();
 		AlarmManager.tick();
@@ -119,10 +130,10 @@ void TCPServer::dropConnection(Connection *connection)
 
 	this->connections.erase(fd);
 	this->handler->onDisconnection(*connection);
+	this->removePollEvent(*connection, fd);
 	this->deletableConnections.push_back(connection);
-	this->removePollEvent(*connection, connection->getSocket().getFd());
 	#if HTTP_DEBUG == true
-	Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
+		Logger::DEBUG() << "Connection dropped: Client " << connection->getSocket().getAddress();
 	#endif
 	this->actualConnections--;
 }
@@ -134,7 +145,7 @@ void TCPServer::setPollEvent(IEpollHandler &event_handler, int fd, uint32_t even
 	ev.data.ptr = &event_handler;
 	errno = 0;
 	if (epoll_ctl(this->epollfd, EPOLL_CTL_MOD, fd, &ev) == -1)
-		throw std::runtime_error("Unable to add a polling event: " + std::string(strerror(errno)));
+		throw std::runtime_error("Unable to set a polling event: " + std::string(strerror(errno)));
 }
 
 void TCPServer::addPollEvent(IEpollHandler &event_handler, int fd, uint32_t events){

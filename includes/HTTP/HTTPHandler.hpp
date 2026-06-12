@@ -48,6 +48,7 @@ public:
 	void		onDataReceived(Connection& connection);
 	void		onConnection(Connection& connection);
 	void		onDisconnection(Connection& connection);
+	void		onConnectionJobFinished(Connection& connection);
 	void		onError(Connection& connection, uint32_t error_event);
 
 	size_t		getTotalRequests(void) const;
@@ -65,8 +66,10 @@ private:
 			AlignedBuffer<UploadHandler>::type		upload_handler;
 		};
 		AHandler	*active;
-		~HandlerSlot() { if (active) active->~AHandler(); };
+		~HandlerSlot() { if (active != NULL) { active->~AHandler(); } active = NULL; };
 	};
+
+	template <typename T> struct HandlerBuffer;
 
 	struct ClientData
 	{
@@ -79,7 +82,7 @@ private:
 		std::string				sizeBuffer;
 
 		ClientData(): actualHandler(NULL), neededBytes(0) {};
-		void Reset()
+		void reset()
 		{
 			this->builder.reset();
 			this->body.reset();
@@ -116,6 +119,24 @@ private:
 	void		streamBodyFragment(Connection& connection, ClientData& client);
 };
 
+template <> struct HTTPHandler::HandlerBuffer<StaticHandler>
+{ static void *get(HandlerSlot *s) { return &s->static_handler; } };
+
+template <> struct HTTPHandler::HandlerBuffer<RedirectHandler>
+{ static void *get(HandlerSlot *s) { return &s->redirect_handler; } };
+
+template <> struct HTTPHandler::HandlerBuffer<ErrorHandler>
+{ static void *get(HandlerSlot *s) { return &s->error_handler; } };
+
+template <> struct HTTPHandler::HandlerBuffer<CGIHandler>
+{ static void *get(HandlerSlot *s) { return &s->cgi_handler; } };
+
+template <> struct HTTPHandler::HandlerBuffer<StatusHandler>
+{ static void *get(HandlerSlot *s) { return &s->status_handler; } };
+
+template <> struct HTTPHandler::HandlerBuffer<UploadHandler>
+{ static void *get(HandlerSlot *s) { return &s->upload_handler; } };
+
 template <typename T>
 inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Request& request,
 				Body& body, const Router::RouteResult& route_result, HTTPCode status_code)
@@ -127,14 +148,15 @@ inline AHandler	*HTTPHandler::createHandler(Connection& connection, const Reques
 	slot->active = NULL;
 	try
 	{
-		handler = new (slot) T(*this, connection, request, body, route_result, status_code);
+		handler = new (HandlerBuffer<T>::get(slot)) T(*this, connection, request, body, route_result, status_code);
 		slot->active = handler;
 	}
 	catch (const HTTPException& e)
 	{
 		try
 		{
-			handler = new (slot) ErrorHandler(*this, connection, request, body, route_result, status_code);
+			handler = new (HandlerBuffer<ErrorHandler>::get(slot))
+				ErrorHandler(*this, connection, request, body, route_result, status_code);
 			slot->active = handler;
 		}
 		catch (...)

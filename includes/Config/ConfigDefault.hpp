@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 19:43:25 by vdurand           #+#    #+#             */
-/*   Updated: 2026/05/05 19:02:32 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 02:26:08 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,8 +23,8 @@
 # define CONFIG_READ_SIZE	4096
 # define CONFIG_READ_LIMIT	16384
 
-# define CONFIG_CLOSING_TIMEOUT	10
-# define CONFIG_ABSOLUTE_TIMEOUT	30
+# define CONFIG_CLOSING_TIMEOUT	5
+# define CONFIG_ABSOLUTE_TIMEOUT	6
 
 # define CONFIG_BODY_SIZE	10485760
 # define CONFIG_TICK_INTERVAL	5

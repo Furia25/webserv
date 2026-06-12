@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Listener.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: antbonin <antbonin@student.42.fr>          +#+  +:+       +#+        */
+/*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/10 19:05:01 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/09 15:08:44 by antbonin         ###   ########.fr       */
+/*   Updated: 2026/06/11 20:01:26 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,8 +51,20 @@ void Listener::handleEvent(TCPServer& server, uint32_t events)
 			Logger::ERROR() << "Accept errored :" << e.what();
 			break ;
 		}
-		catch (...) { server.connectionPool.releaseRaw(ptr); throw ; }
-		server.registerConnection(client_connection);
+		catch (...)
+		{
+			server.connectionPool.releaseRaw(ptr);
+			break ;
+		}
+
+		try { server.registerConnection(client_connection); }
+		catch (const std::exception& e)
+		{
+			server.connectionPool.release(client_connection);
+			Logger::ERROR() << "Couldn't register connection :" << e.what();
+			break ;
+		}
+		
 		#if HTTP_DEBUG == true
 		Logger::DEBUG() << "Connection established: " << this->getSocket().getAddress()
 				<< " <-> "<< client_connection->getSocket().getAddress();

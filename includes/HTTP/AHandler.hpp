@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/04/16 18:39:26 by antbonin          #+#    #+#             */
-/*   Updated: 2026/06/02 19:14:09 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/11 21:02:40 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,12 @@ class Body;
 class AHandler : public IJob
 {
 public:
-	virtual ~AHandler() {};
+	virtual ~AHandler()
+	{
+		#if HTTP_DEBUG == true
+			Logger::DEBUG() << "Handler finished: Destructor called";
+		#endif
+	};
 	bool	execute();
 
 	virtual void onExecute() = 0;

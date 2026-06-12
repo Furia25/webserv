@@ -28,8 +28,8 @@ HTTPHandler::~HTTPHandler()
 			it != this->clientsData.end(); ++it)
 	{
 		if (it->second->actualHandler != NULL)
-			it->second->actualHandler->~HandlerSlot();
-		it->second->~ClientData();
+			this->handlerPool.release(it->second->actualHandler);
+		this->clientPool.release(it->second);
 	}
 }
 
@@ -285,12 +285,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 	ClientData&		client = *this->clientsData.at(connection.getClientID());
 
 	if (client.actualHandler != NULL)
-	{
-		if (client.actualHandler->active == NULL || !client.actualHandler->active->isFinished())
-			return ;
-		this->resetClient(client);
-		connection.setJob(NULL);
-	}
+		return ;
 
 	try
 	{
@@ -305,7 +300,7 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 		}
 		streamBodyFragment(connection, client);
 		checkCompletion(connection, client);
-		// connection.consumeReadData(connection.getReadBufferSize());
+		connection.consumeReadData(connection.getReadBufferSize());
 	}
 	catch (const std::exception &e) 
 	{
@@ -328,6 +323,8 @@ void	HTTPHandler::onDataReceived(Connection& connection)
 void HTTPHandler::onConnection(Connection& connection)
 {
 	ClientData *new_client = new (this->clientPool.acquire()) ClientData();
+
+	new_client->reset();
 	this->clientsData.insert(connection.getClientID(), new_client);
 }
 
@@ -339,13 +336,27 @@ void HTTPHandler::onDisconnection(Connection& connection)
 	{
 		ClientData *client = it->second;
 		if (client->actualHandler != NULL)
+		{
 			this->handlerPool.release(client->actualHandler);
+			client->actualHandler = NULL;
+		}
 		this->clientPool.release(client);
 		this->clientsData.erase(it);
 	}
 }
 
-void HTTPHandler::onError(Connection& connection, uint32_t error_event)
+void HTTPHandler::onConnectionJobFinished(Connection &connection)
+{
+	HashMap<size_t, ClientData*>::iterator it = this->clientsData.find(connection.getClientID());
+
+	if	(it != this->clientsData.end())
+	{
+		ClientData *client = it->second;
+		resetClient(*client);
+	}
+}
+
+void HTTPHandler::onError(Connection &connection, uint32_t error_event)
 {
 	if (error_event & EPOLLHUP || error_event & EPOLLRDHUP)
 		return ;
@@ -366,5 +377,5 @@ void HTTPHandler::resetClient(ClientData &client)
 		this->handlerPool.release(client.actualHandler);
 		client.actualHandler = NULL;
 	}
-	client.Reset();
+	client.reset();
 }

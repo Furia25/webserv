@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/03/05 17:43:15 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/06 20:31:27 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 02:15:19 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@
 
 # define LISTENER_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP
 # define CONNECTION_EVENTS	EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP
+
+# define TCP_EPOLL_DEBUG	false
 
 class TCPServer
 {
