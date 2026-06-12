@@ -6,7 +6,7 @@
 /*   By: vdurand <vdurand@student.42lyon.fr>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/22 04:19:31 by vdurand           #+#    #+#             */
-/*   Updated: 2026/06/12 01:12:38 by vdurand          ###   ########.fr       */
+/*   Updated: 2026/06/12 18:00:34 by vdurand          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ void CGIHandler::onCreation()
 		std::cout << this->envFlat[index] << "\n";
 	#endif
 
-	if (!FileSystem::exists(this->scriptFilename))
+	if (!FileSystem::exists(this->scriptFilename) || !FileSystem::isFile(this->scriptFilename))
 		throw HTTPException(HTTPCode::NOT_FOUND, "Script file not found");
 
 	if (!FileSystem::isExecutable(this->scriptFilename))
@@ -133,6 +133,7 @@ void CGIHandler::initPaths()
 
 	bool isExplicitScript = false;
 	size_t dot = firstSegment.rfind('.');
+
 	if (dot != std::string::npos)
 	{
 		std::string ext = firstSegment.substr(dot + 1);
@@ -249,6 +250,7 @@ void CGIHandler::onExecute()
 		case ERRORED:
 			throw HTTPException(this->statusCode);
 		case COMPLETED:
+			sendHeaders();
 			this->response.sendEnd();
 			this->setFinished();
 			break;
@@ -319,7 +321,15 @@ void CGIHandler::handleEvent(TCPServer& server, uint32_t events)
 	}
 
 	if (events & (EPOLLHUP | EPOLLRDHUP))
-		this->state = COMPLETED;
+	{
+		if (this->state == PARSING_HEADERS)
+		{
+			this->state = ERRORED;
+			this->statusCode = HTTPCode::INTERNAL_SERVER_ERROR;
+		}
+		else
+			this->state = COMPLETED;
+	}
 }
 
 void CGIHandler::parseCGIHeader()
