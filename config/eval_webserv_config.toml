@@ -1,0 +1,71 @@
+[engine]
+max_timeout = 50
+closing_timeout = 30
+read_size = 4096
+max_read_limit = 16384
+
+[logging]
+tick_interval = 5
+level = "DEBUG"
+
+[[servers]]
+server_name = "main"
+root = "www/main_site"
+max_body_size = 150000000
+
+	[[servers.bindings]]
+	host = "127.0.0.1"
+	service = "8080"
+
+	[servers.errors]
+	404 = "www/errors/404.html"
+	403 = "www/errors/403.html"
+	500 = "www/errors/500.html"
+
+	[[servers.routes]]
+	handler  = "STATIC"
+	path     = "/"
+	methods  = ["GET"]
+	index    = "index.html"
+
+	[[servers.routes]]
+	handler = "STATIC"
+	path    = "/directory"
+	methods = ["GET"]
+	autoindex = true
+	index     = "sss.html"
+
+	[[servers.routes]]
+	handler       = "REDIRECT" 
+	path          = "/old-page"
+	location      = "http://127.0.0.1:8080/"
+	methods       = ["GET"]
+	status        = "301"
+
+[[servers]]
+server_name = "second_site"
+root = "www/second_site"
+
+	[[servers.bindings]]
+	host = "localhost"
+	service = "8081"
+
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/"
+	methods = ["GET"]
+	index = "index.html"
+
+[[servers]]
+server_name = "vhost.local"
+root = "www/vhost_site"
+
+	[[servers.bindings]]
+	host = "caca"
+	service = "8080"
+
+	[[servers.routes]]
+	handler = "STATIC"
+	path = "/"
+	methods = ["GET"]
+	index = "index.html"
